@@ -1,0 +1,22 @@
+  The Strict Format Requirements:                                                          
+  The engine scans the text file for unique blocks separated by ---. To import your        
+  external data, format your text file exactly like this:                                  
+                                                                                           
+    TYPE: PRODUCT                                                                          
+    NAME: Dullion 1er                                                                      
+    REFERENCE: DUL-01                                                                      
+    UNIT: L                                                                                
+    UNIT_SIZE: 1                                                                           
+    PURCHASE_PRICE: 12.0                                                                   
+    SELLING_PRICE: 20.0                                                                    
+    ---                                                                                    
+    TYPE: CLIENT                                                                           
+    NAME: John Doe                                                                         
+    PHONE: +21260000000                                                                    
+    ADDRESS: Casablanca, Center                                                            
+    ---                                                                                    
+    TYPE: SUPPLIER                                                                         
+    NAME: Apple Inc                                                                        
+    EMAIL: supplier@apple.com                                                              
+    PHONE: +1800123456                                                                     
+                                      

@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.markogroup" "\0"
-            VALUE "FileDescription", "marko_group" "\0"
+            VALUE "FileDescription", "Marko Group" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "marko_group" "\0"
+            VALUE "InternalName", "Marko Group" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 com.markogroup. All rights reserved." "\0"
             VALUE "OriginalFilename", "marko_group.exe" "\0"
-            VALUE "ProductName", "marko_group" "\0"
+            VALUE "ProductName", "Marko Group" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

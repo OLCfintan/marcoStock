@@ -1,0 +1,41 @@
+name: Build Flutter Apps (Windows & Android)
+
+on:
+  push:
+    branches: [ "master", "main" ]
+  workflow_dispatch: # Allows manual trigger from the Actions tab
+
+jobs:
+  build-android:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          architecture: x64
+      - run: flutter pub get
+      - run: flutter build apk --release
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: marko-group-android-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+  build-windows:
+    name: Build Windows EXE
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          architecture: x64
+      - run: flutter pub get
+      - run: flutter build windows --release
+      - name: Upload Windows Build
+        uses: actions/upload-artifact@v3
+        with:
+          name: marko-group-windows-exe
+          path: build\windows\x64\runner\Release\
