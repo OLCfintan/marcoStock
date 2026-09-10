@@ -32,7 +32,7 @@ dependencies:
   
   # Core utilities
   uuid: ^4.5.1
-  intl: ^0.19.0
+  intl: ^0.20.3
   equatable: ^2.0.7
   fpdart: ^1.1.1 # For functional error handling and Option types
   sqlite3: ^2.9.4
