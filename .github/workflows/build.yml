@@ -31,7 +31,7 @@ jobs:
       - name: Use Flutter-compatible Gradle version
         shell: bash
         run: |
-          sed -i 's/gradle-[0-9.]*-all\.zip/gradle-8.14.0-all.zip/' android/gradle/wrapper/gradle-wrapper.properties
+          sed -i 's/gradle-[0-9.]*-all\.zip/gradle-8.14.3-all.zip/' android/gradle/wrapper/gradle-wrapper.properties
       - run: flutter pub get
       - run: flutter build apk --release
       - name: Upload APK
