@@ -41,13 +41,14 @@ jobs:
         shell: bash
         run: |
           mkdir -p lib/src/localization/generated
-          flutter gen-l10n \
-            --arb-dir=lib/src/localization/arb \
-            --template-arb-file=app_en.arb \
-            --output-dir=lib/src/localization/generated \
-            --output-localization-file=app_localizations.dart \
-            --output-class=AppLocalizations \
-            --no-synthetic-package
+          printf '%s\n' \
+            'arb-dir: lib/src/localization/arb' \
+            'template-arb-file: app_en.arb' \
+            'output-dir: lib/src/localization/generated' \
+            'output-localization-file: app_localizations.dart' \
+            'output-class: AppLocalizations' \
+            'synthetic-package: false' > l10n.yaml
+          flutter gen-l10n
           test -f lib/src/localization/generated/app_localizations.dart
           grep -q 'class AppLocalizations' lib/src/localization/generated/app_localizations.dart
           find lib -type f -name '*.dart' -exec sed -i 's#package:flutter_gen/gen_l10n/app_localizations.dart#package:marko_group/src/localization/generated/app_localizations.dart#g' {} +
@@ -79,13 +80,15 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path lib/src/localization/generated | Out-Null
-          flutter gen-l10n `
-            --arb-dir=lib/src/localization/arb `
-            --template-arb-file=app_en.arb `
-            --output-dir=lib/src/localization/generated `
-            --output-localization-file=app_localizations.dart `
-            --output-class=AppLocalizations `
-            --no-synthetic-package
+          @(
+            'arb-dir: lib/src/localization/arb'
+            'template-arb-file: app_en.arb'
+            'output-dir: lib/src/localization/generated'
+            'output-localization-file: app_localizations.dart'
+            'output-class: AppLocalizations'
+            'synthetic-package: false'
+          ) | Set-Content l10n.yaml
+          flutter gen-l10n
           if (!(Test-Path lib/src/localization/generated/app_localizations.dart)) { throw "Generated localization file was not created" }
           if (!(Select-String -Path lib/src/localization/generated/app_localizations.dart -Pattern 'class AppLocalizations')) { throw "AppLocalizations class was not generated" }
           Get-ChildItem -Path lib -Recurse -Filter *.dart | ForEach-Object {
