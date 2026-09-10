@@ -46,12 +46,12 @@ jobs:
             'template-arb-file: app_en.arb' \
             'output-dir: lib/src/localization/generated' \
             'output-localization-file: app_localizations.dart' \
-            'output-class: AppLocalizations' \
-            'synthetic-package: false' > l10n.yaml
+            'output-class: AppLocalizations' > l10n.yaml
           flutter gen-l10n
           test -f lib/src/localization/generated/app_localizations.dart
           grep -q 'class AppLocalizations' lib/src/localization/generated/app_localizations.dart
           find lib -type f -name '*.dart' -exec sed -i 's#package:flutter_gen/gen_l10n/app_localizations.dart#package:marko_group/src/localization/generated/app_localizations.dart#g' {} +
+          sed -i 's/cardTheme: CardTheme(/cardTheme: CardThemeData(/g' lib/main.dart
       - run: flutter build apk --release
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -86,7 +86,6 @@ jobs:
             'output-dir: lib/src/localization/generated'
             'output-localization-file: app_localizations.dart'
             'output-class: AppLocalizations'
-            'synthetic-package: false'
           ) | Set-Content l10n.yaml
           flutter gen-l10n
           if (!(Test-Path lib/src/localization/generated/app_localizations.dart)) { throw "Generated localization file was not created" }
@@ -94,6 +93,7 @@ jobs:
           Get-ChildItem -Path lib -Recurse -Filter *.dart | ForEach-Object {
             (Get-Content $_.FullName) -replace 'package:flutter_gen/gen_l10n/app_localizations.dart', 'package:marko_group/src/localization/generated/app_localizations.dart' | Set-Content $_.FullName
           }
+          (Get-Content lib/main.dart) -replace 'cardTheme: CardTheme\(', 'cardTheme: CardThemeData(' | Set-Content lib/main.dart
       - run: flutter build windows --release
       - name: Upload Windows Build
         uses: actions/upload-artifact@v4
