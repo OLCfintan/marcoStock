@@ -18,7 +18,7 @@ jobs:
           java-version: '21'
       - uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          flutter-version: '3.47.3'
           architecture: x64
       - name: Use Kotlin compatible with mobile_scanner
         shell: bash
@@ -56,7 +56,7 @@ jobs:
       - uses: actions/checkout@v5
       - uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          flutter-version: '3.47.3'
           architecture: x64
       - name: Enable Windows desktop support
         shell: pwsh
