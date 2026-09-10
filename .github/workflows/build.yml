@@ -39,7 +39,18 @@ jobs:
       - run: flutter pub get
       - name: Generate localization sources for Flutter stable
         shell: bash
-        run: flutter gen-l10n
+        run: |
+          mkdir -p lib/src/localization/generated
+          flutter gen-l10n \
+            --arb-dir=lib/src/localization/arb \
+            --template-arb-file=app_en.arb \
+            --output-dir=lib/src/localization/generated \
+            --output-localization-file=app_localizations.dart \
+            --output-class=AppLocalizations \
+            --no-synthetic-package
+          test -f lib/src/localization/generated/app_localizations.dart
+          grep -q 'class AppLocalizations' lib/src/localization/generated/app_localizations.dart
+          find lib -type f -name '*.dart' -exec sed -i 's#package:flutter_gen/gen_l10n/app_localizations.dart#package:marko_group/src/localization/generated/app_localizations.dart#g' {} +
       - run: flutter build apk --release
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -66,7 +77,20 @@ jobs:
       - run: flutter pub get
       - name: Generate localization sources for Flutter stable
         shell: pwsh
-        run: flutter gen-l10n
+        run: |
+          New-Item -ItemType Directory -Force -Path lib/src/localization/generated | Out-Null
+          flutter gen-l10n `
+            --arb-dir=lib/src/localization/arb `
+            --template-arb-file=app_en.arb `
+            --output-dir=lib/src/localization/generated `
+            --output-localization-file=app_localizations.dart `
+            --output-class=AppLocalizations `
+            --no-synthetic-package
+          if (!(Test-Path lib/src/localization/generated/app_localizations.dart)) { throw "Generated localization file was not created" }
+          if (!(Select-String -Path lib/src/localization/generated/app_localizations.dart -Pattern 'class AppLocalizations')) { throw "AppLocalizations class was not generated" }
+          Get-ChildItem -Path lib -Recurse -Filter *.dart | ForEach-Object {
+            (Get-Content $_.FullName) -replace 'package:flutter_gen/gen_l10n/app_localizations.dart', 'package:marko_group/src/localization/generated/app_localizations.dart' | Set-Content $_.FullName
+          }
       - run: flutter build windows --release
       - name: Upload Windows Build
         uses: actions/upload-artifact@v4
