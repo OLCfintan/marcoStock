@@ -40,7 +40,7 @@ jobs:
       - name: Generate localization sources for Flutter stable
         shell: bash
         run: |
-          flutter gen-l10n --output-dir=lib/src/localization/generated --no-synthetic-package
+          flutter gen-l10n --output-dir=lib/src/localization/generated --output-class=AppLocalizations --no-synthetic-package
           find lib -type f -name '*.dart' -exec sed -i 's#package:flutter_gen/gen_l10n/app_localizations.dart#package:marko_group/src/localization/generated/app_localizations.dart#g' {} +
       - run: flutter build apk --release
       - name: Upload APK
@@ -69,7 +69,7 @@ jobs:
       - name: Generate localization sources for Flutter stable
         shell: pwsh
         run: |
-          flutter gen-l10n --output-dir=lib/src/localization/generated --no-synthetic-package
+          flutter gen-l10n --output-dir=lib/src/localization/generated --output-class=AppLocalizations --no-synthetic-package
           Get-ChildItem -Path lib -Recurse -Filter *.dart | ForEach-Object {
             (Get-Content $_.FullName) -replace 'package:flutter_gen/gen_l10n/app_localizations.dart', 'package:marko_group/src/localization/generated/app_localizations.dart' | Set-Content $_.FullName
           }
