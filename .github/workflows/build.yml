@@ -39,9 +39,7 @@ jobs:
       - run: flutter pub get
       - name: Generate localization sources for Flutter stable
         shell: bash
-        run: |
-          flutter gen-l10n --output-dir=lib/src/localization/generated --output-class=AppLocalizations --no-synthetic-package
-          find lib -type f -name '*.dart' -exec sed -i 's#package:flutter_gen/gen_l10n/app_localizations.dart#package:marko_group/src/localization/generated/app_localizations.dart#g' {} +
+        run: flutter gen-l10n
       - run: flutter build apk --release
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -68,11 +66,7 @@ jobs:
       - run: flutter pub get
       - name: Generate localization sources for Flutter stable
         shell: pwsh
-        run: |
-          flutter gen-l10n --output-dir=lib/src/localization/generated --output-class=AppLocalizations --no-synthetic-package
-          Get-ChildItem -Path lib -Recurse -Filter *.dart | ForEach-Object {
-            (Get-Content $_.FullName) -replace 'package:flutter_gen/gen_l10n/app_localizations.dart', 'package:marko_group/src/localization/generated/app_localizations.dart' | Set-Content $_.FullName
-          }
+        run: flutter gen-l10n
       - run: flutter build windows --release
       - name: Upload Windows Build
         uses: actions/upload-artifact@v4
