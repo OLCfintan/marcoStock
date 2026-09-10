@@ -32,6 +32,10 @@ jobs:
         shell: bash
         run: |
           sed -i 's/  intl: \^0\.19\.0/  intl: ^0.20.3/' pubspec.yaml
+      - name: Enable legacy generated localization package
+        shell: bash
+        run: |
+          printf '\nsynthetic-package: true\n' >> l10n.yaml
       - name: Use Flutter-compatible Gradle version
         shell: bash
         run: |
@@ -60,6 +64,10 @@ jobs:
         shell: pwsh
         run: |
           (Get-Content pubspec.yaml) -replace '  intl: \^0\.19\.0', '  intl: ^0.20.3' | Set-Content pubspec.yaml
+      - name: Enable legacy generated localization package
+        shell: pwsh
+        run: |
+          Add-Content -Path l10n.yaml -Value "`nsynthetic-package: true"
       - run: flutter pub get
       - run: flutter build windows --release
       - name: Upload Windows Build
