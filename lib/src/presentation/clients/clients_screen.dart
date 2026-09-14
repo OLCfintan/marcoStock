@@ -30,16 +30,6 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
         title: const Text('Clients Management'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.print),
-            onPressed: () {
-              if (_selectedIds.isNotEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Printing selected items')),
-                );
-              }
-            },
-          ),
-          IconButton(
             icon: const Icon(Icons.delete),
             onPressed: () async {
               if (_selectedIds.isNotEmpty) {

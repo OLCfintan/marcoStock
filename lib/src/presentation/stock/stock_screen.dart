@@ -56,14 +56,6 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
               }
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.print),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Print stock report coming soon')),
-              );
-            },
-          ),
           if (ref.watch(currentUserProvider)?.role == 'ADMIN')
             IconButton(
               icon: const Icon(Icons.delete),

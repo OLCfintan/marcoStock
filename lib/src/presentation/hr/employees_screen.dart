@@ -38,14 +38,6 @@ class _EmployeesScreenState extends ConsumerState<EmployeesScreen> {
               }
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.print),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Printing selected items')),
-              );
-            },
-          ),
           if (_selectedIds.isNotEmpty)
             IconButton(
               icon: const Icon(Icons.delete),

@@ -136,15 +136,6 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
               );
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.print),
-            tooltip: 'Print',
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Printing selected items')),
-              );
-            },
-          ),
           if (_selectedProductIds.isNotEmpty && ref.watch(currentUserProvider)?.role == 'ADMIN')
             IconButton(
               icon: const Icon(Icons.delete),
