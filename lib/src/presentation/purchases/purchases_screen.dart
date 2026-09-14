@@ -74,14 +74,14 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
     await showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Edit ${(() {
+        title: Text("${AppLocalizations.of(context)!.edit} ${(() {
           String pName = product.name;
           final loc = AppLocalizations.of(context)!.localeName;
           if (loc == 'ar' && product.nameAr != null) pName = product.nameAr!;
           if (loc == 'fr' && product.nameFr != null) pName = product.nameFr!;
           if (loc == 'es' && product.nameEs != null) pName = product.nameEs!;
           return pName;
-        })()}'),
+        })()}"),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -98,7 +98,7 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocalizations.of(context)!.cancel)),
           TextButton(
             onPressed: () {
               final newQty = Decimal.tryParse(qtyCtrl.text) ?? initialQty;
@@ -116,7 +116,7 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
               });
               Navigator.pop(ctx);
             },
-            child: const Text('Save'),
+            child: Text(AppLocalizations.of(context)!.save),
           ),
         ]
       )
@@ -148,7 +148,7 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
     }
 
     if (_totalPaid > _cartTotal) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment amount cannot exceed the total.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.paymentExceedsTotal)));
       return;
     }
 
@@ -273,7 +273,7 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
               labelText: l10n?.suppliers ?? 'Search Supplier...',
             ),
             loading: () => const CircularProgressIndicator(),
-            error: (err, stack) => Text('Err: $err'),
+            error: (err, stack) => Text("${AppLocalizations.of(context)!.errorStr}$err"),
           ),
         ),
         
@@ -428,7 +428,7 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
                   });
                 },
                 icon: const Icon(Icons.add),
-                label: const Text('Add Payment Method'),
+                label: Text(AppLocalizations.of(context)!.addPaymentMethod),
               ),
               const SizedBox(height: 16),
               SizedBox(
@@ -437,7 +437,7 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
                 child: ElevatedButton(
                   onPressed: _processPurchase,
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.teal, foregroundColor: Colors.white),
-                  child: Text(l10n?.confirm ?? 'RECORD PURCHASE', style: const TextStyle(fontSize: 18)),
+                  child: Text(l10n?.confirm ?? AppLocalizations.of(context)!.recordPurchase, style: const TextStyle(fontSize: 18)),
                 ),
               ),
             ],
@@ -447,7 +447,7 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
     );
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n?.purchases ?? 'Record Inbound Purchase (ACH)')),
+      appBar: AppBar(title: Text(l10n?.purchases ?? AppLocalizations.of(context)!.recordInboundPurchase)),
       body: LayoutBuilder(
         builder: (context, constraints) {
           if (constraints.maxWidth < 600) {

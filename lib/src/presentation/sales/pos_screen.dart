@@ -141,7 +141,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     final paidAmount = paymentRequests.fold(Decimal.zero, (sum, p) => sum + p.amount);
     
     if (paidAmount > total) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment amount cannot exceed the total.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.paymentExceedsTotal)));
       return;
     }
 
@@ -279,7 +279,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   child: Row(
                     children: [
                       ActionChip(
-                        label: const Text('Client Passager'),
+                        label: Text(AppLocalizations.of(context)!.walkInClient),
                         onPressed: () {
                           setState(() {
                             _selectedClientId = 'WALKIN_CLIENT_01';
@@ -355,7 +355,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                   showDialog(
                                     context: context,
                                     builder: (ctx) => AlertDialog(
-                                      title: Text('Edit ${p.name}'),
+                                      title: Text("${AppLocalizations.of(context)!.edit} ${p.name}"),
                                       content: Column(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
@@ -372,7 +372,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                         ],
                                       ),
                                       actions: [
-                                        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+                                        TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocalizations.of(context)!.cancel)),
                                         TextButton(
                                           onPressed: () {
                                             final newQty = Decimal.tryParse(qtyCtrl.text) ?? line.quantity;
@@ -391,7 +391,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                             });
                                             Navigator.pop(ctx);
                                           },
-                                          child: const Text('Save'),
+                                          child: Text(AppLocalizations.of(context)!.save),
                                         ),
                                       ]
                                     )

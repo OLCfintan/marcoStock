@@ -126,5 +126,15 @@
   "pdfGrandTotal": "Grand Total",
   "pdfThankYou": "Thank you for your business!",
   "pdfPurchase": "Purchase",
-  "pdfSupplier": "Supplier:"
+  "pdfSupplier": "Supplier:",
+  "paymentExceedsTotal": "Payment amount cannot exceed the total.",
+  "walkInClient": "Client Passager",
+  "edit": "Edit",
+  "confirmReturn": "CONFIRM RETURN",
+  "processReturn": "Process Return",
+  "garbage": "Garbage / Deleted",
+  "recordPurchase": "RECORD PURCHASE",
+  "recordInboundPurchase": "Record Inbound Purchase (ACH)",
+  "returnCompletedSuccessfully": "Return completed successfully!",
+  "employees": "Employees"
 }

@@ -63,10 +63,10 @@ class MainLayout extends ConsumerWidget {
                     _buildNavItem(context, Icons.local_shipping, l10n?.suppliers ?? 'Suppliers', '/suppliers'),
                     _buildNavItem(context, Icons.shopping_cart, l10n?.purchases ?? 'Purchases', '/purchases'),
 
-                    _buildNavItem(context, Icons.badge, 'Employees', '/employees'),
+                    _buildNavItem(context, Icons.badge, l10n?.employeesHr ?? 'Employees (HR)', '/employees'),
                   ],
                   const Divider(height: 32),
-                  _buildNavItem(context, Icons.delete_outline, 'Garbage / Deleted', '/garbage'),
+                  _buildNavItem(context, Icons.delete_outline, l10n?.garbage ?? 'Garbage / Deleted', '/garbage'),
                   _buildNavItem(context, Icons.settings, l10n?.settings ?? 'Settings', '/settings'),
                   const SizedBox(height: 24),
                 ],

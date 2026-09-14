@@ -112,7 +112,7 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen> {
       _addToCart(products[productIndex]);
     } else {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Product not found: $code')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("${AppLocalizations.of(context)!.productNotFound}$code")));
       }
     }
     _barcodeController.clear();
@@ -121,7 +121,7 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen> {
 
   Future<void> _processSale() async {
     if (_selectedClientId == null || _cart.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a client and add products.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.pleaseSelectClientAndProducts)));
       return;
     }
 
@@ -144,7 +144,7 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen> {
     try {
       await ref.read(salesServiceProvider).processReturn(req);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Return completed successfully!')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.returnCompletedSuccessfully)));
         setState(() { 
           _cart.clear(); 
           for (var p in _payments) {
@@ -155,7 +155,7 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen> {
         });
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("${AppLocalizations.of(context)!.errorStr}$e")));
     }
   }
 
@@ -166,7 +166,7 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Process Return')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.processReturn)),
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isMobile = constraints.maxWidth < 600;
@@ -299,7 +299,7 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen> {
                                     showDialog(
                                       context: context,
                                       builder: (ctx) => AlertDialog(
-                                        title: Text('Edit ${p.name}'),
+                                        title: Text("${AppLocalizations.of(context)!.edit} ${p.name}"),
                                         content: Column(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
@@ -316,7 +316,7 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen> {
                                           ],
                                         ),
                                         actions: [
-                                          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+                                          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocalizations.of(context)!.cancel)),
                                           TextButton(
                                             onPressed: () {
                                               final newQty = Decimal.tryParse(qtyCtrl.text) ?? line.quantity;
@@ -335,7 +335,7 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen> {
                                               });
                                               Navigator.pop(ctx);
                                             },
-                                            child: const Text('Save'),
+                                            child: Text(AppLocalizations.of(context)!.save),
                                           ),
                                         ],
                                       ),
@@ -433,10 +433,10 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen> {
                                           labelText: 'Method',
                                           border: InputBorder.none,
                                         ),
-                                        items: const [
-                                          DropdownMenuItem(value: 'CASH', child: Text('CASH')),
-                                          DropdownMenuItem(value: 'CHECK', child: Text('CHECK')),
-                                          DropdownMenuItem(value: 'CREDIT', child: Text('CREDIT')),
+                                        items: [
+                                          DropdownMenuItem(value: 'CASH', child: Text(AppLocalizations.of(context)!.cash.toUpperCase())),
+                                          const DropdownMenuItem(value: 'CHECK', child: Text('CHECK')),
+                                          const DropdownMenuItem(value: 'CREDIT', child: Text('CREDIT')),
                                         ],
                                         onChanged: (val) {
                                           setState(() {
@@ -499,7 +499,7 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen> {
                             });
                           },
                           icon: const Icon(Icons.add),
-                          label: const Text('Add Payment Method'),
+                          label: Text(AppLocalizations.of(context)!.addPaymentMethod),
                         ),
                         
                         const SizedBox(height: 16),
@@ -513,7 +513,7 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen> {
                               foregroundColor: theme.colorScheme.onPrimary,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             ),
-                            child: const Text('CONFIRM RETURN', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+                            child: Text(AppLocalizations.of(context)!.confirmReturn, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
                           ),
                         ),
                       ],
