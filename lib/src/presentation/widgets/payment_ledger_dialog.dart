@@ -36,6 +36,8 @@ class _PaymentEntry {
 
   _PaymentEntry({
     String initialAmount = '',
+    this.method = 'CASH',
+    this.checkImagePath,
   }) {
     amountController = TextEditingController(text: initialAmount);
   }
