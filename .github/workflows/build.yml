@@ -11,11 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Set up Java 21
+      - name: Set up Java 17
         uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
-          java-version: '21'
+          java-version: '17'
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
@@ -38,6 +38,74 @@ jobs:
           channel: 'stable'
           architecture: x64
       - run: flutter config --enable-windows-desktop
+      - name: Strip Mobile Scanner for Windows
+        shell: bash
+        run: |
+          sed -i '/mobile_scanner:/d' pubspec.yaml
+          cat << 'EOF' > lib/src/presentation/widgets/universal_scanner.dart
+          import 'package:flutter/material.dart';
+          class UniversalScanner {
+            static Future<String?> scan(BuildContext context) async {
+              return showDialog<String>(
+                context: context,
+                builder: (context) => const _DesktopScannerDialog(),
+              );
+            }
+          }
+          class _DesktopScannerDialog extends StatefulWidget {
+            const _DesktopScannerDialog();
+            @override
+            State<_DesktopScannerDialog> createState() => _DesktopScannerDialogState();
+          }
+          class _DesktopScannerDialogState extends State<_DesktopScannerDialog> {
+            final TextEditingController _controller = TextEditingController();
+            final FocusNode _focusNode = FocusNode();
+            @override
+            void initState() {
+              super.initState();
+              Future.microtask(() => _focusNode.requestFocus());
+            }
+            @override
+            void dispose() {
+              _controller.dispose();
+              _focusNode.dispose();
+              super.dispose();
+            }
+            void _submit() {
+              if (_controller.text.trim().isNotEmpty) {
+                Navigator.of(context).pop(_controller.text.trim());
+              }
+            }
+            @override
+            Widget build(BuildContext context) {
+              return AlertDialog(
+                title: const Text('Scan Barcode'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.qr_code_scanner, size: 64, color: Colors.indigo),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _controller,
+                      focusNode: _focusNode,
+                      decoration: const InputDecoration(
+                        labelText: 'Awaiting Scanner Input...',
+                        border: OutlineInputBorder(),
+                      ),
+                      onSubmitted: (_) => _submit(),
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Cancel'),
+                  ),
+                ],
+              );
+            }
+          }
+          EOF
       - run: flutter pub get
       - run: flutter build windows --release
       - name: Upload Windows Build
