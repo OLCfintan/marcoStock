@@ -11,11 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Java 21
+      - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '21'
+          java-version: '17'
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
@@ -37,11 +37,12 @@ jobs:
         with:
           channel: 'stable'
           architecture: x64
+      - run: flutter config --enable-windows-desktop
       - name: Strip Mobile Scanner for Windows
-        shell: pwsh
+        shell: bash
         run: |
-          (Get-Content pubspec.yaml) -replace 'mobile_scanner:.*', '' | Set-Content pubspec.yaml
-          $mockCode = @"
+          sed -i '/mobile_scanner:/d' pubspec.yaml
+          cat << 'EOF' > lib/src/presentation/widgets/universal_scanner.dart
           import 'package:flutter/material.dart';
           class UniversalScanner {
             static Future<String?> scan(BuildContext context) async {
@@ -104,8 +105,7 @@ jobs:
               );
             }
           }
-          "@
-          Set-Content -Path "lib/src/presentation/widgets/universal_scanner.dart" -Value $mockCode
+          EOF
       - run: flutter pub get
       - run: flutter build windows --release
       - name: Upload Windows Build
