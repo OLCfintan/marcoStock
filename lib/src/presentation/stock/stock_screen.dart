@@ -1,5 +1,4 @@
 import '../../domain/constants/locations.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import "package:decimal/decimal.dart";
 import '../widgets/universal_scanner.dart';
@@ -106,8 +105,11 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
                         value: isSelected,
                         onChanged: (val) {
                           setState(() {
-                            if (val == true) _selectedIds.add(uniqueId);
-                            else _selectedIds.remove(uniqueId);
+                            if (val == true) {
+                              _selectedIds.add(uniqueId);
+                            } else {
+                              _selectedIds.remove(uniqueId);
+                            }
                           });
                         },
                       ),

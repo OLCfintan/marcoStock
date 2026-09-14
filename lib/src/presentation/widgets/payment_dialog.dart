@@ -89,8 +89,9 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
           // 2. Update Invoice Status
           final newPaid = widget.currentlyPaid + amount;
           String newStatus = 'UNPAID';
-          if (newPaid >= widget.currentTotal) newStatus = 'PAID';
-          else if (newPaid > Decimal.zero) newStatus = 'PARTIAL';
+          if (newPaid >= widget.currentTotal) {
+            newStatus = 'PAID';
+          } else if (newPaid > Decimal.zero) newStatus = 'PARTIAL';
           
           await (db.update(db.invoices)..where((t) => t.id.equals(widget.entityId))).write(
             InvoicesCompanion(status: drift.Value(newStatus), paidAmount: drift.Value(newPaid))
@@ -119,8 +120,9 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
           // 2. Update Purchase Status
           final newPaid = widget.currentlyPaid + amount;
           String newStatus = 'UNPAID';
-          if (newPaid >= widget.currentTotal) newStatus = 'PAID';
-          else if (newPaid > Decimal.zero) newStatus = 'PARTIAL';
+          if (newPaid >= widget.currentTotal) {
+            newStatus = 'PAID';
+          } else if (newPaid > Decimal.zero) newStatus = 'PARTIAL';
           
           await (db.update(db.purchases)..where((t) => t.id.equals(widget.entityId))).write(
             PurchasesCompanion(status: drift.Value(newStatus), paidAmount: drift.Value(newPaid))

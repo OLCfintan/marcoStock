@@ -49,8 +49,6 @@ class SyncService {
       }
       
        
-    } catch (e) {
-       
     } finally {
       _isSyncing = false;
     }

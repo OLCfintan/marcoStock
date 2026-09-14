@@ -53,7 +53,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 17;
+  int get schemaVersion => 18;
   
   @override
   MigrationStrategy get migration {
@@ -66,6 +66,14 @@ class AppDatabase extends _$AppDatabase {
           id: 'BASE_WAREHOUSE_01',
           name: 'Main Warehouse',
           type: 'BASE',
+        ));
+        
+        // Seed the system walk-in / temporary client
+        await into(clients).insert(ClientsCompanion.insert(
+          id: 'WALKIN_CLIENT_01',
+          name: 'Client Passager',
+          type: const Value('TEMP'),
+          tier: const Value('Tier 1'),
         ));
       },
 onUpgrade: (Migrator m, int from, int to) async {
@@ -147,6 +155,15 @@ onUpgrade: (Migrator m, int from, int to) async {
           await m.addColumn(products, products.nameAr);
           await m.addColumn(products, products.nameFr);
           await m.addColumn(products, products.nameEs);
+        }
+        if (from < 18) {
+          // Seed walk-in / temporary client for existing databases
+          await into(clients).insert(ClientsCompanion.insert(
+            id: 'WALKIN_CLIENT_01',
+            name: 'Client Passager',
+            type: const Value('TEMP'),
+            tier: const Value('Tier 1'),
+          ), mode: InsertMode.insertOrIgnore);
         }
       },
       beforeOpen: (details) async {

@@ -270,8 +270,8 @@ class PurchaseService {
 
       // Reverse Supplier Debt
       final debtAdded = purchase.total - purchase.paidAmount;
-      if (debtAdded > Decimal.zero && purchase.supplierId != null) {
-        final supplierQuery = _db.select(_db.suppliers)..where((t) => t.id.equals(purchase.supplierId!));
+      if (debtAdded > Decimal.zero) {
+        final supplierQuery = _db.select(_db.suppliers)..where((t) => t.id.equals(purchase.supplierId));
         final supplier = await supplierQuery.getSingleOrNull();
         if (supplier != null) {
           final newBalance = supplier.balance - debtAdded;
@@ -329,8 +329,8 @@ class PurchaseService {
 
       // Re-apply Supplier Debt
       final debtAdded = purchase.total - purchase.paidAmount;
-      if (debtAdded > Decimal.zero && purchase.supplierId != null) {
-        final supplierQuery = _db.select(_db.suppliers)..where((t) => t.id.equals(purchase.supplierId!));
+      if (debtAdded > Decimal.zero) {
+        final supplierQuery = _db.select(_db.suppliers)..where((t) => t.id.equals(purchase.supplierId));
         final supplier = await supplierQuery.getSingleOrNull();
         if (supplier != null) {
           final newBalance = supplier.balance + debtAdded;

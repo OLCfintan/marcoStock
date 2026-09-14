@@ -7,13 +7,12 @@ import 'package:decimal/decimal.dart';
 
 import '../../application/sales/sales_service.dart';
 import '../../infrastructure/repositories/client_repository.dart';
-import '../../infrastructure/repositories/product_repository.dart';
 import '../../domain/products/product.dart';
 import '../widgets/image_picker_field.dart';
 import '../widgets/autocomplete_search_field.dart';
 import '../widgets/quantity_selector_dialog.dart';
-
-
+import '../widgets/product_image.dart';
+import '../widgets/item_navigator.dart';
 
 class ReturnsScreen extends ConsumerStatefulWidget {
   const ReturnsScreen({super.key});
@@ -168,63 +167,59 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Process Return')),
-      body: Row(
-        children: [
-          // Left side: Products catalog
-          Expanded(
-            flex: 2,
-            child: productsAsync.when(
-              data: (products) => GridView.builder(
-                padding: const EdgeInsets.all(16),
-                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 200,
-                  childAspectRatio: 0.85,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                ),
-                itemCount: products.length,
-                itemBuilder: (context, index) {
-                  final p = products[index];
-                  return Card(
-                    elevation: 2,
-                    clipBehavior: Clip.antiAlias,
-                    child: InkWell(
-                      onTap: () => _addToCart(p),
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [theme.colorScheme.primaryContainer, theme.colorScheme.surface],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isMobile = constraints.maxWidth < 600;
+          final productsCatalog = productsAsync.when(
+              data: (products) {
+                final activeProducts = products.where((p) => p.isActive).toList();
+                return GridView.builder(
+                  padding: const EdgeInsets.all(16),
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 200,
+                    childAspectRatio: 0.85,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                  ),
+                  itemCount: activeProducts.length,
+                  itemBuilder: (context, index) {
+                    final p = activeProducts[index];
+                    return Card(
+                      elevation: 2,
+                      clipBehavior: Clip.antiAlias,
+                      child: InkWell(
+                        onTap: () => _addToCart(p),
+                        onDoubleTap: () => ItemNavigator.openProduct(context, p),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [theme.colorScheme.primaryContainer, theme.colorScheme.surface],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Expanded(child: ProductImage(product: p)),
+                              const SizedBox(height: 8),
+                              Text(p.name, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 4),
+                              Text('${p.sellingPrice.toStringAsFixed(2)} Dhs', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 16)),
+                            ],
                           ),
                         ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.category, size: 32, color: Colors.indigo),
-                            const SizedBox(height: 8),
-                            Text(p.name, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 4),
-                            Text('${p.sellingPrice.toStringAsFixed(2)} Dhs', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 16)),
-                          ],
-                        ),
                       ),
-                    ),
-                  );
-                },
-              ),
+                    );
+                  },
+                );
+              },
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (err, stack) => Center(child: Text('Error: $err')),
-            ),
-          ),
+          );
           
-          const VerticalDivider(width: 1),
-          
-          // Right side: Cart & Checkout
-          Expanded(
-            flex: 1,
-            child: Container(
+          final cartSection = Container(
               color: theme.colorScheme.surface,
               child: Column(
                 children: [
@@ -526,9 +521,40 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen> {
                   ),
                 ],
               ),
-            ),
-          ),
-        ],
+            );
+
+          if (isMobile) {
+            return DefaultTabController(
+              length: 2,
+              child: Column(
+                children: [
+                  const TabBar(
+                    tabs: [
+                      Tab(text: 'Products'),
+                      Tab(text: 'Return Cart'),
+                    ],
+                  ),
+                  Expanded(
+                    child: TabBarView(
+                      children: [
+                        productsCatalog,
+                        cartSection,
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return Row(
+            children: [
+              Expanded(flex: 2, child: productsCatalog),
+              const VerticalDivider(width: 1),
+              Expanded(flex: 1, child: cartSection),
+            ],
+          );
+        },
       ),
     );
   }
@@ -543,7 +569,6 @@ class _PaymentEntry {
   _PaymentEntry({
     String initialAmount = '',
     this.method = 'CASH',
-    this.checkImagePath,
   }) {
     amountController = TextEditingController(text: initialAmount);
   }

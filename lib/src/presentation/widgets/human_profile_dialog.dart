@@ -1,5 +1,3 @@
-import '../../application/suppliers/supplier_providers.dart';
-import '../../application/clients/client_providers.dart';
 import '../../application/auth/auth_service.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'dart:io';

@@ -1,5 +1,5 @@
 
-import 'package:uuid/uuid.dart';
+
 import 'package:decimal/decimal.dart';
 import '../../infrastructure/database/app_database.dart';
 import '../../infrastructure/database/providers.dart';
@@ -15,7 +15,7 @@ import '../../domain/products/product.dart';
 import '../../infrastructure/repositories/product_repository.dart';
 
 import 'add_product_screen.dart';
-import '../widgets/product_profile_dialog.dart';
+import '../widgets/item_navigator.dart';
 
 class ProductsScreen extends ConsumerStatefulWidget {
   const ProductsScreen({super.key});
@@ -66,7 +66,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                 final db = ref.read(databaseProvider);
                 final uuid = const Uuid();
                 
-                Future<void> _createAndLink(String type) async {
+                Future<void> createAndLink(String type) async {
                   final targetRef = '${product.reference}_$type';
                   final existing = await (db.select(db.products)..where((t) => t.reference.equals(targetRef))).getSingleOrNull();
                   
@@ -103,9 +103,9 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                   ), mode: drift.InsertMode.replace);
                 }
                 
-                if (createBox) await _createAndLink('Box');
-                if (createBottle) await _createAndLink('Bottle');
-                if (createTicket) await _createAndLink('Ticket');
+                if (createBox) await createAndLink('Box');
+                if (createBottle) await createAndLink('Bottle');
+                if (createTicket) await createAndLink('Ticket');
                 
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Consumables created and linked!')));
@@ -122,20 +122,6 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
   @override
   Widget build(BuildContext context) {
     final productsAsync = ref.watch(productsStreamProvider);
-
-    DataCell buildCell(Widget child, Product p) {
-      return DataCell(
-        child,
-        onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => ProductProfileDialog(product: p),
-              fullscreenDialog: true,
-            ),
-          );
-        },
-      );
-    }
 
     return Scaffold(
       appBar: AppBar(
@@ -204,8 +190,11 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                   selectedIds: _selectedProductIds,
                   onSelectChanged: (id, selected) {
                     setState(() {
-                      if (selected == true) _selectedProductIds.add(id);
-                      else _selectedProductIds.remove(id);
+                      if (selected == true) {
+                        _selectedProductIds.add(id);
+                      } else {
+                        _selectedProductIds.remove(id);
+                      }
                     });
                   },
                   onConsumable: (p) => _showConsumableDialog(context, p),
@@ -214,6 +203,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                     final db = ref.read(databaseProvider);
                     await (db.update(db.products)..where((t) => t.id.equals(p.id))).write(const ProductsCompanion(isActive: drift.Value(false)));
                   },
+                  onDoubleTap: (p) => ItemNavigator.openProduct(context, p),
                   isAdmin: ref.watch(currentUserProvider)?.role == 'ADMIN',
                 ),
               ),
@@ -235,6 +225,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
         tooltip: 'Add Product',
         child: const Icon(Icons.add),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
     );
   }
 }
@@ -246,6 +237,7 @@ class _ProductDataSource extends DataTableSource {
   final Function(Product) onConsumable;
   final Function(Product) onEdit;
   final Function(Product) onDelete;
+  final Function(Product) onDoubleTap;
   final bool isAdmin;
 
   _ProductDataSource({
@@ -255,6 +247,7 @@ class _ProductDataSource extends DataTableSource {
     required this.onConsumable,
     required this.onEdit,
     required this.onDelete,
+    required this.onDoubleTap,
     required this.isAdmin,
   });
 
@@ -262,6 +255,11 @@ class _ProductDataSource extends DataTableSource {
   DataRow? getRow(int index) {
     if (index >= products.length) return null;
     final p = products[index];
+    
+    DataCell buildCell(Widget child) {
+      return DataCell(child, onDoubleTap: () => onDoubleTap(p));
+    }
+    
     return DataRow(
       selected: selectedIds.contains(p.id),
       onSelectChanged: (selected) => onSelectChanged(p.id, selected),
@@ -277,15 +275,15 @@ class _ProductDataSource extends DataTableSource {
             ],
           ),
         ),
-        DataCell(Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold))),
-        DataCell(Text(p.reference)),
-        DataCell(Text('${p.packagingType} (${p.unitSize} ${p.unit})')),
-        DataCell(Text('${p.purchasePrice.toStringAsFixed(2)} Dhs')),
-        DataCell(Text('${p.sellingPrice.toStringAsFixed(2)} Dhs')),
-        DataCell(Text('${p.tier2Price?.toStringAsFixed(2) ?? '-'} Dhs')),
-        DataCell(Text('${p.tier3Price?.toStringAsFixed(2) ?? '-'} Dhs')),
-        DataCell(Text(p.baseMinimumStock.toString())),
-        DataCell(Text(p.magazinMinimumStock.toString())),
+        buildCell(Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold))),
+        buildCell(Text(p.reference)),
+        buildCell(Text('${p.packagingType} (${p.unitSize} ${p.unit})')),
+        buildCell(Text('${p.purchasePrice.toStringAsFixed(2)} Dhs')),
+        buildCell(Text('${p.sellingPrice.toStringAsFixed(2)} Dhs')),
+        buildCell(Text('${p.tier2Price?.toStringAsFixed(2) ?? '-'} Dhs')),
+        buildCell(Text('${p.tier3Price?.toStringAsFixed(2) ?? '-'} Dhs')),
+        buildCell(Text(p.baseMinimumStock.toString())),
+        buildCell(Text(p.magazinMinimumStock.toString())),
       ],
     );
   }

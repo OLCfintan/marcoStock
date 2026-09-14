@@ -95,7 +95,7 @@ class PdfGeneratorService {
   Future<void> generatePurchasePdf(String purchaseId, AppLocalizations l10n) async {
     var purchase = await (_db.select(_db.purchases)..where((tbl) => tbl.id.equals(purchaseId))).getSingle();
     final supplier = purchase.supplierId != null
-        ? await (_db.select(_db.suppliers)..where((tbl) => tbl.id.equals(purchase.supplierId!))).getSingleOrNull()
+        ? await (_db.select(_db.suppliers)..where((tbl) => tbl.id.equals(purchase.supplierId))).getSingleOrNull()
         : null;
     final lines = await (_db.select(_db.purchaseLines)..where((tbl) => tbl.purchaseId.equals(purchaseId))).get();
     
@@ -179,7 +179,7 @@ class PdfGeneratorService {
                 child: pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.stretch,
                   children: [
-                    _buildTotalRow(l10n.pdfTotal + ':', purchase.total.toStringAsFixed(2), isBold: true, fontSize: 14),
+                    _buildTotalRow('${l10n.pdfTotal}:', purchase.total.toStringAsFixed(2), isBold: true, fontSize: 14),
                   ],
                 ),
               ),

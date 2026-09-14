@@ -1,7 +1,6 @@
 import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
-import '../../domain/constants/locations.dart';
 
 import '../../infrastructure/database/app_database.dart';
 

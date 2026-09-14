@@ -169,18 +169,14 @@ class SalesService {
       
       final status = paidAmount >= total ? 'PAID' : (paidAmount > Decimal.zero ? 'PARTIAL' : 'UNPAID');
       
-      // 5. Update Client Balance (Debt)
+      // 5. Update Client Balance (Debt) — skip for walk-in (TEMP) clients
       final debt = total - paidAmount;
-      if (debt > Decimal.zero) {
-        final clientQuery = _db.select(_db.clients)..where((t) => t.id.equals(request.clientId));
-        final client = await clientQuery.getSingleOrNull();
-        if (client != null) {
-          final newBalance = client.balance + debt;
-          await _db.update(_db.clients).replace(client.copyWith(
-            balance: newBalance,
-            updatedAt: DateTime.now(),
-          ));
-        }
+      if (debt > Decimal.zero && client != null && client.type != 'TEMP') {
+        final newBalance = client.balance + debt;
+        await _db.update(_db.clients).replace(client.copyWith(
+          balance: newBalance,
+          updatedAt: DateTime.now(),
+        ));
       }
       
       // 6. Create Invoice
@@ -281,9 +277,9 @@ class SalesService {
         );
       }
 
-      // Reverse Client Debt
+      // Reverse Client Debt — skip for walk-in (TEMP) clients
       final debtAdded = invoice.total - invoice.paidAmount;
-      if (debtAdded > Decimal.zero && client != null) {
+      if (debtAdded > Decimal.zero && client != null && client.type != 'TEMP') {
         final newBalance = client.balance - debtAdded;
         await _db.update(_db.clients).replace(client.copyWith(balance: newBalance));
       }
@@ -330,9 +326,9 @@ class SalesService {
         );
       }
 
-      // Re-apply Client Debt
+      // Re-apply Client Debt — skip for walk-in (TEMP) clients
       final debtAdded = invoice.total - invoice.paidAmount;
-      if (debtAdded > Decimal.zero && client != null) {
+      if (debtAdded > Decimal.zero && client != null && client.type != 'TEMP') {
         final newBalance = client.balance + debtAdded;
         await _db.update(_db.clients).replace(client.copyWith(balance: newBalance));
       }
@@ -484,18 +480,14 @@ class SalesService {
       
       final status = 'REFUNDED';
       
-      // 5. Update Client Balance (Debt)
+      // 5. Update Client Balance (Debt) — skip for walk-in (TEMP) clients
       final debt = total - negativePaidAmount; 
-      if (debt.compareTo(Decimal.zero) != 0) {
-        final clientQuery = _db.select(_db.clients)..where((t) => t.id.equals(request.clientId));
-        final client = await clientQuery.getSingleOrNull();
-        if (client != null) {
-          final newBalance = client.balance + debt;
-          await _db.update(_db.clients).replace(client.copyWith(
-            balance: newBalance,
-            updatedAt: DateTime.now(),
-          ));
-        }
+      if (debt.compareTo(Decimal.zero) != 0 && client != null && client.type != 'TEMP') {
+        final newBalance = client.balance + debt;
+        await _db.update(_db.clients).replace(client.copyWith(
+          balance: newBalance,
+          updatedAt: DateTime.now(),
+        ));
       }
       
       // 6. Create Invoice (Refund type)
