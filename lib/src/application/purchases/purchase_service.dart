@@ -247,14 +247,13 @@ class PurchaseService {
         final balanceQuery = _db.select(_db.stockBalances)..where((t) => t.productId.equals(targetProductId) & t.locationId.equals(locationId));
         final balance = await balanceQuery.getSingleOrNull();
         final currentQty = balance?.quantity ?? Decimal.zero;
-        final newQty = currentQty - totalBaseUnits;
-        if (newQty < Decimal.zero) {
-          throw Exception('Cannot delete purchase: ${product.name} has insufficient stock to reverse ($currentQty available, trying to remove $totalBaseUnits).');
-        }
+        // Clamp to zero: stock may have been manually deleted, transferred, or sold
+        final actualDeduction = currentQty < totalBaseUnits ? currentQty : totalBaseUnits;
+        final newQty = currentQty - actualDeduction;
 
         if (balance != null) {
           await _db.update(_db.stockBalances).replace(balance.copyWith(quantity: newQty, updatedAt: DateTime.now()));
-        } else {
+        } else if (newQty > Decimal.zero) {
           await _db.into(_db.stockBalances).insert(StockBalancesCompanion.insert(productId: targetProductId, locationId: locationId, quantity: newQty));
         }
 

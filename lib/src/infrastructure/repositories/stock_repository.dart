@@ -37,19 +37,23 @@ class StockRepository {
   StockRepository(this._db);
 
   Stream<List<StockItem>> watchStockBalances() {
-    // Joins StockBalances with Products and Locations
-    final query = _db.select(_db.stockBalances).join([
-      innerJoin(_db.products, _db.products.id.equalsExp(_db.stockBalances.productId)),
-      innerJoin(_db.stockLocations, _db.stockLocations.id.equalsExp(_db.stockBalances.locationId)),
-    ]);
-
-    return query.watch().map((rows) {
-      return rows.map((row) {
-        final balance = row.readTable(_db.stockBalances);
-        final product = row.readTable(_db.products);
-        final location = row.readTable(_db.stockLocations);
-
-        return StockItem(
+    // Watch stock_balances table for changes
+    return _db.select(_db.stockBalances).watch().asyncMap((balances) async {
+      final items = <StockItem>[];
+      for (final balance in balances) {
+        if (balance.quantity <= Decimal.zero) continue;
+        
+        final product = await (_db.select(_db.products)
+          ..where((t) => t.id.equals(balance.productId)))
+          .getSingleOrNull();
+        if (product == null) continue; // Skip orphaned stock
+        
+        final location = await (_db.select(_db.stockLocations)
+          ..where((t) => t.id.equals(balance.locationId)))
+          .getSingleOrNull();
+        if (location == null) continue;
+        
+        items.add(StockItem(
           productId: product.id,
           productName: product.name,
           productReference: product.reference,
@@ -58,8 +62,9 @@ class StockRepository {
           locationId: location.id,
           locationName: location.name,
           quantity: balance.quantity,
-        );
-      }).toList();
+        ));
+      }
+      return items;
     });
   }
 

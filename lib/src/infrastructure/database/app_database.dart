@@ -169,7 +169,11 @@ onUpgrade: (Migrator m, int from, int to) async {
       beforeOpen: (details) async {
         await customStatement('PRAGMA foreign_keys = ON');
         // Mathematical Clamping: Erase any ghost negative stock from the engine
-        await customStatement('UPDATE stock_balances SET quantity = 0 WHERE quantity < 0');
+        await customStatement("UPDATE stock_balances SET quantity = '0' WHERE CAST(quantity AS REAL) < 0");
+        // Cleanup: Remove orphaned stock_balances pointing to deleted products
+        await customStatement("DELETE FROM stock_balances WHERE product_id NOT IN (SELECT id FROM products)");
+        // Cleanup: Remove zero-quantity noise
+        await customStatement("DELETE FROM stock_balances WHERE quantity = '0' OR quantity = '0.0' OR quantity = '0.000000'");
       },
     );
   }

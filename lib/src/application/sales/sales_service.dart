@@ -406,10 +406,9 @@ class SalesService {
     final balance = await balanceQuery.getSingleOrNull();
     final currentQty = balance?.quantity ?? Decimal.zero;
     
-    final newQty = currentQty - actualQuantityToDeduct;
-    if (newQty < Decimal.zero) {
-      throw Exception('Insufficient stock for ${product.name}. Available: $currentQty, Requested: $actualQuantityToDeduct');
-    }
+    // Clamp to zero: stock may have been manually deleted, transferred, or consumed
+    final actualDeduction = currentQty < actualQuantityToDeduct ? currentQty : actualQuantityToDeduct;
+    final newQty = currentQty - actualDeduction;
     
     if (balance == null) {
       await _db.into(_db.stockBalances).insert(StockBalancesCompanion.insert(productId: targetProductId, locationId: locationId, quantity: newQty));
