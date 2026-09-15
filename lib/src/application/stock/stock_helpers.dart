@@ -68,9 +68,23 @@ Decimal getConversionFactor(String oldUnit, String newUnit) {
   return (oldBase / newBase).toDecimal(scaleOnInfinitePrecision: 6);
 }
 
+String extractUnitFromName(String name, String fallbackUnit) {
+  final regex = RegExp(r'\s*(?:\d+(?:\.\d+)?)\s*(L|ml|kg|g|mg|cl|dl)$', caseSensitive: false);
+  final match = regex.firstMatch(name);
+  if (match != null) {
+    return match.group(1)!.toLowerCase();
+  }
+  return fallbackUnit;
+}
+
 Decimal convertQuantityToBase(Decimal quantity, ProductEntity variant, ProductEntity baseProduct) {
   final rawVariantMagnitude = quantity * variant.unitSize;
-  final unitFactor = getConversionFactor(variant.unit, baseProduct.unit);
+  
+  // Intelligently infer the real unit from the name to fix bad DB entries like 'Unit' for '250ml' variants
+  final variantRealUnit = extractUnitFromName(variant.name, variant.unit);
+  final baseRealUnit = extractUnitFromName(baseProduct.name, baseProduct.unit);
+  
+  final unitFactor = getConversionFactor(variantRealUnit, baseRealUnit);
   final convertedMagnitude = rawVariantMagnitude * unitFactor;
   return (convertedMagnitude / baseProduct.unitSize).toDecimal(scaleOnInfinitePrecision: 6);
 }
