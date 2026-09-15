@@ -400,7 +400,7 @@ class SalesService {
     
     final baseProduct = await getDeterministicBaseProduct(_db, product);
     String targetProductId = baseProduct.id;
-    Decimal actualQuantityToDeduct = quantity * product.unitSize;
+    Decimal actualQuantityToDeduct = convertQuantityToBase(quantity, product, baseProduct);
     
     final balanceQuery = _db.select(_db.stockBalances)..where((t) => t.productId.equals(targetProductId) & t.locationId.equals(locationId));
     final balance = await balanceQuery.getSingleOrNull();
@@ -588,7 +588,7 @@ class SalesService {
     
     final baseProduct = await getDeterministicBaseProduct(_db, product);
     String targetProductId = baseProduct.id;
-    Decimal actualQtyToAdd = quantity * product.unitSize;
+    Decimal actualQtyToAdd = convertQuantityToBase(quantity, product, baseProduct);
     
     final balanceQuery = _db.select(_db.stockBalances)..where((t) => t.productId.equals(targetProductId) & t.locationId.equals(locationId));
     final balance = await balanceQuery.getSingleOrNull();

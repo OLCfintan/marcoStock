@@ -116,11 +116,13 @@ class PurchaseService {
         for (final p in familyProducts) {
           final bals = await (_db.select(_db.stockBalances)..where((t) => t.productId.equals(p.id))).get();
           final pQty = bals.fold(Decimal.zero, (sum, b) => sum + (b.quantity > Decimal.zero ? b.quantity : Decimal.zero));
-          totalOldBaseQty += pQty * p.unitSize;
+          final pBase = await getDeterministicBaseProduct(_db, p);
+          totalOldBaseQty += convertQuantityToBase(pQty, p, pBase);
           totalOldValue += pQty * p.purchasePrice;
         }
         
-        final addedBaseQty = line.quantity * product.unitSize;
+        final baseProductForWac = await getDeterministicBaseProduct(_db, product);
+        final addedBaseQty = convertQuantityToBase(line.quantity, product, baseProductForWac);
         final addedValue = line.quantity * line.unitPrice;
         
         final newTotalBaseQty = totalOldBaseQty + addedBaseQty;
@@ -238,7 +240,7 @@ class PurchaseService {
         if (product == null) continue;
 
         final baseProduct = await getDeterministicBaseProduct(_db, product);
-        final totalBaseUnits = line.quantity * product.unitSize;
+        final totalBaseUnits = convertQuantityToBase(line.quantity, product, baseProduct);
         final targetProductId = baseProduct.id;
         final locationId = AppLocations.baseWarehouse;
 
@@ -299,7 +301,7 @@ class PurchaseService {
         if (product == null) continue;
 
         final baseProduct = await getDeterministicBaseProduct(_db, product);
-        final totalBaseUnits = line.quantity * product.unitSize;
+        final totalBaseUnits = convertQuantityToBase(line.quantity, product, baseProduct);
         final targetProductId = baseProduct.id;
         final locationId = AppLocations.baseWarehouse;
 
@@ -356,7 +358,7 @@ class PurchaseService {
     if (product == null) return;
     
     final baseProduct = await getDeterministicBaseProduct(_db, product);
-    final totalBaseUnits = quantity * product.unitSize;
+    final totalBaseUnits = convertQuantityToBase(quantity, product, baseProduct);
     final targetProductId = baseProduct.id;
     
     final balanceQuery = _db.select(_db.stockBalances)..where((t) => t.productId.equals(targetProductId) & t.locationId.equals(locationId));

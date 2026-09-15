@@ -32,9 +32,8 @@ class StockTransferService {
       
       final baseProduct = await getDeterministicBaseProduct(_db, product);
       String targetProductId = baseProduct.id;
-      final unitSize = product.unitSize;
       
-      final totalBaseUnits = quantity * unitSize;
+      final totalBaseUnits = convertQuantityToBase(quantity, product, baseProduct);
 
       // 1. Deduct from source
       final sourceBalance = await (_db.select(_db.stockBalances)

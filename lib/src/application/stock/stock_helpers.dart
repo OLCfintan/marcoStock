@@ -27,3 +27,38 @@ Future<ProductEntity> getDeterministicBaseProduct(AppDatabase db, ProductEntity 
   
   return familyProducts.first;
 }
+
+Decimal getBaseValue(String unit) {
+  switch (unit.toLowerCase().trim()) {
+    case 't':
+    case 'm3':
+      return Decimal.parse('1000');
+    case 'kg':
+    case 'l':
+      return Decimal.parse('1');
+    case 'g':
+    case 'ml':
+      return Decimal.parse('0.001');
+    case 'mg':
+      return Decimal.parse('0.000001');
+    case 'cl':
+      return Decimal.parse('0.01');
+    case 'dl':
+      return Decimal.parse('0.1');
+    default:
+      return Decimal.parse('1');
+  }
+}
+
+Decimal getConversionFactor(String oldUnit, String newUnit) {
+  final oldBase = getBaseValue(oldUnit);
+  final newBase = getBaseValue(newUnit);
+  return (oldBase / newBase).toDecimal(scaleOnInfinitePrecision: 6);
+}
+
+Decimal convertQuantityToBase(Decimal quantity, ProductEntity variant, ProductEntity baseProduct) {
+  final rawVariantMagnitude = quantity * variant.unitSize;
+  final unitFactor = getConversionFactor(variant.unit, baseProduct.unit);
+  final convertedMagnitude = rawVariantMagnitude * unitFactor;
+  return (convertedMagnitude / baseProduct.unitSize).toDecimal(scaleOnInfinitePrecision: 6);
+}
