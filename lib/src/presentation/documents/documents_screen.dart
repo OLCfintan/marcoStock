@@ -3,6 +3,7 @@ import '../../application/purchases/purchase_service.dart';
 import '../../application/sales/sales_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../widgets/print_dialog.dart';
 import '../../application/auth/auth_service.dart';
 import 'package:drift/drift.dart' as drift;
 import 'package:intl/intl.dart';
@@ -111,12 +112,20 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> with SingleTi
                     elevation: 1,
                     child: InkWell(
                       onDoubleTap: () {
-                        Navigator.push(context, MaterialPageRoute(
-                          builder: (_) => PdfPreviewScreen(
-                            title: '${invoice.documentType} #${invoice.invoiceNumber}',
-                            buildPdf: () => ref.read(pdfGeneratorProvider).generateInvoicePdf(invoice.id, AppLocalizations.of(context)!),
-                          ),
-                        ));
+                        
+                        // Replaced navigation
+                        () async {
+                          final options = await PrintDialog.show(context, defaultLanguageCode: Localizations.localeOf(context).languageCode);
+                          if (options != null && context.mounted) {
+                            Navigator.push(context, MaterialPageRoute(
+                              builder: (_) => PdfPreviewScreen(
+                                title: '${invoice.documentType} #${invoice.invoiceNumber}',
+                                buildPdf: () => ref.read(pdfGeneratorProvider).generateInvoicePdf(invoice.id, options),
+                              ),
+                            ));
+                          }
+                        }();
+                    
                       },
                       child: ListTile(
                         leading: CircleAvatar(
@@ -129,12 +138,15 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> with SingleTi
                           icon: const Icon(Icons.more_vert),
                           onSelected: (value) async {
                             if (value == 'print') {
-                              Navigator.push(context, MaterialPageRoute(
-                                builder: (_) => PdfPreviewScreen(
-                                  title: '${invoice.documentType} #${invoice.invoiceNumber}',
-                                  buildPdf: () => ref.read(pdfGeneratorProvider).generateInvoicePdf(invoice.id, AppLocalizations.of(context)!),
-                                ),
-                              ));
+                              final options = await PrintDialog.show(context, defaultLanguageCode: Localizations.localeOf(context).languageCode);
+                              if (options != null && context.mounted) {
+                                Navigator.push(context, MaterialPageRoute(
+                                  builder: (_) => PdfPreviewScreen(
+                                    title: '${invoice.documentType} #${invoice.invoiceNumber}',
+                                    buildPdf: () => ref.read(pdfGeneratorProvider).generateInvoicePdf(invoice.id, options),
+                                  ),
+                                ));
+                              }
                             } else if (value == 'record_payment') {
                               PaymentDialog.show(context, entityId: invoice.id, entityType: 'INVOICE', partnerId: client?.id, currentTotal: invoice.total, currentlyPaid: invoice.paidAmount);
                             } else if (value == 'view_payments') {
@@ -173,12 +185,20 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> with SingleTi
                           ],
                         ),
                       onTap: () {
-                        Navigator.push(context, MaterialPageRoute(
-                          builder: (_) => PdfPreviewScreen(
-                            title: '${invoice.documentType} #${invoice.invoiceNumber}',
-                            buildPdf: () => ref.read(pdfGeneratorProvider).generateInvoicePdf(invoice.id, AppLocalizations.of(context)!),
-                          ),
-                        ));
+                        
+                        // Replaced navigation
+                        () async {
+                          final options = await PrintDialog.show(context, defaultLanguageCode: Localizations.localeOf(context).languageCode);
+                          if (options != null && context.mounted) {
+                            Navigator.push(context, MaterialPageRoute(
+                              builder: (_) => PdfPreviewScreen(
+                                title: '${invoice.documentType} #${invoice.invoiceNumber}',
+                                buildPdf: () => ref.read(pdfGeneratorProvider).generateInvoicePdf(invoice.id, options),
+                              ),
+                            ));
+                          }
+                        }();
+                    
                       },
                     ),
                   ),
@@ -215,7 +235,15 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> with SingleTi
                         icon: const Icon(Icons.more_vert),
                         onSelected: (value) async {
                           if (value == 'print') {
-                            Navigator.push(context, MaterialPageRoute(builder: (_) => PdfPreviewScreen(title: "Purchase ${purchase.purchaseNumber}", buildPdf: () => ref.read(pdfGeneratorProvider).generatePurchasePdf(purchase.id, AppLocalizations.of(context)!))));
+                            final options = await PrintDialog.show(context, defaultLanguageCode: Localizations.localeOf(context).languageCode);
+                            if (options != null && context.mounted) {
+                              Navigator.push(context, MaterialPageRoute(
+                                builder: (_) => PdfPreviewScreen(
+                                  title: "Purchase ${purchase.purchaseNumber}",
+                                  buildPdf: () => ref.read(pdfGeneratorProvider).generatePurchasePdf(purchase.id, options),
+                                )
+                              ));
+                            }
                           } else if (value == 'record_payment') {
                             PaymentDialog.show(context, entityId: purchase.id, entityType: 'PURCHASE', partnerId: supplier?.id, currentTotal: purchase.total, currentlyPaid: purchase.paidAmount);
                           } else if (value == 'view_payments') {
@@ -234,7 +262,20 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> with SingleTi
                         ],
                       ),
                       onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (_) => PdfPreviewScreen(title: "Purchase ${purchase.purchaseNumber}", buildPdf: () => ref.read(pdfGeneratorProvider).generatePurchasePdf(purchase.id, AppLocalizations.of(context)!))));
+                        
+                        // Replaced navigation
+                        () async {
+                          final options = await PrintDialog.show(context, defaultLanguageCode: Localizations.localeOf(context).languageCode);
+                          if (options != null && context.mounted) {
+                            Navigator.push(context, MaterialPageRoute(
+                              builder: (_) => PdfPreviewScreen(
+                                title: "Purchase ${purchase.purchaseNumber}",
+                                buildPdf: () => ref.read(pdfGeneratorProvider).generatePurchasePdf(purchase.id, options),
+                              ),
+                            ));
+                          }
+                        }();
+                    
                       },
                     ),
                   );

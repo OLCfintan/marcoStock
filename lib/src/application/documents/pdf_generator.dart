@@ -1,6 +1,8 @@
 import "dart:typed_data";
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../presentation/widgets/print_dialog.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -24,6 +26,39 @@ class PdfGeneratorService {
 
   PdfGeneratorService(this._db, this._settings);
 
+  void _addPages(pw.Document doc, PrintOptions options, pw.TextDirection textDir, List<pw.Widget> Function() buildContent) {
+    if (options.layout == PrintLayout.a4_2up) {
+      doc.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4.landscape,
+          textDirection: textDir,
+          margin: const pw.EdgeInsets.all(24),
+          build: (context) {
+            return pw.Row(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Expanded(child: pw.Column(children: buildContent())),
+                pw.SizedBox(width: 48),
+                pw.Expanded(child: pw.Column(children: buildContent())),
+              ],
+            );
+          },
+        ),
+      );
+    } else {
+      doc.addPage(
+        pw.MultiPage(
+          pageFormat: options.layout == PrintLayout.a5 ? PdfPageFormat.a5 : PdfPageFormat.a4,
+          textDirection: textDir,
+          margin: const pw.EdgeInsets.all(32),
+          build: (context) => buildContent(),
+        ),
+      );
+    }
+  }
+
+
+
   String _localizedProductName(ProductEntity? product, String locale) {
     if (product == null) return 'Unknown';
     String finalName = product.name;
@@ -46,7 +81,8 @@ class PdfGeneratorService {
     }
   }
 
-  Future<Uint8List> generateInvoicePdf(String invoiceId, AppLocalizations l10n) async {
+  Future<Uint8List> generateInvoicePdf(String invoiceId, PrintOptions options) async {
+    final l10n = await AppLocalizations.delegate.load(Locale(options.languageCode));
     var invoice = await (_db.select(_db.invoices)..where((tbl) => tbl.id.equals(invoiceId))).getSingle();
     final client = invoice.clientId != null
         ? await (_db.select(_db.clients)..where((tbl) => tbl.id.equals(invoice.clientId!))).getSingleOrNull()
@@ -97,33 +133,25 @@ class PdfGeneratorService {
 
     final textDir = l10n.localeName.startsWith('ar') ? pw.TextDirection.rtl : pw.TextDirection.ltr;
 
-    doc.addPage(
-      pw.MultiPage(
-        pageFormat: PdfPageFormat.a4,
-        textDirection: textDir,
-        margin: const pw.EdgeInsets.all(32),
-        build: (pw.Context context) {
-          return [
-            _buildHeader(invoice, client, companyName, companyAddress, companyPhone, companyTaxId, logoImage, l10n),
-            pw.SizedBox(height: 32),
-            _buildInvoiceTable(lines, productMap, l10n),
-            pw.SizedBox(height: 16),
-            _buildTotals(invoice, l10n),
-            pw.Spacer(),
-            pw.Divider(),
-            pw.Container(
-              alignment: pw.Alignment.center,
-              child: pw.Text(l10n.pdfThankYou, style: const pw.TextStyle(color: PdfColors.grey)),
-            ),
-          ];
-        },
+    _addPages(doc, options, textDir, () => [
+      _buildHeader(invoice, client, companyName, companyAddress, companyPhone, companyTaxId, logoImage, l10n),
+      pw.SizedBox(height: 32),
+      _buildInvoiceTable(lines, productMap, l10n),
+      pw.SizedBox(height: 16),
+      _buildTotals(invoice, l10n),
+      pw.Spacer(),
+      pw.Divider(),
+      pw.Container(
+        alignment: pw.Alignment.center,
+        child: pw.Text(l10n.pdfThankYou, style: const pw.TextStyle(color: PdfColors.grey)),
       ),
-    );
+    ]);
 
     return doc.save();
   }
 
-  Future<Uint8List> generatePurchasePdf(String purchaseId, AppLocalizations l10n) async {
+  Future<Uint8List> generatePurchasePdf(String purchaseId, PrintOptions options) async {
+    final l10n = await AppLocalizations.delegate.load(Locale(options.languageCode));
     var purchase = await (_db.select(_db.purchases)..where((tbl) => tbl.id.equals(purchaseId))).getSingle();
     final supplier = await (_db.select(_db.suppliers)..where((tbl) => tbl.id.equals(purchase.supplierId))).getSingleOrNull();
     final lines = await (_db.select(_db.purchaseLines)..where((tbl) => tbl.purchaseId.equals(purchaseId))).get();
@@ -155,13 +183,7 @@ class PdfGeneratorService {
 
     final textDir = l10n.localeName.startsWith('ar') ? pw.TextDirection.rtl : pw.TextDirection.ltr;
 
-    doc.addPage(
-      pw.MultiPage(
-        pageFormat: PdfPageFormat.a4,
-        textDirection: textDir,
-        margin: const pw.EdgeInsets.all(32),
-        build: (pw.Context context) {
-          return [
+    _addPages(doc, options, textDir, () => [
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
@@ -222,10 +244,7 @@ class PdfGeneratorService {
                 ),
               ),
             ),
-          ];
-        },
-      ),
-    );
+    ]);
 
     return doc.save();
   }
