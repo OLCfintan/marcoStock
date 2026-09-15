@@ -135,7 +135,7 @@ final lowStockAlertsProvider = StreamProvider<List<LowStockAlert>>((ref) {
     final familyGroups = <String, List<ProductEntity>>{};
     for (final p in products) {
       // We no longer filter by packagingType, we want to evaluate EVERY active product!
-      familyGroups.putIfAbsent(p.name, () => []).add(p);
+      familyGroups.putIfAbsent(extractFamilyName(p.name), () => []).add(p);
     }
 
     for (final familyName in familyGroups.keys) {

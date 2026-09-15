@@ -1,16 +1,28 @@
 import '../../infrastructure/database/app_database.dart';
 import 'package:decimal/decimal.dart';
 
+String extractFamilyName(String name) {
+  final regex = RegExp(r'\s*(?:\d+(?:\.\d+)?)\s*(?:L|ml|kg|g|mg|cl|dl)$', caseSensitive: false);
+  final stripped = name.replaceAll(regex, '').trim();
+  // Standardize by replacing hyphens and underscores with spaces, and lowercasing for comparison
+  return stripped.replaceAll(RegExp(r'[-_]'), ' ').toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+}
+
 Future<ProductEntity> getDeterministicBaseProduct(AppDatabase db, ProductEntity product) async {
   if (product.unitSize == Decimal.one && product.packagingType == 'Unit') {
     return product;
   }
   
-  final familyProducts = await (db.select(db.products)..where((t) => t.name.equals(product.name))).get();
+  final familyName = extractFamilyName(product.name);
+  
+  // Fetch all products and filter in memory to allow regex matching
+  final allProducts = await db.select(db.products).get();
+  final familyProducts = allProducts.where((p) => extractFamilyName(p.name) == familyName).toList();
   
   if (familyProducts.isEmpty) return product;
 
   familyProducts.sort((a, b) {
+
     // 1. Prefer unitSize == 1
     if (a.unitSize == Decimal.one && b.unitSize != Decimal.one) return -1;
     if (b.unitSize == Decimal.one && a.unitSize != Decimal.one) return 1;
