@@ -1,6 +1,7 @@
 import "package:drift/drift.dart";
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/constants/locations.dart';
+import '../stock/stock_helpers.dart';
 import 'package:decimal/decimal.dart';
 import '../../infrastructure/database/providers.dart';
 import '../../infrastructure/database/app_database.dart';
@@ -140,19 +141,25 @@ final lowStockAlertsProvider = StreamProvider<List<LowStockAlert>>((ref) {
     for (final familyName in familyGroups.keys) {
       final family = familyGroups[familyName]!;
       
-      // Determine Root Product for Base Stock (Prefer unitSize == 1)
-      final rootProduct = family.firstWhere((p) => p.unitSize == Decimal.one, orElse: () => family.first);
+      // 1. Determine Exact Mathematical Root Product to sync with Stock Engine
+      final rootProduct = await getDeterministicBaseProduct(db, family.first);
       
-      // 1. Evaluate Base Stock (ONCE per family)
-      // Extract the highest base minimum stock configured across ANY variant in the family
+      // 2. Extract highest minimums for this entire family
       Decimal familyBaseMin = Decimal.zero;
+      Decimal familyMagazinMin = Decimal.zero;
+      
       for (final p in family) {
-        final pMin = p.baseMinimumStock > Decimal.zero ? p.baseMinimumStock : p.minimumStock;
-        if (pMin > familyBaseMin) familyBaseMin = pMin;
+        final pBaseMin = p.baseMinimumStock > Decimal.zero ? p.baseMinimumStock : p.minimumStock;
+        if (pBaseMin > familyBaseMin) familyBaseMin = pBaseMin;
+        
+        final pMagMin = p.magazinMinimumStock > Decimal.zero ? p.magazinMinimumStock : p.minimumStock;
+        if (pMagMin > familyMagazinMin) familyMagazinMin = pMagMin;
       }
       
+      // Since ALL stock (Base & Magazin) is routed to the rootProduct mathematically, we evaluate ONCE per family
+      
+      // A. Evaluate Base Stock
       if (familyBaseMin > Decimal.zero) {
-        // The physical base stock resides in the rootProduct ID in the database
         final baseQuery = db.select(db.stockBalances)..where((t) => t.productId.equals(rootProduct.id) & t.locationId.equals(AppLocations.baseWarehouse));
         final baseBalances = await baseQuery.get();
         final baseTotal = baseBalances.fold(Decimal.zero, (sum, b) => sum + b.quantity);
@@ -163,18 +170,15 @@ final lowStockAlertsProvider = StreamProvider<List<LowStockAlert>>((ref) {
         }
       }
 
-      // 2. Evaluate Magazin Stock (For EVERY variant dynamically)
-      for (final p in family) {
-        final magazinMin = p.magazinMinimumStock > Decimal.zero ? p.magazinMinimumStock : p.minimumStock;
-        if (magazinMin > Decimal.zero) {
-          final magazinQuery = db.select(db.stockBalances)..where((t) => t.productId.equals(p.id) & t.locationId.equals(AppLocations.magazin));
-          final magazinBalances = await magazinQuery.get();
-          final magazinTotal = magazinBalances.fold(Decimal.zero, (sum, b) => sum + b.quantity);
-          if (magazinTotal <= magazinMin) {
-            // Include unitSize dynamically to differentiate variants
-            final variantLabel = p.unitSize == Decimal.one ? ' ${p.unit}' : ' ${p.unitSize}${p.unit}';
-            alerts.add(LowStockAlert('${p.name}$variantLabel (Magazin)', magazinTotal, magazinMin));
-          }
+      // B. Evaluate Magazin Stock
+      if (familyMagazinMin > Decimal.zero) {
+        final magazinQuery = db.select(db.stockBalances)..where((t) => t.productId.equals(rootProduct.id) & t.locationId.equals(AppLocations.magazin));
+        final magazinBalances = await magazinQuery.get();
+        final magazinTotal = magazinBalances.fold(Decimal.zero, (sum, b) => sum + b.quantity);
+        
+        if (magazinTotal <= familyMagazinMin) {
+          final baseLabel = rootProduct.unitSize == Decimal.one ? ' ${rootProduct.unit}' : ' ${rootProduct.unitSize}${rootProduct.unit}';
+          alerts.add(LowStockAlert('${rootProduct.name}$baseLabel (Magazin)', magazinTotal, familyMagazinMin));
         }
       }
     }
