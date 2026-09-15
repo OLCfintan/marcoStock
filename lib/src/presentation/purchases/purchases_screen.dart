@@ -419,9 +419,10 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
           ),
         ),
       ],
-    );
+    ),
+  );
 
-    return Scaffold(
+  return Scaffold(
       appBar: AppBar(title: Text(l10n?.purchases ?? AppLocalizations.of(context)!.recordInboundPurchase)),
       body: LayoutBuilder(
         builder: (context, constraints) {

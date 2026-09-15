@@ -364,7 +364,6 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen> {
                         },
                       ),
                     ),
-                  ),
                   
                   // Totals & Checkout
                   Container(
@@ -562,7 +561,7 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen> {
           );
         },
       ),
-    )
+    );
   }
 }
 
