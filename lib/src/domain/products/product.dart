@@ -55,12 +55,10 @@ class Product extends Equatable {
   /// Returns the product name for the given locale code.
   /// Falls back to [name] if no translation exists.
   String localizedName(String locale) {
-    switch (locale) {
-      case 'ar': return nameAr ?? name;
-      case 'fr': return nameFr ?? name;
-      case 'es': return nameEs ?? name;
-      default: return name;
-    }
+    if (locale.startsWith('ar')) return nameAr ?? name;
+    if (locale.startsWith('fr')) return nameFr ?? name;
+    if (locale.startsWith('es')) return nameEs ?? name;
+    return name;
   }
 
   /// Returns "{localizedName} {unit}" or "{localizedName} {unitSize}{unit}"

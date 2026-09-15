@@ -95,7 +95,7 @@ class PdfGeneratorService {
     final companyPhone = companySettings['companyPhone'] ?? '';
     final companyTaxId = companySettings['companyTaxId'] ?? '';
 
-    final textDir = l10n.localeName == 'ar' ? pw.TextDirection.rtl : pw.TextDirection.ltr;
+    final textDir = l10n.localeName.startsWith('ar') ? pw.TextDirection.rtl : pw.TextDirection.ltr;
 
     doc.addPage(
       pw.MultiPage(
@@ -153,7 +153,7 @@ class PdfGeneratorService {
     final companyPhone = companySettings['companyPhone'] ?? '';
     final companyTaxId = companySettings['companyTaxId'] ?? '';
 
-    final textDir = l10n.localeName == 'ar' ? pw.TextDirection.rtl : pw.TextDirection.ltr;
+    final textDir = l10n.localeName.startsWith('ar') ? pw.TextDirection.rtl : pw.TextDirection.ltr;
 
     doc.addPage(
       pw.MultiPage(
