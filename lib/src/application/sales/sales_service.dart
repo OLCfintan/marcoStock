@@ -7,6 +7,7 @@ import '../../domain/constants/locations.dart';
 
 import '../../infrastructure/database/app_database.dart';
 import '../../infrastructure/database/providers.dart';
+import '../stock/stock_helpers.dart';
 
 final salesServiceProvider = Provider<SalesService>((ref) {
   return SalesService(ref.watch(databaseProvider));
@@ -397,22 +398,9 @@ class SalesService {
     final product = await (_db.select(_db.products)..where((t) => t.id.equals(productId))).getSingleOrNull();
     if (product == null) return;
     
-    String targetProductId = product.id;
-    Decimal actualQuantityToDeduct = quantity;
-    
-    // Always convert to the Root Base Product mathematically to maintain global consistency
-    if (product.unitSize != Decimal.one) {
-        final familyProducts = await (_db.select(_db.products)..where((t) => t.name.equals(product.name))).get();
-        final baseProduct = familyProducts.firstWhere(
-          (p) => p.unitSize == Decimal.one,
-          orElse: () => familyProducts.firstWhere(
-            (p) => p.packagingType == 'Unit' || p.packagingType == null || p.packagingType == '',
-            orElse: () => product,
-          ),
-        );
-        targetProductId = baseProduct.id;
-        actualQuantityToDeduct = quantity * product.unitSize;
-    }
+    final baseProduct = await getDeterministicBaseProduct(_db, product);
+    String targetProductId = baseProduct.id;
+    Decimal actualQuantityToDeduct = quantity * product.unitSize;
     
     final balanceQuery = _db.select(_db.stockBalances)..where((t) => t.productId.equals(targetProductId) & t.locationId.equals(locationId));
     final balance = await balanceQuery.getSingleOrNull();
@@ -598,21 +586,9 @@ class SalesService {
     final product = await (_db.select(_db.products)..where((t) => t.id.equals(productId))).getSingleOrNull();
     if (product == null) return;
     
-    String targetProductId = product.id;
-    Decimal actualQtyToAdd = quantity;
-    
-    if (product.unitSize != Decimal.one) {
-        final familyProducts = await (_db.select(_db.products)..where((t) => t.name.equals(product.name))).get();
-        final baseProduct = familyProducts.firstWhere(
-          (p) => p.unitSize == Decimal.one,
-          orElse: () => familyProducts.firstWhere(
-            (p) => p.packagingType == 'Unit' || p.packagingType == null || p.packagingType == '',
-            orElse: () => product,
-          ),
-        );
-        targetProductId = baseProduct.id;
-        actualQtyToAdd = quantity * product.unitSize;
-    }
+    final baseProduct = await getDeterministicBaseProduct(_db, product);
+    String targetProductId = baseProduct.id;
+    Decimal actualQtyToAdd = quantity * product.unitSize;
     
     final balanceQuery = _db.select(_db.stockBalances)..where((t) => t.productId.equals(targetProductId) & t.locationId.equals(locationId));
     final balance = await balanceQuery.getSingleOrNull();

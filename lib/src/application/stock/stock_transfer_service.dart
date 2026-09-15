@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../infrastructure/database/app_database.dart';
+import 'stock_helpers.dart';
 
 class StockTransferService {
   final AppDatabase _db;
@@ -29,21 +30,9 @@ class StockTransferService {
       // Resolve product Family Base Unit and scale quantity
       final product = await (_db.select(_db.products)..where((t) => t.id.equals(productId))).getSingle();
       
-      String targetProductId = product.id;
+      final baseProduct = await getDeterministicBaseProduct(_db, product);
+      String targetProductId = baseProduct.id;
       final unitSize = product.unitSize;
-      
-      if (product.unitSize != Decimal.one) {
-        final familyProducts = await (_db.select(_db.products)..where((t) => t.name.equals(product.name))).get();
-        // Prefer the exact product mathematically defined as the base (unitSize == 1)
-        final baseProduct = familyProducts.firstWhere(
-          (p) => p.unitSize == Decimal.one,
-          orElse: () => familyProducts.firstWhere(
-            (p) => p.packagingType == 'Unit' || p.packagingType == null || p.packagingType == '',
-            orElse: () => product,
-          ),
-        );
-        targetProductId = baseProduct.id;
-      }
       
       final totalBaseUnits = quantity * unitSize;
 

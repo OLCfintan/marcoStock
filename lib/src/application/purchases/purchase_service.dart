@@ -7,6 +7,7 @@ import '../../domain/constants/locations.dart';
 
 import '../../infrastructure/database/app_database.dart';
 import '../../infrastructure/database/providers.dart';
+import '../stock/stock_helpers.dart';
 
 final purchaseServiceProvider = Provider<PurchaseService>((ref) {
   return PurchaseService(ref.watch(databaseProvider));
@@ -236,8 +237,7 @@ class PurchaseService {
         final product = await (_db.select(_db.products)..where((t) => t.id.equals(line.productId))).getSingleOrNull();
         if (product == null) continue;
 
-        final baseProducts = await (_db.select(_db.products)..where((t) => t.name.equals(product.name) & t.packagingType.equals('Unit'))).get();
-        final baseProduct = baseProducts.isNotEmpty ? baseProducts.first : product;
+        final baseProduct = await getDeterministicBaseProduct(_db, product);
         final totalBaseUnits = line.quantity * product.unitSize;
         final targetProductId = baseProduct.id;
         final locationId = AppLocations.baseWarehouse;
@@ -298,8 +298,7 @@ class PurchaseService {
         final product = await (_db.select(_db.products)..where((t) => t.id.equals(line.productId))).getSingleOrNull();
         if (product == null) continue;
 
-        final baseProducts = await (_db.select(_db.products)..where((t) => t.name.equals(product.name) & t.packagingType.equals('Unit'))).get();
-        final baseProduct = baseProducts.isNotEmpty ? baseProducts.first : product;
+        final baseProduct = await getDeterministicBaseProduct(_db, product);
         final totalBaseUnits = line.quantity * product.unitSize;
         final targetProductId = baseProduct.id;
         final locationId = AppLocations.baseWarehouse;
@@ -356,14 +355,7 @@ class PurchaseService {
     final product = await (_db.select(_db.products)..where((t) => t.id.equals(productId))).getSingleOrNull();
     if (product == null) return;
     
-    final familyProducts = await (_db.select(_db.products)..where((t) => t.name.equals(product.name))).get();
-    final baseProduct = familyProducts.firstWhere(
-      (p) => p.unitSize == Decimal.one,
-      orElse: () => familyProducts.firstWhere(
-        (p) => p.packagingType == 'Unit' || p.packagingType == null || p.packagingType == '',
-        orElse: () => product,
-      ),
-    );
+    final baseProduct = await getDeterministicBaseProduct(_db, product);
     final totalBaseUnits = quantity * product.unitSize;
     final targetProductId = baseProduct.id;
     
