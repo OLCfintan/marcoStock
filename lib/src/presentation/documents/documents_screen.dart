@@ -125,28 +125,21 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> with SingleTi
                         ),
                         title: Text('${invoice.documentType} #${invoice.invoiceNumber} - ${client?.name ?? "Walk-in Client"}', style: const TextStyle(fontWeight: FontWeight.bold)),
                         subtitle: Text('${DateFormat('MMM dd, yyyy').format(invoice.date)} | Total: ${invoice.total.toStringAsFixed(2)} Dhs | Status: ${invoice.status}'),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(icon: const Icon(Icons.print, color: Colors.blueGrey), tooltip: 'View/Print Document', onPressed: () {
+                        trailing: PopupMenuButton<String>(
+                          icon: const Icon(Icons.more_vert),
+                          onSelected: (value) async {
+                            if (value == 'print') {
                               Navigator.push(context, MaterialPageRoute(
                                 builder: (_) => PdfPreviewScreen(
                                   title: '${invoice.documentType} #${invoice.invoiceNumber}',
                                   buildPdf: () => ref.read(pdfGeneratorProvider).generateInvoicePdf(invoice.id, AppLocalizations.of(context)!),
                                 ),
                               ));
-                            }),
-                          IconButton(icon: const Icon(Icons.attach_money, color: Colors.green), tooltip: 'Record Payment', onPressed: () {
-                            PaymentDialog.show(context, entityId: invoice.id, entityType: 'INVOICE', partnerId: client?.id, currentTotal: invoice.total, currentlyPaid: invoice.paidAmount);
-                          }),
-                          IconButton(icon: const Icon(Icons.receipt_long, color: Colors.blue), tooltip: 'View Payments & Checks', onPressed: () {
-                            ViewPaymentsDialog.show(context, entityId: invoice.id, entityType: 'INVOICE');
-                          }),
-                          if (invoice.documentType == 'BON')
-                            IconButton(
-                              icon: const Icon(Icons.transform, color: Colors.purple),
-                              tooltip: AppLocalizations.of(context)!.convertToInvoice,
-                              onPressed: () async {
+                            } else if (value == 'record_payment') {
+                              PaymentDialog.show(context, entityId: invoice.id, entityType: 'INVOICE', partnerId: client?.id, currentTotal: invoice.total, currentlyPaid: invoice.paidAmount);
+                            } else if (value == 'view_payments') {
+                              ViewPaymentsDialog.show(context, entityId: invoice.id, entityType: 'INVOICE');
+                            } else if (value == 'convert') {
                                 final confirm = await showDialog<bool>(
                                   context: context,
                                   builder: (ctx) => AlertDialog(
@@ -164,15 +157,21 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> with SingleTi
                                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.convertedSuccessfully)));
                                   }
                                 }
-                              }
-                            ),
-                          if (ref.watch(currentUserProvider)?.role == 'ADMIN')
-                            IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () async {
+                            } else if (value == 'delete') {
                               final userId = ref.read(currentUserProvider)?.id ?? '';
                               await ref.read(salesServiceProvider).deleteInvoice(invoice.id, userId);
-                            }),
-                        ],
-                      ),
+                            }
+                          },
+                          itemBuilder: (context) => [
+                            const PopupMenuItem(value: 'print', child: Text('Print Document')),
+                            const PopupMenuItem(value: 'record_payment', child: Text('Record Payment')),
+                            const PopupMenuItem(value: 'view_payments', child: Text('View Payments & Checks')),
+                            if (invoice.documentType == 'BON')
+                              PopupMenuItem(value: 'convert', child: Text(AppLocalizations.of(context)!.convertToInvoice)),
+                            if (ref.watch(currentUserProvider)?.role == 'ADMIN')
+                              const PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: Colors.red))),
+                          ],
+                        ),
                       onTap: () {
                         Navigator.push(context, MaterialPageRoute(
                           builder: (_) => PdfPreviewScreen(
@@ -212,23 +211,26 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> with SingleTi
                       ),
                       title: Text('Purchase #${purchase.purchaseNumber} - ${supplier?.name ?? "Unknown Supplier"}', style: const TextStyle(fontWeight: FontWeight.bold)),
                       subtitle: Text('${DateFormat('MMM dd, yyyy').format(purchase.date)} | Total: ${purchase.total.toStringAsFixed(2)} Dhs | Status: ${purchase.status}'),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(icon: const Icon(Icons.print, color: Colors.blueGrey), tooltip: 'Print Document', onPressed: () {
+                      trailing: PopupMenuButton<String>(
+                        icon: const Icon(Icons.more_vert),
+                        onSelected: (value) async {
+                          if (value == 'print') {
                             Navigator.push(context, MaterialPageRoute(builder: (_) => PdfPreviewScreen(title: "Purchase ${purchase.purchaseNumber}", buildPdf: () => ref.read(pdfGeneratorProvider).generatePurchasePdf(purchase.id, AppLocalizations.of(context)!))));
-                          }),
-                          IconButton(icon: const Icon(Icons.attach_money, color: Colors.green), tooltip: 'Record Payment', onPressed: () {
+                          } else if (value == 'record_payment') {
                             PaymentDialog.show(context, entityId: purchase.id, entityType: 'PURCHASE', partnerId: supplier?.id, currentTotal: purchase.total, currentlyPaid: purchase.paidAmount);
-                          }),
-                          IconButton(icon: const Icon(Icons.receipt_long, color: Colors.blue), tooltip: 'View Payments & Checks', onPressed: () {
+                          } else if (value == 'view_payments') {
                             ViewPaymentsDialog.show(context, entityId: purchase.id, entityType: 'PURCHASE');
-                          }),
+                          } else if (value == 'delete') {
+                            final userId = ref.read(currentUserProvider)?.id ?? '';
+                            await ref.read(purchaseServiceProvider).deletePurchase(purchase.id, userId);
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(value: 'print', child: Text('Print Document')),
+                          const PopupMenuItem(value: 'record_payment', child: Text('Record Payment')),
+                          const PopupMenuItem(value: 'view_payments', child: Text('View Payments & Checks')),
                           if (ref.watch(currentUserProvider)?.role == 'ADMIN')
-                            IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () async {
-                              final userId = ref.read(currentUserProvider)?.id ?? '';
-                              await ref.read(purchaseServiceProvider).deletePurchase(purchase.id, userId);
-                            }),
+                            const PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: Colors.red))),
                         ],
                       ),
                       onTap: () {

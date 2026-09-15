@@ -6,6 +6,7 @@ import "../widgets/image_picker_field.dart";
 import '../widgets/product_image.dart';
 import '../widgets/item_navigator.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../application/stock/stock_helpers.dart';
 import 'package:decimal/decimal.dart';
 
 import '../../application/suppliers/supplier_providers.dart';
@@ -189,8 +190,26 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
 
     final productsWidget = productsAsync.when(
       data: (allProducts) {
-       final products = allProducts.where((p) => p.isActive).toList();
-        products.sort((a, b) => a.name.compareTo(b.name));
+       // Get one base product per family
+      final Map<String, Product> familyBases = {};
+      for (final p in allProducts.where((p) => p.isActive)) {
+        final family = extractFamilyName(p.name);
+        if (!familyBases.containsKey(family)) {
+          familyBases[family] = p;
+        } else {
+          // Prefer unitSize == 1
+          if (p.unitSize == Decimal.one && familyBases[family]!.unitSize != Decimal.one) {
+            familyBases[family] = p;
+          } else if (p.unitSize == Decimal.one && familyBases[family]!.unitSize == Decimal.one) {
+            // Prefer packaging type Vrac or Unit
+            if (p.packagingType?.toLowerCase() == 'vrac' || p.packagingType?.toLowerCase() == 'unit') {
+              familyBases[family] = p;
+            }
+          }
+        }
+      }
+      final products = familyBases.values.toList();
+      products.sort((a, b) => a.name.compareTo(b.name));
         return GridView.builder(
           padding: const EdgeInsets.all(8),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
