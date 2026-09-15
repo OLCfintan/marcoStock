@@ -23,6 +23,15 @@ class PdfGeneratorService {
 
   PdfGeneratorService(this._db, this._settings);
 
+  String _localizedProductName(dynamic product, String locale) {
+    if (product == null) return 'Unknown';
+    final name = product.name ?? 'Unknown';
+    if (locale == 'ar' && product.nameAr != null) return product.nameAr!;
+    if (locale == 'fr' && product.nameFr != null) return product.nameFr!;
+    if (locale == 'es' && product.nameEs != null) return product.nameEs!;
+    return name;
+  }
+
   Future<void> generateInvoicePdf(String invoiceId, AppLocalizations l10n) async {
     var invoice = await (_db.select(_db.invoices)..where((tbl) => tbl.id.equals(invoiceId))).getSingle();
     final client = invoice.clientId != null
@@ -155,10 +164,7 @@ class PdfGeneratorService {
               headers: [l10n.pdfItem, l10n.pdfQty, l10n.pdfPrice, l10n.pdfTotal],
               data: lines.map((line) {
                 final product = productMap[line.productId];
-                String productName = product?.name ?? 'Unknown';
-                if (l10n.localeName == 'ar' && product?.nameAr != null) productName = product!.nameAr!;
-                if (l10n.localeName == 'fr' && product?.nameFr != null) productName = product!.nameFr!;
-                if (l10n.localeName == 'es' && product?.nameEs != null) productName = product!.nameEs!;
+                String productName = _localizedProductName(product, l10n.localeName);
                 
                 return [
                   productName,
@@ -235,13 +241,10 @@ class PdfGeneratorService {
 
   pw.Widget _buildInvoiceTable(List<InvoiceLineEntity> lines, Map<String, ProductEntity> productMap, AppLocalizations l10n) {
     return pw.TableHelper.fromTextArray(
-      headers: [l10n.pdfItem, l10n.pdfQty, l10n.pdfPrice, 'Discount', l10n.pdfTotal],
+      headers: [l10n.pdfItem, l10n.pdfQty, l10n.pdfPrice, l10n.pdfDiscount, l10n.pdfTotal],
       data: lines.map((line) {
         final product = productMap[line.productId];
-        String productName = product?.name ?? 'Unknown';
-        if (l10n.localeName == 'ar' && product?.nameAr != null) productName = product!.nameAr!;
-        if (l10n.localeName == 'fr' && product?.nameFr != null) productName = product!.nameFr!;
-        if (l10n.localeName == 'es' && product?.nameEs != null) productName = product!.nameEs!;
+        String productName = _localizedProductName(product, l10n.localeName);
         
         return [
           productName,
@@ -285,9 +288,9 @@ class PdfGeneratorService {
             pw.Divider(),
             _buildTotalRow('${l10n.pdfTotal}:', invoice.total.toStringAsFixed(2), isBold: true, fontSize: 14),
             pw.SizedBox(height: 8),
-            _buildTotalRow('Paid:', invoice.paidAmount.toStringAsFixed(2)),
+            _buildTotalRow('${l10n.pdfPaid}:', invoice.paidAmount.toStringAsFixed(2)),
             pw.Divider(color: PdfColors.grey400),
-            _buildTotalRow('Balance:', balance.toStringAsFixed(2), isBold: true, color: PdfColors.red700),
+            _buildTotalRow('${l10n.pdfBalance}:', balance.toStringAsFixed(2), isBold: true, color: PdfColors.red700),
           ],
         ),
       ),

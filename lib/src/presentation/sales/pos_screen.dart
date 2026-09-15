@@ -176,6 +176,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
     final productsAsync = ref.watch(productsStreamProvider);
     final theme = Theme.of(context);
+    final loc = AppLocalizations.of(context)!.localeName;
 
     return Scaffold(
       appBar: AppBar(title: Text(AppLocalizations.of(context)!.newSalePos)),
@@ -213,9 +214,9 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            ProductImage(product: p, size: 48),
+                            Expanded(child: ProductImage(product: p)),
                             const SizedBox(height: 8),
-                            Text(p.unitSize == Decimal.one ? '${p.name} ${p.unit}' : '${p.name} ${p.unitSize}${p.unit}', textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold)),
+                            Text(p.localizedLabel(loc), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold)),
                             const SizedBox(height: 4),
                             Text('${p.sellingPrice.toStringAsFixed(2)} Dhs', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 16)),
                           ],
@@ -230,6 +231,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             error: (err, stack) => Center(child: Text('${(AppLocalizations.of(context)?.errorStr ?? 'Error: ')}$err')),
           );
 
+          final productMap = productsAsync.valueOrNull != null 
+              ? {for (final p in productsAsync.valueOrNull!) p.id: p} 
+              : <String, Product>{};
+
           final cartWidget = Container(
             color: theme.colorScheme.surface,
             child: Column(
@@ -242,7 +247,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                       labelText: 'Document Type',
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       filled: true,
-                      fillColor: theme.colorScheme.primaryContainer.withOpacity(0.5),
+                      fillColor: theme.colorScheme.primaryContainer.withAlpha(128),
                     ),
                     style: TextStyle(
                       fontSize: 20, 
@@ -276,23 +281,6 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Row(
-                    children: [
-                      ActionChip(
-                        label: Text(AppLocalizations.of(context)!.walkInClient),
-                        onPressed: () {
-                          setState(() {
-                            _selectedClientId = 'WALKIN_CLIENT_01';
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: AutocompleteSearchField<Client>(
                     labelText: 'Select Client',
                     prefixIcon: const Icon(Icons.person_search),
@@ -310,53 +298,46 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 
                 const SizedBox(height: 16),
                 
-                // Cart Items
+                // Cart Items & Checkout
                 Expanded(
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16.0),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: theme.dividerColor),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: ListView.separated(
-                      itemCount: _cart.length,
-                      separatorBuilder: (context, index) => const Divider(height: 1),
-                      itemBuilder: (context, index) {
-                        final line = _cart[index];
-                        // Find name via products
-                        final products = productsAsync.valueOrNull ?? [];
-                        final product = products.firstWhere((p) => p.id == line.productId, orElse: () => products.first);
-                        String pName = product.name;
-                        final loc = AppLocalizations.of(context)!.localeName;
-                        if (loc == 'ar' && product.nameAr != null) pName = product.nameAr!;
-                        if (loc == 'fr' && product.nameFr != null) pName = product.nameFr!;
-                        if (loc == 'es' && product.nameEs != null) pName = product.nameEs!;
-                        final variantLabel = product.unitSize == Decimal.one ? '$pName ${product.unit}' : '$pName ${product.unitSize}${product.unit}';
-                        final lineTotal = line.calculatedTotal;
-                        
-                        return ListTile(
-                          leading: CircleAvatar(child: Text('${line.quantity}')),
-                          title: Text(variantLabel, style: const TextStyle(fontWeight: FontWeight.bold)),
-                          subtitle: Text('${line.unitPrice} each'),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit, color: Colors.blueGrey),
-                                onPressed: () {
-                                  // Open a dialog to edit unitPrice and quantity
-                                  final pIndex = products.indexWhere((p) => p.id == line.productId);
-                                  if (pIndex < 0) return;
-                                  final p = products[pIndex];
-                                  
-                                  final qtyCtrl = TextEditingController(text: line.quantity.toString());
-                                  final priceCtrl = TextEditingController(text: line.unitPrice.toStringAsFixed(2));
-                                  
-                                  showDialog(
-                                    context: context,
-                                    builder: (ctx) => AlertDialog(
-                                      title: Text("${AppLocalizations.of(context)!.edit} ${p.name}"),
-                                      content: Column(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 16.0),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: theme.dividerColor),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: ListView.separated(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: _cart.length,
+                            separatorBuilder: (context, index) => const Divider(height: 1),
+                            itemBuilder: (context, index) {
+                              final line = _cart[index];
+                              final product = productMap[line.productId] ?? productsAsync.valueOrNull!.first;
+                              final variantLabel = product.localizedLabel(loc);
+                              final lineTotal = line.calculatedTotal;
+                              
+                              return ListTile(
+                                leading: CircleAvatar(child: Text('${line.quantity}')),
+                                title: Text(variantLabel, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                subtitle: Text('${line.unitPrice} each'),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.edit, color: Colors.blueGrey),
+                                      onPressed: () {
+                                        final qtyCtrl = TextEditingController(text: line.quantity.toString());
+                                        final priceCtrl = TextEditingController(text: line.unitPrice.toStringAsFixed(2));
+                                        
+                                        showDialog(
+                                          context: context,
+                                          builder: (ctx) => AlertDialog(
+                                            title: Text("${AppLocalizations.of(context)!.edit} ${product.localizedName(loc)}"),
+                                            content: Column(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           TextFormField(
@@ -382,7 +363,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                                 _cart.removeAt(index);
                                               } else {
                                                 _cart[index] = SaleLineRequest(
-                                                  productId: p.id,
+                                                  productId: product.id,
                                                   quantity: newQty,
                                                   unitPrice: newPrice,
                                                   discount: line.discount,
@@ -403,14 +384,14 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                           ),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                           onTap: () {
-                            final pIndex = products.indexWhere((p) => p.id == line.productId);
-                            if (pIndex >= 0) _addToCart(products[pIndex]);
+                            if (productMap.containsKey(line.productId)) {
+                              _addToCart(productMap[line.productId]!);
+                            }
                           },
                         );
                       },
                     ),
                   ),
-                ),
                 
                 // Totals & Checkout
                 Container(
@@ -568,6 +549,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                         ),
                       ),
                     ],
+                  ),
+                ),
+                      ],
+                    ),
                   ),
                 ),
               ],

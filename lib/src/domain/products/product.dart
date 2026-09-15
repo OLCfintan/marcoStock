@@ -52,6 +52,23 @@ class Product extends Equatable {
     required this.updatedAt,
   });
 
+  /// Returns the product name for the given locale code.
+  /// Falls back to [name] if no translation exists.
+  String localizedName(String locale) {
+    switch (locale) {
+      case 'ar': return nameAr ?? name;
+      case 'fr': return nameFr ?? name;
+      case 'es': return nameEs ?? name;
+      default: return name;
+    }
+  }
+
+  /// Returns "{localizedName} {unit}" or "{localizedName} {unitSize}{unit}"
+  String localizedLabel(String locale) {
+    final n = localizedName(locale);
+    return unitSize == Decimal.one ? '$n $unit' : '$n $unitSize$unit';
+  }
+
 
   Product copyWith({
     String? id,

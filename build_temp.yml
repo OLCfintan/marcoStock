@@ -1,0 +1,102 @@
+name: Build Flutter Apps (Windows & Android)
+
+on:
+  push:
+    branches: [ "master", "main" ]
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up Java 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.3'
+          architecture: x64
+      - name: Use Kotlin compatible with mobile_scanner
+        shell: bash
+        run: |
+          sed -i 's/id("org.jetbrains.kotlin.android") version "[^"]*" apply false/id("org.jetbrains.kotlin.android") version "2.2.20" apply false/' android/settings.gradle.kts
+      - name: Use Flutter-compatible Android Gradle Plugin
+        shell: bash
+        run: |
+          sed -i 's/id("com.android.application") version "[^"]*" apply false/id("com.android.application") version "8.11.1" apply false/' android/settings.gradle.kts
+      - name: Use Flutter-compatible intl constraint
+        shell: bash
+        run: |
+          sed -i 's/  intl: \^0\.19\.0/  intl: ^0.20.3/' pubspec.yaml
+      - name: Use Flutter-compatible Gradle version
+        shell: bash
+        run: |
+          sed -i 's/gradle-[0-9.]*-all\.zip/gradle-8.14.3-all.zip/' android/gradle/wrapper/gradle-wrapper.properties
+      - run: flutter pub get
+      - name: Generate localization sources for Flutter stable
+        shell: bash
+        run: |
+          mkdir -p lib/src/localization/generated
+          printf '%s\n' \
+            'arb-dir: lib/src/localization/arb' \
+            'template-arb-file: app_en.arb' \
+            'output-dir: lib/src/localization/generated' \
+            'output-localization-file: app_localizations.dart' \
+            'output-class: AppLocalizations' > l10n.yaml
+          flutter gen-l10n
+          test -f lib/src/localization/generated/app_localizations.dart
+          grep -q 'class AppLocalizations' lib/src/localization/generated/app_localizations.dart
+          find lib -type f -name '*.dart' -exec sed -i 's#package:flutter_gen/gen_l10n/app_localizations.dart#package:marko_group/src/localization/generated/app_localizations.dart#g' {} +
+          sed -i 's/cardTheme: CardTheme(/cardTheme: CardThemeData(/g' lib/main.dart
+      - run: flutter build apk --release
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: marko-group-android-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+  build-windows:
+    name: Build Windows EXE
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.3'
+          architecture: x64
+      - name: Enable Windows desktop support
+        shell: pwsh
+        run: flutter config --enable-windows-desktop
+      - name: Use Flutter-compatible intl constraint
+        shell: pwsh
+        run: |
+          (Get-Content pubspec.yaml) -replace '  intl: \^0\.19\.0', '  intl: ^0.20.3' | Set-Content pubspec.yaml
+      - run: flutter pub get
+      - name: Generate localization sources for Flutter stable
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path lib/src/localization/generated | Out-Null
+          @(
+            'arb-dir: lib/src/localization/arb'
+            'template-arb-file: app_en.arb'
+            'output-dir: lib/src/localization/generated'
+            'output-localization-file: app_localizations.dart'
+            'output-class: AppLocalizations'
+          ) | Set-Content l10n.yaml
+          flutter gen-l10n
+          if (!(Test-Path lib/src/localization/generated/app_localizations.dart)) { throw "Generated localization file was not created" }
+          if (!(Select-String -Path lib/src/localization/generated/app_localizations.dart -Pattern 'class AppLocalizations')) { throw "AppLocalizations class was not generated" }
+          Get-ChildItem -Path lib -Recurse -Filter *.dart | ForEach-Object {
+            (Get-Content $_.FullName) -replace 'package:flutter_gen/gen_l10n/app_localizations.dart', 'package:marko_group/src/localization/generated/app_localizations.dart' | Set-Content $_.FullName
+          }
+          (Get-Content lib/main.dart) -replace 'cardTheme: CardTheme\(', 'cardTheme: CardThemeData(' | Set-Content lib/main.dart
+      - run: flutter build windows --release
+      - name: Upload Windows Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: marko-group-windows-exe
+          path: build/windows/x64/runner/Release/

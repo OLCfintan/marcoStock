@@ -164,6 +164,7 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen> {
 
     final productsAsync = ref.watch(productsStreamProvider);
     final theme = Theme.of(context);
+    final loc = AppLocalizations.of(context)!.localeName;
 
     return Scaffold(
       appBar: AppBar(title: Text(AppLocalizations.of(context)!.processReturn)),
@@ -204,7 +205,7 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen> {
                             children: [
                               Expanded(child: ProductImage(product: p)),
                               const SizedBox(height: 8),
-                              Text(p.name, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold)),
+                              Text(p.localizedLabel(loc), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold)),
                               const SizedBox(height: 4),
                               Text('${p.sellingPrice.toStringAsFixed(2)} Dhs', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 16)),
                             ],
@@ -221,62 +222,66 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen> {
           
           final cartSection = Container(
               color: theme.colorScheme.surface,
-              child: Column(
-                children: [
-                  // Document type not needed for return
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: TextField(
-                      controller: _barcodeController,
-                      focusNode: _barcodeFocusNode,
-                      decoration: InputDecoration(
-                        labelText: 'Scan Barcode',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        prefixIcon: const Icon(Icons.qr_code_scanner),
-                        filled: true,
-                        fillColor: theme.colorScheme.surfaceContainerHighest,
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    // Document type not needed for return
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: TextField(
+                        controller: _barcodeController,
+                        focusNode: _barcodeFocusNode,
+                        decoration: InputDecoration(
+                          labelText: 'Scan Barcode',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          prefixIcon: const Icon(Icons.qr_code_scanner),
+                          filled: true,
+                          fillColor: theme.colorScheme.surfaceContainerHighest,
+                        ),
+                        onSubmitted: (code) => _handleBarcodeScan(code, productsAsync.valueOrNull),
+                        autofocus: true,
                       ),
-                      onSubmitted: (code) => _handleBarcodeScan(code, productsAsync.valueOrNull),
-                      autofocus: true,
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: AutocompleteSearchField<Client>(
-                      labelText: 'Select Client',
-                      prefixIcon: const Icon(Icons.person_search),
-                      displayStringForOption: (client) => client.name,
-                      getSuggestions: (query) async {
-                        return ref.read(clientRepositoryProvider).searchClients(query);
-                      },
-                      onSelected: (client) {
-                        setState(() {
-                          _selectedClientId = client.id;
-                        });
-                      },
+                    const SizedBox(height: 16),
+                    
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: AutocompleteSearchField<Client>(
+                        labelText: 'Select Client',
+                        prefixIcon: const Icon(Icons.person_search),
+                        displayStringForOption: (client) => client.name,
+                        getSuggestions: (query) async {
+                          return ref.read(clientRepositoryProvider).searchClients(query);
+                        },
+                        onSelected: (client) {
+                          setState(() {
+                            _selectedClientId = client.id;
+                          });
+                        },
+                      ),
                     ),
-                  ),
-                  
-                  const SizedBox(height: 16),
-                  
-                  // Cart Items
-                  Expanded(
-                    child: Container(
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Cart Items
+                    Container(
                       margin: const EdgeInsets.symmetric(horizontal: 16.0),
                       decoration: BoxDecoration(
                         border: Border.all(color: theme.dividerColor),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
                         itemCount: _cart.length,
                         separatorBuilder: (context, index) => const Divider(height: 1),
                         itemBuilder: (context, index) {
                           final line = _cart[index];
                           // Find name via products
                           final products = productsAsync.valueOrNull ?? [];
-                          final productName = products.firstWhere((p) => p.id == line.productId, orElse: () => products.first).name;
+                          final productMap = {for (final p in products) p.id: p};
+                          final product = productMap[line.productId] ?? products.first;
+                          final productName = product.localizedLabel(loc);
                           final lineTotal = line.calculatedTotal;
                           
                           return ListTile(
@@ -299,7 +304,7 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen> {
                                     showDialog(
                                       context: context,
                                       builder: (ctx) => AlertDialog(
-                                        title: Text("${AppLocalizations.of(context)!.edit} ${p.name}"),
+                                        title: Text("${AppLocalizations.of(context)!.edit} ${p.localizedName(AppLocalizations.of(context)!.localeName)}"),
                                         content: Column(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
@@ -521,6 +526,7 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen> {
                   ),
                 ],
               ),
+              ),
             );
 
           if (isMobile) {
@@ -556,7 +562,7 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen> {
           );
         },
       ),
-    );
+    )
   }
 }
 

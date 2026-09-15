@@ -340,6 +340,54 @@ class SalesService {
     });
   }
 
+  /// Converts a BON to a FACTURE (Invoice). Generates a new invoice number.
+  Future<void> convertBonToInvoice(String invoiceId) async {
+    await _db.transaction(() async {
+      final invoice = await (_db.select(_db.invoices)..where((t) => t.id.equals(invoiceId))).getSingleOrNull();
+      if (invoice == null || invoice.documentType != 'BON') return;
+
+      final date = DateTime.now();
+      final yearMonth = '${date.year}-${date.month.toString().padLeft(2, '0')}';
+      final prefix = 'FAC-$yearMonth';
+      
+      final seqQuery = _db.select(_db.documentSequences)
+        ..where((t) => t.documentType.equals('INVOICE') & t.prefix.equals(prefix));
+      final seq = await seqQuery.getSingleOrNull();
+      
+      int nextNum = 1;
+      if (seq != null) {
+        nextNum = seq.lastNumber + 1;
+        await _db.update(_db.documentSequences).replace(
+          seq.copyWith(lastNumber: nextNum)
+        );
+      } else {
+        await _db.into(_db.documentSequences).insert(DocumentSequencesCompanion.insert(
+          documentType: 'INVOICE',
+          prefix: prefix,
+          lastNumber: const drift.Value(1),
+        ));
+      }
+      
+      final invoiceNumber = '$prefix-${nextNum.toString().padLeft(4, '0')}';
+
+      await (_db.update(_db.invoices)..where((t) => t.id.equals(invoiceId))).write(
+        InvoicesCompanion(
+          documentType: const drift.Value('FACTURE'),
+          invoiceNumber: drift.Value(invoiceNumber),
+        )
+      );
+
+      await _db.into(_db.auditLogs).insert(AuditLogsCompanion.insert(
+        id: _uuid.v4(),
+        userId: 'SYSTEM',
+        action: 'CONVERT_BON',
+        entityType: 'INVOICE',
+        entityId: invoiceId,
+        details: jsonEncode({'oldNumber': invoice.invoiceNumber, 'newNumber': invoiceNumber}),
+      ));
+    });
+  }
+
   Future<void> _deductStock({
     required String productId, 
     required Decimal quantity,

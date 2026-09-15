@@ -29,7 +29,7 @@ void main() async {
     }
 
     final encoder = JsonEncoder.withIndent('  ');
-    await file.writeAsString(encoder.convert(json) + '\n');
+    await file.writeAsString('${encoder.convert(json)}\n');
     print('Updated ${file.path}');
   }
 }

@@ -74,14 +74,7 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
     await showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text("${AppLocalizations.of(context)!.edit} ${(() {
-          String pName = product.name;
-          final loc = AppLocalizations.of(context)!.localeName;
-          if (loc == 'ar' && product.nameAr != null) pName = product.nameAr!;
-          if (loc == 'fr' && product.nameFr != null) pName = product.nameFr!;
-          if (loc == 'es' && product.nameEs != null) pName = product.nameEs!;
-          return pName;
-        })()}"),
+        title: Text("${AppLocalizations.of(context)!.edit} ${product.localizedName(AppLocalizations.of(context)!.localeName)}"),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -196,23 +189,8 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
 
     final productsWidget = productsAsync.when(
       data: (allProducts) {
-        final baseProductsMap = <String, Product>{};
-        for (final p in allProducts) {
-          // Only consider active products
-          if (!p.isActive) continue;
-          
-          // If we haven't seen this family (name), or if the current one is exactly the base 'Unit' with unitSize 1, prioritize it.
-          if (!baseProductsMap.containsKey(p.name)) {
-            baseProductsMap[p.name] = p;
-          } else {
-            final existing = baseProductsMap[p.name]!;
-            // Prefer products that explicitly have unitSize == 1 as the true root base
-            if (p.unitSize == Decimal.parse('1')) {
-              baseProductsMap[p.name] = p;
-            }
-          }
-        }
-        final products = baseProductsMap.values.toList();
+        final decimalOne = Decimal.one;
+        final products = allProducts.where((p) => p.isActive && p.unitSize == decimalOne).toList();
         products.sort((a, b) => a.name.compareTo(b.name));
         return GridView.builder(
           padding: const EdgeInsets.all(8),
@@ -236,10 +214,10 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      ProductImage(product: p, size: 40),
+                      Expanded(child: ProductImage(product: p)),
                       Expanded(
                         child: Center(
-                          child: Text('${p.name}\n(${p.unit})', textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                          child: Text('${p.localizedName(l10n!.localeName)}\n(${p.unit})', textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                         ),
                       ),
                       FittedBox(
@@ -258,57 +236,54 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
       error: (err, stack) => Center(child: Text('${l10n?.errorStr ?? "Error:"} $err')),
     );
 
-    final cartWidget = Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: suppliersAsync.when(
-            data: (suppliers) => AutocompleteSearchField<Supplier>(
-              displayStringForOption: (s) => '${s.name} (${s.type})',
-              getSuggestions: (pattern) async {
-                if (pattern.isEmpty) return suppliers;
-                return suppliers.where((s) => s.name.toLowerCase().contains(pattern.toLowerCase())).toList();
-              },
-              onSelected: (s) => setState(() => _selectedSupplierId = s.id),
-              labelText: l10n?.suppliers ?? 'Search Supplier...',
+    final cartWidget = SingleChildScrollView(
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: suppliersAsync.when(
+              data: (suppliers) => AutocompleteSearchField<Supplier>(
+                displayStringForOption: (s) => '${s.name} (${s.type})',
+                getSuggestions: (pattern) async {
+                  if (pattern.isEmpty) return suppliers;
+                  return suppliers.where((s) => s.name.toLowerCase().contains(pattern.toLowerCase())).toList();
+                },
+                onSelected: (s) => setState(() => _selectedSupplierId = s.id),
+                labelText: l10n?.suppliers ?? 'Search Supplier...',
+              ),
+              loading: () => const CircularProgressIndicator(),
+              error: (err, stack) => Text("${AppLocalizations.of(context)!.errorStr}$err"),
             ),
-            loading: () => const CircularProgressIndicator(),
-            error: (err, stack) => Text("${AppLocalizations.of(context)!.errorStr}$err"),
           ),
-        ),
-        
-        Expanded(
-          child: productsAsync.when(
-            data: (productsList) => ListView.builder(
-              itemCount: _cart.length,
-              itemBuilder: (context, index) {
-                final line = _cart[index];
-                final lineTotal = line.calculatedTotal;
-                
-                final product = productsList.firstWhere(
-                  (p) => p.id == line.productId, 
-                  orElse: () => Product(id: line.productId, name: 'Unknown', reference: '', purchasePrice: Decimal.zero, sellingPrice: Decimal.zero, minimumStock: Decimal.zero, baseMinimumStock: Decimal.zero, magazinMinimumStock: Decimal.zero, packagingType: 'Unit', unitsPerBox: 1, unitSize: Decimal.one, unit: 'Unit', isActive: true, createdAt: DateTime.now(), updatedAt: DateTime.now())
-                );
-                
-                String pName = product.name;
-                final loc = AppLocalizations.of(context)!.localeName;
-                if (loc == 'ar' && product.nameAr != null) pName = product.nameAr!;
-                if (loc == 'fr' && product.nameFr != null) pName = product.nameFr!;
-                if (loc == 'es' && product.nameEs != null) pName = product.nameEs!;
-                final variantLabel = product.unitSize == Decimal.one ? '$pName ${product.unit}' : '$pName ${product.unitSize}${product.unit}';
-                return ListTile(
-                  onTap: () => _editQuantity(product, line.quantity),
-                  leading: const Icon(Icons.download, color: Colors.teal),
-                  title: Text(variantLabel),
-                  subtitle: Text('${line.quantity} x ${line.unitPrice} Dhs'),
-                  trailing: Text('${lineTotal.toStringAsFixed(2)} Dhs'),
-                );
-              },
-            ),
+          
+          productsAsync.when(
+            data: (productsList) {
+              final productMap = {for (var p in productsList) p.id: p};
+              return ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _cart.length,
+                itemBuilder: (context, index) {
+                  final line = _cart[index];
+                  final lineTotal = line.calculatedTotal;
+                  
+                  final product = productMap[line.productId] ?? Product(id: line.productId, name: 'Unknown', reference: '', purchasePrice: Decimal.zero, sellingPrice: Decimal.zero, minimumStock: Decimal.zero, baseMinimumStock: Decimal.zero, magazinMinimumStock: Decimal.zero, packagingType: 'Unit', unitsPerBox: 1, unitSize: Decimal.one, unit: 'Unit', isActive: true, createdAt: DateTime.now(), updatedAt: DateTime.now());
+                  
+                  final loc = l10n!.localeName;
+                  final variantLabel = product.localizedLabel(loc);
+                  return ListTile(
+                    onTap: () => _editQuantity(product, line.quantity),
+                    leading: const Icon(Icons.download, color: Colors.teal),
+                    title: Text(variantLabel),
+                    subtitle: Text('${line.quantity} x ${line.unitPrice} Dhs'),
+                    trailing: Text('${lineTotal.toStringAsFixed(2)} Dhs'),
+                  );
+                },
+              );
+            },
             loading: () => const CircularProgressIndicator(),
             error: (e,s) => const SizedBox(),
-          )
-        ),
+          ),
         
         Container(
           color: Colors.teal.shade50,

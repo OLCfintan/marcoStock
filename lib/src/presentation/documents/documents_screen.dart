@@ -127,6 +127,30 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> with SingleTi
                           IconButton(icon: const Icon(Icons.receipt_long, color: Colors.blue), tooltip: 'View Payments & Checks', onPressed: () {
                             ViewPaymentsDialog.show(context, entityId: invoice.id, entityType: 'INVOICE');
                           }),
+                          if (invoice.documentType == 'BON')
+                            IconButton(
+                              icon: const Icon(Icons.transform, color: Colors.purple),
+                              tooltip: AppLocalizations.of(context)!.convertToInvoice,
+                              onPressed: () async {
+                                final confirm = await showDialog<bool>(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    title: Text(AppLocalizations.of(context)!.convertToInvoice),
+                                    content: Text(AppLocalizations.of(context)!.convertBonToInvoice),
+                                    actions: [
+                                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.of(context)!.cancel)),
+                                      TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(AppLocalizations.of(context)!.confirm)),
+                                    ],
+                                  ),
+                                );
+                                if (confirm == true) {
+                                  await ref.read(salesServiceProvider).convertBonToInvoice(invoice.id);
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.convertedSuccessfully)));
+                                  }
+                                }
+                              }
+                            ),
                           if (ref.watch(currentUserProvider)?.role == 'ADMIN')
                             IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () async {
                               final userId = ref.read(currentUserProvider)?.id ?? '';
