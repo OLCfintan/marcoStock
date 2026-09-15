@@ -60,7 +60,7 @@ class AutocompleteSearchField<T extends Object> extends StatelessWidget {
           Iterable<T> options,
         ) {
           return Align(
-            alignment: Alignment.topLeft,
+            alignment: AlignmentDirectional.topStart,
             child: Material(
               elevation: 4.0,
               borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
@@ -69,6 +69,7 @@ class AutocompleteSearchField<T extends Object> extends StatelessWidget {
                 constraints: BoxConstraints(
                   maxHeight: 250, 
                   maxWidth: constraints.maxWidth,
+                  minWidth: constraints.maxWidth,
                 ),
                 child: ListView.separated(
                   padding: EdgeInsets.zero,
