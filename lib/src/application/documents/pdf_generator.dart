@@ -1,3 +1,4 @@
+import "dart:typed_data";
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pdf/pdf.dart';
@@ -32,7 +33,7 @@ class PdfGeneratorService {
     return name;
   }
 
-  Future<void> generateInvoicePdf(String invoiceId, AppLocalizations l10n) async {
+  Future<Uint8List> generateInvoicePdf(String invoiceId, AppLocalizations l10n) async {
     var invoice = await (_db.select(_db.invoices)..where((tbl) => tbl.id.equals(invoiceId))).getSingle();
     final client = invoice.clientId != null
         ? await (_db.select(_db.clients)..where((tbl) => tbl.id.equals(invoice.clientId!))).getSingleOrNull()
@@ -61,7 +62,15 @@ class PdfGeneratorService {
       invoice = invoice.copyWith(taxes: dynamicTaxes, total: dynamicTotal);
     }
 
-    final doc = pw.Document();
+    final font = await PdfGoogleFonts.cairoRegular();
+    final boldFont = await PdfGoogleFonts.cairoBold();
+    
+    final doc = pw.Document(
+      theme: pw.ThemeData.withFont(
+        base: font,
+        bold: boldFont,
+      ),
+    );
 
     final logoBytes = companySettings['companyLogoPath'] != null && File(companySettings['companyLogoPath']!).existsSync()
         ? File(companySettings['companyLogoPath']!).readAsBytesSync()
@@ -73,9 +82,12 @@ class PdfGeneratorService {
     final companyPhone = companySettings['companyPhone'] ?? '';
     final companyTaxId = companySettings['companyTaxId'] ?? '';
 
+    final textDir = l10n.localeName == 'ar' ? pw.TextDirection.rtl : pw.TextDirection.ltr;
+
     doc.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
+        textDirection: textDir,
         margin: const pw.EdgeInsets.all(32),
         build: (pw.Context context) {
           return [
@@ -95,13 +107,10 @@ class PdfGeneratorService {
       ),
     );
 
-    await Printing.layoutPdf(
-      onLayout: (PdfPageFormat format) async => doc.save(),
-      name: '${(invoice.documentType == 'BON' ? l10n.bon : (invoice.documentType == 'TICKET' ? l10n.ticket : l10n.invoice))}_${invoice.invoiceNumber}.pdf',
-    );
+    return doc.save();
   }
 
-  Future<void> generatePurchasePdf(String purchaseId, AppLocalizations l10n) async {
+  Future<Uint8List> generatePurchasePdf(String purchaseId, AppLocalizations l10n) async {
     var purchase = await (_db.select(_db.purchases)..where((tbl) => tbl.id.equals(purchaseId))).getSingle();
     final supplier = await (_db.select(_db.suppliers)..where((tbl) => tbl.id.equals(purchase.supplierId))).getSingleOrNull();
     final lines = await (_db.select(_db.purchaseLines)..where((tbl) => tbl.purchaseId.equals(purchaseId))).get();
@@ -111,7 +120,15 @@ class PdfGeneratorService {
     final productMap = {for (var p in products) p.id: p};
 
     final companySettings = await _settings.getAllCompanySettings();
-    final doc = pw.Document();
+    final font = await PdfGoogleFonts.cairoRegular();
+    final boldFont = await PdfGoogleFonts.cairoBold();
+    
+    final doc = pw.Document(
+      theme: pw.ThemeData.withFont(
+        base: font,
+        bold: boldFont,
+      ),
+    );
 
     final logoBytes = companySettings['companyLogoPath'] != null && File(companySettings['companyLogoPath']!).existsSync()
         ? File(companySettings['companyLogoPath']!).readAsBytesSync()
@@ -123,9 +140,12 @@ class PdfGeneratorService {
     final companyPhone = companySettings['companyPhone'] ?? '';
     final companyTaxId = companySettings['companyTaxId'] ?? '';
 
+    final textDir = l10n.localeName == 'ar' ? pw.TextDirection.rtl : pw.TextDirection.ltr;
+
     doc.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
+        textDirection: textDir,
         margin: const pw.EdgeInsets.all(32),
         build: (pw.Context context) {
           return [
@@ -193,10 +213,7 @@ class PdfGeneratorService {
       ),
     );
 
-    await Printing.layoutPdf(
-      onLayout: (PdfPageFormat format) async => doc.save(),
-      name: '${l10n.pdfPurchase}_${purchase.purchaseNumber}.pdf',
-    );
+    return doc.save();
   }
 
   pw.Widget _buildHeader(InvoiceEntity invoice, ClientEntity? client, String companyName, String companyAddress, String companyPhone, String companyTaxId, pw.ImageProvider? logoImage, AppLocalizations l10n) {

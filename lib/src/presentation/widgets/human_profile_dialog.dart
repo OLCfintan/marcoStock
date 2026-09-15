@@ -1,3 +1,4 @@
+import "../documents/pdf_preview_screen.dart";
 import '../../application/auth/auth_service.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'dart:io';
@@ -277,7 +278,7 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
             itemBuilder: (context, i) {
               final inv = items[i];
               return GestureDetector(
-                onDoubleTap: () => ref.read(pdfGeneratorProvider).generateInvoicePdf(inv.id, AppLocalizations.of(context)!),
+                onDoubleTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PdfPreviewScreen(title: "Invoice ${inv.invoiceNumber}", buildPdf: () => ref.read(pdfGeneratorProvider).generateInvoicePdf(inv.id, AppLocalizations.of(context)!)))),
                 child: ListTile(
                   onTap: () {
                     PaymentDialog.show(context, entityId: inv.id, entityType: 'INVOICE', partnerId: widget.id, currentTotal: inv.total, currentlyPaid: inv.paidAmount);
@@ -294,7 +295,7 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      IconButton(icon: const Icon(Icons.print, color: Colors.blueGrey, size: 20), tooltip: 'Print Invoice', onPressed: () => ref.read(pdfGeneratorProvider).generateInvoicePdf(inv.id, AppLocalizations.of(context)!)),
+                      IconButton(icon: const Icon(Icons.print, color: Colors.blueGrey, size: 20), tooltip: 'Print Invoice', onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PdfPreviewScreen(title: "Invoice ${inv.invoiceNumber}", buildPdf: () => ref.read(pdfGeneratorProvider).generateInvoicePdf(inv.id, AppLocalizations.of(context)!))))),
                       
                         IconButton(icon: const Icon(Icons.attach_money, color: Colors.green, size: 20), tooltip: 'Record Payment', onPressed: () {
                           PaymentDialog.show(context, entityId: inv.id, entityType: 'INVOICE', partnerId: widget.id, currentTotal: inv.total, currentlyPaid: inv.paidAmount);
@@ -325,7 +326,7 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
             itemBuilder: (context, i) {
               final pur = items[i];
               return GestureDetector(
-                onDoubleTap: () => ref.read(pdfGeneratorProvider).generatePurchasePdf(pur.id, AppLocalizations.of(context)!),
+                onDoubleTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PdfPreviewScreen(title: "Purchase ${pur.purchaseNumber}", buildPdf: () => ref.read(pdfGeneratorProvider).generatePurchasePdf(pur.id, AppLocalizations.of(context)!)))),
                 child: ListTile(
                   onTap: () {
                     PaymentDialog.show(context, entityId: pur.id, entityType: 'PURCHASE', partnerId: widget.id, currentTotal: pur.total, currentlyPaid: pur.paidAmount);
@@ -342,7 +343,7 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      IconButton(icon: const Icon(Icons.print, color: Colors.blueGrey, size: 20), tooltip: 'Print Purchase', onPressed: () { ref.read(pdfGeneratorProvider).generatePurchasePdf(pur.id, AppLocalizations.of(context)!); }),
+                      IconButton(icon: const Icon(Icons.print, color: Colors.blueGrey, size: 20), tooltip: 'Print Purchase', onPressed: () { Navigator.push(context, MaterialPageRoute(builder: (_) => PdfPreviewScreen(title: "Purchase ${pur.purchaseNumber}", buildPdf: () => ref.read(pdfGeneratorProvider).generatePurchasePdf(pur.id, AppLocalizations.of(context)!)))); }),
                       
                         IconButton(icon: const Icon(Icons.attach_money, color: Colors.green, size: 20), tooltip: 'Record Payment', onPressed: () {
                           PaymentDialog.show(context, entityId: pur.id, entityType: 'PURCHASE', partnerId: widget.id, currentTotal: pur.total, currentlyPaid: pur.paidAmount);
