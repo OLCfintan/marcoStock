@@ -13,7 +13,8 @@ import '../../application/system/unit_conversion_service.dart';
 
 class AddProductScreen extends ConsumerStatefulWidget {
   final Product? productToEdit;
-  const AddProductScreen({super.key, this.productToEdit});
+  final Product? templateProduct;
+  const AddProductScreen({super.key, this.productToEdit, this.templateProduct});
 
   @override
   ConsumerState<AddProductScreen> createState() => _AddProductScreenState();
@@ -48,28 +49,29 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.productToEdit != null) {
-      _nameController.text = widget.productToEdit!.name;
-      _nameArController.text = widget.productToEdit!.nameAr ?? '';
-      _nameFrController.text = widget.productToEdit!.nameFr ?? '';
-      _nameEsController.text = widget.productToEdit!.nameEs ?? '';
-      _loadConsumables();
-      _referenceController.text = widget.productToEdit!.reference;
-      _sellingPriceController.text = widget.productToEdit!.sellingPrice.toStringAsFixed(2);
-      _tier2PriceController.text = widget.productToEdit!.tier2Price?.toStringAsFixed(2) ?? '';
-      _tier3PriceController.text = widget.productToEdit!.tier3Price?.toStringAsFixed(2) ?? '';
-      _minimumStockController.text = widget.productToEdit!.minimumStock.toString();
-      _baseMinimumStockController.text = widget.productToEdit!.baseMinimumStock.toString();
-      _magazinMinimumStockController.text = widget.productToEdit!.magazinMinimumStock.toString();
-      _imagePath = widget.productToEdit!.imagePath;
-      _unitSizeController.text = widget.productToEdit!.unitSize.toString();
-      _unitsPerBoxController.text = widget.productToEdit!.unitsPerBox.toString();
-      final u = widget.productToEdit!.unit;
+    if (widget.productToEdit != null || widget.templateProduct != null) {
+      final source = widget.productToEdit ?? widget.templateProduct!;
+      _nameController.text = source.name;
+      _nameArController.text = source.nameAr ?? '';
+      _nameFrController.text = source.nameFr ?? '';
+      _nameEsController.text = source.nameEs ?? '';
+      if (widget.productToEdit != null) _loadConsumables();
+      _referenceController.text = source.reference;
+      _sellingPriceController.text = source.sellingPrice.toStringAsFixed(2);
+      _tier2PriceController.text = source.tier2Price?.toStringAsFixed(2) ?? '';
+      _tier3PriceController.text = source.tier3Price?.toStringAsFixed(2) ?? '';
+      _minimumStockController.text = source.minimumStock.toString();
+      _baseMinimumStockController.text = source.baseMinimumStock.toString();
+      _magazinMinimumStockController.text = source.magazinMinimumStock.toString();
+      _imagePath = source.imagePath;
+      _unitSizeController.text = source.unitSize.toString();
+      _unitsPerBoxController.text = source.unitsPerBox.toString();
+      final u = source.unit;
       _unit = UnitConversionService.allUnits.contains(u) ? u : 
                (UnitConversionService.allUnits.contains(u.toLowerCase()) ? u.toLowerCase() : 
                (UnitConversionService.allUnits.contains(u.toUpperCase()) ? u.toUpperCase() : 'Unit'));
-      if (_packagingOptions.contains(widget.productToEdit!.packagingType)) {
-          _packagingType = widget.productToEdit!.packagingType!;
+      if (_packagingOptions.contains(source.packagingType)) {
+          _packagingType = source.packagingType!;
       }
     }
   }
@@ -255,7 +257,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.productToEdit != null ? 'Edit Product' : AppLocalizations.of(context)!.addNewProduct),
+        title: Text(widget.productToEdit != null ? 'Edit Product' : (widget.templateProduct != null ? 'Add Family Member' : AppLocalizations.of(context)!.addNewProduct)),
         elevation: 0,
         actions: [
           TextButton.icon(

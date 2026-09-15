@@ -190,6 +190,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                   },
                   onConsumable: (p) => _showConsumableDialog(context, p),
                   onEdit: (p) => Navigator.push(context, MaterialPageRoute(builder: (_) => AddProductScreen(productToEdit: p))),
+                  onAddFamilyMember: (p) => Navigator.push(context, MaterialPageRoute(builder: (_) => AddProductScreen(templateProduct: p))),
                   onDelete: (p) async {
                     final db = ref.read(databaseProvider);
                     await (db.update(db.products)..where((t) => t.id.equals(p.id))).write(const ProductsCompanion(isActive: drift.Value(false)));
@@ -227,6 +228,7 @@ class _ProductDataSource extends DataTableSource {
   final Function(String, bool?) onSelectChanged;
   final Function(Product) onConsumable;
   final Function(Product) onEdit;
+  final Function(Product) onAddFamilyMember;
   final Function(Product) onDelete;
   final Function(Product) onDoubleTap;
   final bool isAdmin;
@@ -237,6 +239,7 @@ class _ProductDataSource extends DataTableSource {
     required this.onSelectChanged,
     required this.onConsumable,
     required this.onEdit,
+    required this.onAddFamilyMember,
     required this.onDelete,
     required this.onDoubleTap,
     required this.isAdmin,
@@ -256,13 +259,20 @@ class _ProductDataSource extends DataTableSource {
       onSelectChanged: (selected) => onSelectChanged(p.id, selected),
       cells: [
         DataCell(
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(icon: const Icon(Icons.add_box, color: Colors.green), tooltip: 'Create Consumables', onPressed: () => onConsumable(p)),
-              IconButton(icon: const Icon(Icons.edit, color: Colors.blue), onPressed: () => onEdit(p)),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: (value) {
+              if (value == 'consumables') onConsumable(p);
+              if (value == 'edit') onEdit(p);
+              if (value == 'delete') onDelete(p);
+              if (value == 'family') onAddFamilyMember(p);
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(value: 'consumables', child: Text('Create Consumables')),
+              const PopupMenuItem(value: 'family', child: Text('Add Family Member')),
+              const PopupMenuItem(value: 'edit', child: Text('Edit')),
               if (isAdmin)
-                IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => onDelete(p)),
+                const PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: Colors.red))),
             ],
           ),
         ),

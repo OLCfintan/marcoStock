@@ -102,11 +102,15 @@ class GarbageScreen extends ConsumerWidget {
           title: Text('$title (${items.length})', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
           children: items.map((item) => ListTile(
             title: Text(getName(item)),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(icon: const Icon(Icons.restore, color: Colors.green), onPressed: () => onRestore(item)),
-                IconButton(icon: const Icon(Icons.delete_forever, color: Colors.red), onPressed: () => onPermanentDelete(item)),
+            trailing: PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert),
+              onSelected: (value) {
+                if (value == 'restore') onRestore(item);
+                if (value == 'delete_forever') onPermanentDelete(item);
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(value: 'restore', child: Text('Restore', style: TextStyle(color: Colors.green))),
+                const PopupMenuItem(value: 'delete_forever', child: Text('Delete Permanently', style: TextStyle(color: Colors.red))),
               ],
             ),
           )).toList(),

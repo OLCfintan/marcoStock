@@ -89,21 +89,33 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                         color: client.balance > Decimal.zero ? Colors.red : Colors.green, fontWeight: FontWeight.bold
                       )),
                       const SizedBox(width: 8),
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.blue),
-                        onPressed: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => AddClientScreen(clientToEdit: client)));
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () {
-                          if (ref.read(currentUserProvider)?.role == 'ADMIN') {
-                            ref.read(clientRepositoryProvider).deleteClient(client.id);
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Admin access required to delete.')));
+                      PopupMenuButton<String>(
+                        icon: const Icon(Icons.more_vert),
+                        onSelected: (value) {
+                          if (value == 'ledger') {
+                            showDialog(
+                              context: context,
+                              builder: (_) => PaymentLedgerDialog(
+                                clientId: client.id,
+                                initialBalance: client.balance,
+                                entityName: client.name,
+                              ),
+                            );
+                          } else if (value == 'edit') {
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => AddClientScreen(clientToEdit: client)));
+                          } else if (value == 'delete') {
+                            if (ref.read(currentUserProvider)?.role == 'ADMIN') {
+                              ref.read(clientRepositoryProvider).deleteClient(client.id);
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Admin access required to delete.')));
+                            }
                           }
                         },
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(value: 'ledger', child: Text('Ledger / Payments')),
+                          const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                          const PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: Colors.red))),
+                        ],
                       ),
                     ],
                   ),
@@ -124,7 +136,6 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                       ),
                     );
                   },
-                  onLongPress: () => _showActionMenu(context, ref, client),
                 );
               },
             );
@@ -132,55 +143,6 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, st) => Center(child: Text('${(AppLocalizations.of(context)?.errorStr ?? 'Error: ')}$e')),
         ),
-      );
-    }
-
-    void _showActionMenu(BuildContext context, WidgetRef ref, Client client) {
-      showModalBottomSheet(
-        context: context,
-        builder: (context) {
-          return SafeArea(
-            child: Wrap(
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.payment, color: Colors.green),
-                  title: const Text('Ledger / Payments'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    showDialog(
-                      context: context,
-                      builder: (_) => PaymentLedgerDialog(
-                        clientId: client.id,
-                        initialBalance: client.balance,
-                        entityName: client.name,
-                      ),
-                    );
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.edit, color: Colors.blue),
-                  title: const Text('Edit'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => AddClientScreen(clientToEdit: client)));
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.delete, color: Colors.red),
-                  title: const Text('Delete', style: TextStyle(color: Colors.red)),
-                  onTap: () {
-                    Navigator.pop(context);
-                    if (ref.read(currentUserProvider)?.role == 'ADMIN') {
-                      ref.read(clientRepositoryProvider).deleteClient(client.id);
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Admin access required to delete.')));
-                    }
-                  },
-                ),
-              ],
-            ),
-          );
-        }
       );
     }
 }

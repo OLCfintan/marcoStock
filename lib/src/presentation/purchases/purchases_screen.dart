@@ -189,8 +189,7 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
 
     final productsWidget = productsAsync.when(
       data: (allProducts) {
-        final decimalOne = Decimal.one;
-        final products = allProducts.where((p) => p.isActive && p.unitSize == decimalOne).toList();
+       final products = allProducts.where((p) => p.isActive).toList();
         products.sort((a, b) => a.name.compareTo(b.name));
         return GridView.builder(
           padding: const EdgeInsets.all(8),
@@ -217,7 +216,7 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
                       Expanded(child: ProductImage(product: p, size: double.infinity)),
                       Expanded(
                         child: Center(
-                          child: Text('${p.localizedName(l10n!.localeName)}\n(${p.unit})', textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                          child: Text('${p.localizedName(l10n!.localeName)}\n(${p.unitSize == Decimal.one ? p.unit : '${p.unitSize}${p.unit}'})', textAlign: TextAlign.center, maxLines: 3, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                         ),
                       ),
                       FittedBox(
