@@ -247,37 +247,4 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> with SingleTi
     );
   }
 
-  Widget _buildStatusBadge(String status) {
-    Color color;
-    switch (status.toUpperCase()) {
-      case 'PAID':
-        color = Colors.green;
-        break;
-      case 'PARTIAL':
-        color = Colors.orange;
-        break;
-      case 'UNPAID':
-        color = Colors.red;
-        break;
-      default:
-        color = Colors.grey;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.5)),
-      ),
-      child: Text(
-        status,
-        style: TextStyle(
-          color: color,
-          fontWeight: FontWeight.bold,
-          fontSize: 12,
-        ),
-      ),
-    );
-  }
 }

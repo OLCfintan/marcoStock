@@ -194,9 +194,7 @@ class SalesService {
       ));
       
       // 7. Create Payments
-      Decimal actualPaid = Decimal.zero;
       for (final p in request.payments) {
-        actualPaid += p.amount;
         if (p.amount > Decimal.zero || p.method == 'CREDIT') {
           await _db.into(_db.payments).insert(PaymentsCompanion.insert(
             id: _uuid.v4(),

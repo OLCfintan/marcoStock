@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class PdfPreviewScreen extends StatelessWidget {
   final Future<Uint8List> Function() buildPdf;

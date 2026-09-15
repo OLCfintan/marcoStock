@@ -171,6 +171,7 @@ class PdfGeneratorService {
                     if (logoImage != null) pw.Container(height: 50, margin: const pw.EdgeInsets.only(bottom: 8), child: pw.Image(logoImage)),
                     pw.Text(companyName, style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
                     if (companyAddress.isNotEmpty) pw.Text(companyAddress),
+                    if (companyPhone.isNotEmpty) pw.Text(companyPhone),
                     if (companyTaxId.isNotEmpty) pw.Text('Tax ID: $companyTaxId'),
                     pw.SizedBox(height: 16),
                     pw.Text(l10n.pdfPurchase.toUpperCase(), style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold, color: PdfColors.blueGrey800)),

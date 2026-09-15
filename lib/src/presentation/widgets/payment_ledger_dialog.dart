@@ -107,7 +107,6 @@ class _PaymentLedgerDialogState extends ConsumerState<PaymentLedgerDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final remainingBalance = widget.initialBalance - _totalPaid;
 
     return Dialog(
