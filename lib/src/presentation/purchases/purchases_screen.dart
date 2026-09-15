@@ -214,7 +214,7 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Expanded(child: ProductImage(product: p)),
+                      Expanded(child: ProductImage(product: p, size: double.infinity)),
                       Expanded(
                         child: Center(
                           child: Text('${p.localizedName(l10n!.localeName)}\n(${p.unit})', textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),

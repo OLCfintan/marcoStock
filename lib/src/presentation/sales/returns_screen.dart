@@ -203,7 +203,7 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Expanded(child: ProductImage(product: p)),
+                              Expanded(child: ProductImage(product: p, size: double.infinity)),
                               const SizedBox(height: 8),
                               Text(p.localizedLabel(loc), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold)),
                               const SizedBox(height: 4),

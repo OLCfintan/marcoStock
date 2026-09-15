@@ -28,33 +28,39 @@ class ProductImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (_hasImage) {
-      final image = ClipRRect(
+      return ClipRRect(
         borderRadius: borderRadius ?? BorderRadius.circular(8),
         child: Image.file(
           File(product.imagePath!),
-          width: size,
-          height: size,
+          width: size == double.infinity ? null : size,
+          height: size == double.infinity ? null : size,
           fit: fit,
           errorBuilder: (_, __, ___) => _fallbackIcon(context),
         ),
       );
-      return SizedBox(width: size, height: size, child: image);
     }
     return _fallbackIcon(context);
   }
 
   Widget _fallbackIcon(BuildContext context) {
     return Container(
-      width: size,
-      height: size,
+      width: size == double.infinity ? null : size,
+      height: size == double.infinity ? null : size,
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.primaryContainer,
         borderRadius: borderRadius ?? BorderRadius.circular(8),
       ),
-      child: Icon(
-        Icons.inventory_2_outlined,
-        size: size * 0.5,
-        color: Theme.of(context).colorScheme.primary,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final iconSize = size == double.infinity 
+              ? (constraints.maxHeight < constraints.maxWidth ? constraints.maxHeight * 0.5 : constraints.maxWidth * 0.5) 
+              : size * 0.5;
+          return Icon(
+            Icons.inventory_2_outlined,
+            size: iconSize,
+            color: Theme.of(context).colorScheme.primary,
+          );
+        },
       ),
     );
   }
