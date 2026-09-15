@@ -24,13 +24,26 @@ class PdfGeneratorService {
 
   PdfGeneratorService(this._db, this._settings);
 
-  String _localizedProductName(dynamic product, String locale) {
+  String _localizedProductName(ProductEntity? product, String locale) {
     if (product == null) return 'Unknown';
-    final name = product.name ?? 'Unknown';
-    if (locale == 'ar' && product.nameAr != null) return product.nameAr!;
-    if (locale == 'fr' && product.nameFr != null) return product.nameFr!;
-    if (locale == 'es' && product.nameEs != null) return product.nameEs!;
-    return name;
+    String finalName = product.name;
+    if (locale.startsWith('ar') && product.nameAr != null && product.nameAr!.isNotEmpty) {
+      finalName = product.nameAr!;
+    } else if (locale.startsWith('fr') && product.nameFr != null && product.nameFr!.isNotEmpty) {
+      finalName = product.nameFr!;
+    } else if (locale.startsWith('es') && product.nameEs != null && product.nameEs!.isNotEmpty) {
+      finalName = product.nameEs!;
+    }
+    
+    // Append unit logic similar to UI
+    final unitSize = product.unitSize;
+    final unit = product.unit;
+    
+    if (unitSize == Decimal.one) {
+      return '$finalName $unit';
+    } else {
+      return '$finalName $unitSize$unit';
+    }
   }
 
   Future<Uint8List> generateInvoicePdf(String invoiceId, AppLocalizations l10n) async {
