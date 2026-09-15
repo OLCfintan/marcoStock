@@ -31,13 +31,11 @@ class PaymentLedgerDialog extends ConsumerStatefulWidget {
 
 class _PaymentEntry {
   late final TextEditingController amountController;
-  String method;
+  String method = 'CASH';
   String? checkImagePath;
 
   _PaymentEntry({
     String initialAmount = '',
-    this.method = 'CASH',
-    this.checkImagePath,
   }) {
     amountController = TextEditingController(text: initialAmount);
   }

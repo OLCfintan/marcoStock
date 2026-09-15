@@ -103,9 +103,7 @@ class PdfGeneratorService {
 
   Future<void> generatePurchasePdf(String purchaseId, AppLocalizations l10n) async {
     var purchase = await (_db.select(_db.purchases)..where((tbl) => tbl.id.equals(purchaseId))).getSingle();
-    final supplier = purchase.supplierId != null
-        ? await (_db.select(_db.suppliers)..where((tbl) => tbl.id.equals(purchase.supplierId))).getSingleOrNull()
-        : null;
+    final supplier = await (_db.select(_db.suppliers)..where((tbl) => tbl.id.equals(purchase.supplierId))).getSingleOrNull();
     final lines = await (_db.select(_db.purchaseLines)..where((tbl) => tbl.purchaseId.equals(purchaseId))).get();
     
     final productIds = lines.map((l) => l.productId).toSet();

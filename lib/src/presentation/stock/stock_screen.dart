@@ -109,7 +109,7 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
                     ],
                   ),
                   title: Text(item.unitSize == Decimal.one ? '${item.productName} ${item.unit}' : '${item.productName} ${item.unitSize}${item.unit}'),
-                  subtitle: Text('Ref: ${item.productReference ?? ''} | Loc: ${item.locationName}'),
+                  subtitle: Text('Ref: ${item.productReference} | Loc: ${item.locationName}'),
                   trailing: Text(
                     '${item.quantity.toStringAsFixed(2)} Units',
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
