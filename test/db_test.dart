@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:marko_group/src/infrastructure/database/app_database.dart';
-import 'package:flutter/widgets.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

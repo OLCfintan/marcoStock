@@ -40,19 +40,23 @@ class StockTransferService {
             ..where((t) => t.productId.equals(targetProductId) & t.locationId.equals(fromLocationId)))
           .getSingleOrNull();
 
-      if (sourceBalance == null || sourceBalance.quantity <= Decimal.zero) {
-        throw Exception('Insufficient stock at source location for base unit');
+      // Mathematically preserve balances
+      final actualTransfer = totalBaseUnits;
+
+      if (sourceBalance == null) {
+        await _db.into(_db.stockBalances).insert(StockBalancesCompanion.insert(
+              productId: targetProductId,
+              locationId: fromLocationId,
+              quantity: -actualTransfer,
+            ));
+      } else {
+        await _db.update(_db.stockBalances).replace(
+              sourceBalance.copyWith(
+                quantity: sourceBalance.quantity - actualTransfer,
+                updatedAt: DateTime.now(),
+              ),
+            );
       }
-
-      // Clamp to available stock
-      final actualTransfer = sourceBalance.quantity < totalBaseUnits ? sourceBalance.quantity : totalBaseUnits;
-
-      await _db.update(_db.stockBalances).replace(
-            sourceBalance.copyWith(
-              quantity: sourceBalance.quantity - actualTransfer,
-              updatedAt: DateTime.now(),
-            ),
-          );
 
       // 2. Add to destination
       final destBalance = await (_db.select(_db.stockBalances)

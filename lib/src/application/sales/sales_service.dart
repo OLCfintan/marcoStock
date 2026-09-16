@@ -80,7 +80,7 @@ class SalesService {
   Future<void> executeSale(SaleRequest request) async {
     await _db.transaction(() async {
       final client = await (_db.select(_db.clients)..where((t) => t.id.equals(request.clientId))).getSingleOrNull();
-      final locationId = client?.type == 'SPECIAL' ? AppLocations.baseWarehouse : AppLocations.magazin;
+      final locationId = (client?.type == 'MAGAZIN' || client?.id == 'MAGAZIN_01') ? AppLocations.baseWarehouse : AppLocations.magazin;
 
       final invoiceId = _uuid.v4();
       final date = DateTime.now();
@@ -138,7 +138,7 @@ class SalesService {
         );
         
         // If selling to a Special Client (Magazin), this is a transfer. We must add the stock to MAGAZIN_01.
-        if (client?.type == 'SPECIAL') {
+        if ((client?.type == 'MAGAZIN' || client?.id == 'MAGAZIN_01')) {
           await _restoreStock(
             productId: line.productId,
             quantity: line.quantity,
@@ -241,7 +241,7 @@ class SalesService {
       if (invoice.clientId != null) {
         client = await (_db.select(_db.clients)..where((t) => t.id.equals(invoice.clientId!))).getSingleOrNull();
       }
-      final locationId = client?.type == 'SPECIAL' ? AppLocations.baseWarehouse : AppLocations.magazin;
+      final locationId = (client?.type == 'MAGAZIN' || client?.id == 'MAGAZIN_01') ? AppLocations.baseWarehouse : AppLocations.magazin;
 
       for (final line in lines) {
         // Reverse Stock Deduction
@@ -255,7 +255,7 @@ class SalesService {
         );
 
         // If it was a special client (transfer), reverse the inbound to Magazin
-        if (client?.type == 'SPECIAL') {
+        if ((client?.type == 'MAGAZIN' || client?.id == 'MAGAZIN_01')) {
           await _deductStock(
             productId: line.productId,
             quantity: line.quantity,
@@ -300,7 +300,7 @@ class SalesService {
       if (invoice.clientId != null) {
         client = await (_db.select(_db.clients)..where((t) => t.id.equals(invoice.clientId!))).getSingleOrNull();
       }
-      final locationId = client?.type == 'SPECIAL' ? AppLocations.baseWarehouse : AppLocations.magazin;
+      final locationId = (client?.type == 'MAGAZIN' || client?.id == 'MAGAZIN_01') ? AppLocations.baseWarehouse : AppLocations.magazin;
 
       for (final line in lines) {
         // Re-apply Stock Deduction
@@ -406,9 +406,8 @@ class SalesService {
     final balance = await balanceQuery.getSingleOrNull();
     final currentQty = balance?.quantity ?? Decimal.zero;
     
-    // Clamp to zero: stock may have been manually deleted, transferred, or consumed
-    final actualDeduction = currentQty < actualQuantityToDeduct ? currentQty : actualQuantityToDeduct;
-    final newQty = currentQty - actualDeduction;
+    // Mathematically preserve exact balances even if they go negative
+    final newQty = currentQty - actualQuantityToDeduct;
     
     if (balance == null) {
       await _db.into(_db.stockBalances).insert(StockBalancesCompanion.insert(productId: targetProductId, locationId: locationId, quantity: newQty));
@@ -430,7 +429,7 @@ class SalesService {
   Future<void> processReturn(ReturnRequest request) async {
     await _db.transaction(() async {
       final client = await (_db.select(_db.clients)..where((t) => t.id.equals(request.clientId))).getSingleOrNull();
-      final locationId = client?.type == 'SPECIAL' ? AppLocations.baseWarehouse : AppLocations.magazin;
+      final locationId = (client?.type == 'MAGAZIN' || client?.id == 'MAGAZIN_01') ? AppLocations.baseWarehouse : AppLocations.magazin;
 
       final invoiceId = _uuid.v4();
       final date = DateTime.now();

@@ -247,13 +247,12 @@ class PurchaseService {
         final balanceQuery = _db.select(_db.stockBalances)..where((t) => t.productId.equals(targetProductId) & t.locationId.equals(locationId));
         final balance = await balanceQuery.getSingleOrNull();
         final currentQty = balance?.quantity ?? Decimal.zero;
-        // Clamp to zero: stock may have been manually deleted, transferred, or sold
-        final actualDeduction = currentQty < totalBaseUnits ? currentQty : totalBaseUnits;
-        final newQty = currentQty - actualDeduction;
+        // Mathematically preserve exact balances even if they go negative
+        final newQty = currentQty - totalBaseUnits;
 
         if (balance != null) {
           await _db.update(_db.stockBalances).replace(balance.copyWith(quantity: newQty, updatedAt: DateTime.now()));
-        } else if (newQty > Decimal.zero) {
+        } else {
           await _db.into(_db.stockBalances).insert(StockBalancesCompanion.insert(productId: targetProductId, locationId: locationId, quantity: newQty));
         }
 
