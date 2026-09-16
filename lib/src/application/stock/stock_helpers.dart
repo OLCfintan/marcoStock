@@ -110,5 +110,5 @@ Decimal convertQuantityToBase(Decimal quantity, ProductEntity variant, ProductEn
   final convertedMagnitude = rawVariantMagnitude * unitFactor;
   
   // Return the pure magnitude in SI units (divide by 1 since SI unit size is mathematically 1)
-  return convertedMagnitude.toDecimal(scaleOnInfinitePrecision: 6);
+  return convertedMagnitude;
 }
