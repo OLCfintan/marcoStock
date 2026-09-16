@@ -286,6 +286,38 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               }
             },
           ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.delete_forever, color: Colors.red),
+            title: Text('Wipe Database (Clear All Data)', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+            subtitle: const Text('Deletes all products, clients, stock, and history.'),
+            onTap: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('Are you absolutely sure?', style: TextStyle(color: Colors.red)),
+                  content: const Text('This will permanently delete all records (Products, Clients, Stock, Invoices, etc). This cannot be undone. Are you sure you want to start fresh?'),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                      onPressed: () => Navigator.pop(ctx, true), 
+                      child: const Text('WIPE EVERYTHING', style: TextStyle(color: Colors.white))
+                    ),
+                  ],
+                )
+              );
+              
+              if (confirm == true && context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Wiping database...')));
+                await ref.read(databaseProvider).clearAllData();
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Database completely erased and reset.')));
+                }
+              }
+            },
+          ),
+
         ],
       ),
     );
