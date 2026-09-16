@@ -1,6 +1,5 @@
 import '../../domain/constants/locations.dart';
 import 'package:flutter/material.dart';
-import "package:decimal/decimal.dart";
 import '../widgets/universal_scanner.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/auth/auth_service.dart';
@@ -108,7 +107,7 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
                       const CircleAvatar(child: Icon(Icons.inventory_2)),
                     ],
                   ),
-                  title: Text(item.unitSize == Decimal.one ? '${item.productName} ${item.unit}' : '${item.productName} ${item.unitSize}${item.unit}'),
+                  title: Text('${item.productName} ${item.unitSize}${item.unit}'),
                   subtitle: Text('Ref: ${item.productReference} | Loc: ${item.locationName}'),
                   trailing: Text(
                     '${item.quantity.toStringAsFixed(2)} Units',

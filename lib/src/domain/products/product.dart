@@ -64,7 +64,7 @@ class Product extends Equatable {
   /// Returns "{localizedName} {unit}" or "{localizedName} {unitSize}{unit}"
   String localizedLabel(String locale) {
     final n = localizedName(locale);
-    return unitSize == Decimal.one ? '$n $unit' : '$n $unitSize$unit';
+    return '$n $unitSize$unit';
   }
 
 

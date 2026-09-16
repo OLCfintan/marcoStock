@@ -165,7 +165,7 @@ final lowStockAlertsProvider = StreamProvider<List<LowStockAlert>>((ref) {
         final baseTotal = baseBalances.fold(Decimal.zero, (sum, b) => sum + b.quantity);
         
         if (baseTotal <= familyBaseMin) {
-          final baseLabel = rootProduct.unitSize == Decimal.one ? ' ${rootProduct.unit}' : ' ${rootProduct.unitSize}${rootProduct.unit}';
+          final baseLabel = ' ${rootProduct.unitSize}${rootProduct.unit}';
           alerts.add(LowStockAlert('${rootProduct.name}$baseLabel (Base)', baseTotal, familyBaseMin));
         }
       }
@@ -177,7 +177,7 @@ final lowStockAlertsProvider = StreamProvider<List<LowStockAlert>>((ref) {
         final magazinTotal = magazinBalances.fold(Decimal.zero, (sum, b) => sum + b.quantity);
         
         if (magazinTotal <= familyMagazinMin) {
-          final baseLabel = rootProduct.unitSize == Decimal.one ? ' ${rootProduct.unit}' : ' ${rootProduct.unitSize}${rootProduct.unit}';
+          final baseLabel = ' ${rootProduct.unitSize}${rootProduct.unit}';
           alerts.add(LowStockAlert('${rootProduct.name}$baseLabel (Magazin)', magazinTotal, familyMagazinMin));
         }
       }

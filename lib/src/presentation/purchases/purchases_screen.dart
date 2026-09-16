@@ -235,7 +235,7 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
                       Expanded(child: ProductImage(product: p, size: double.infinity)),
                       Expanded(
                         child: Center(
-                          child: Text('${p.localizedName(l10n!.localeName)}\n(${p.unitSize == Decimal.one ? p.unit : '${p.unitSize}${p.unit}'})', textAlign: TextAlign.center, maxLines: 3, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                          child: Text('${p.localizedName(l10n!.localeName)}\n(${p.unitSize}${p.unit})', textAlign: TextAlign.center, maxLines: 3, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                         ),
                       ),
                       FittedBox(

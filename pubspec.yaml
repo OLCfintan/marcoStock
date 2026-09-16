@@ -28,7 +28,7 @@ dependencies:
   path: ^1.9.0
 
   # Precision calculations (financial/stock)
-  decimal: ^3.0.3
+  decimal: ^3.2.6
   
   # Core utilities
   uuid: ^4.5.1

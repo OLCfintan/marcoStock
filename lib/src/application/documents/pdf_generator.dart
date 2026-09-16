@@ -74,11 +74,7 @@ class PdfGeneratorService {
     final unitSize = product.unitSize;
     final unit = product.unit;
     
-    if (unitSize == Decimal.one) {
-      return '$finalName $unit';
-    } else {
-      return '$finalName $unitSize$unit';
-    }
+    return '$finalName $unitSize$unit';
   }
 
   Future<Uint8List> generateInvoicePdf(String invoiceId, PrintOptions options) async {
