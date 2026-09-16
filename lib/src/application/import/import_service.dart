@@ -98,9 +98,11 @@ class ImportService {
               reference: drift.Value(refVal),
               unit: drift.Value(() {
                 final u = map['UNIT'] ?? existingProduct?.unit ?? 'Unit';
-                return UnitConversionService.allUnits.contains(u) ? u : 
-                  (UnitConversionService.allUnits.contains(u.toLowerCase()) ? u.toLowerCase() : 
-                  (UnitConversionService.allUnits.contains(u.toUpperCase()) ? u.toUpperCase() : 'Unit'));
+                try {
+                  return UnitConversionService.allUnits.firstWhere((e) => e.toLowerCase() == u.toLowerCase());
+                } catch (_) {
+                  return 'Unit';
+                }
               }()),
               unitSize: drift.Value(Decimal.tryParse(map['UNITSIZE'] ?? '') ?? existingProduct?.unitSize ?? Decimal.one),
               unitsPerBox: drift.Value(int.tryParse(map['UNITSPERBOX'] ?? map['BOXUNITS'] ?? '') ?? existingProduct?.unitsPerBox ?? 1),
@@ -117,6 +119,7 @@ class ImportService {
                  return opts.contains(p) ? p : (opts.map((o) => o.toLowerCase()).contains(p.toLowerCase()) ? 
                         opts.firstWhere((o) => o.toLowerCase() == p.toLowerCase()) : 'Unit');
               }()),
+              isActive: const drift.Value(true),
             );
 
             if (existingProduct != null) {
