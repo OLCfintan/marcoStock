@@ -156,5 +156,8 @@
   "convertBonToInvoice": "¿Convertir este Bon a Factura?",
   "convertedSuccessfully": "¡Bon convertido a Factura con éxito!",
   "searchSupplier": "Buscar Proveedor...",
-  "pdfBonTo": "Albarán a:"
+  "pdfBonTo": "Albarán a:",
+  "pdfTotalDebt": "Deuda total",
+  "pdfRemainingInInvoice": "Restante en esta factura",
+  "pdfRemainingInBon": "Restante en este albarán"
 }

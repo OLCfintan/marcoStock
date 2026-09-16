@@ -156,5 +156,8 @@
   "convertBonToInvoice": "Convertir ce Bon en Facture?",
   "convertedSuccessfully": "Bon converti en Facture avec succès!",
   "searchSupplier": "Rechercher un Fournisseur...",
-  "pdfBonTo": "Bon de livraison à :"
+  "pdfBonTo": "Bon de livraison à :",
+  "pdfTotalDebt": "Crédit total",
+  "pdfRemainingInInvoice": "Reste sur cette facture",
+  "pdfRemainingInBon": "Reste sur ce bon de livraison"
 }

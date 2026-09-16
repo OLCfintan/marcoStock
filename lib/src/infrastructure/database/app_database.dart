@@ -77,7 +77,7 @@ class AppDatabase extends _$AppDatabase {
         id: 'WALKIN_CLIENT_01',
         name: 'Client Passager',
         type: const Value('TEMP'),
-        tier: const Value('Tier 1'),
+        tier: const Value('Tier 3'),
       ));
       
       await customStatement('PRAGMA foreign_keys = ON');
@@ -105,7 +105,7 @@ class AppDatabase extends _$AppDatabase {
           id: 'WALKIN_CLIENT_01',
           name: 'Client Passager',
           type: const Value('TEMP'),
-          tier: const Value('Tier 1'),
+          tier: const Value('Tier 3'),
         ));
       },
 onUpgrade: (Migrator m, int from, int to) async {
@@ -194,12 +194,14 @@ onUpgrade: (Migrator m, int from, int to) async {
             id: 'WALKIN_CLIENT_01',
             name: 'Client Passager',
             type: const Value('TEMP'),
-            tier: const Value('Tier 1'),
+            tier: const Value('Tier 3'),
           ), mode: InsertMode.insertOrIgnore);
         }
       },
       beforeOpen: (details) async {
         await customStatement('PRAGMA foreign_keys = ON');
+        // Force Client Passager to Tier 3 prices always
+        await customStatement("UPDATE clients SET tier = 'Tier 3' WHERE id = 'WALKIN_CLIENT_01'");
         // Mathematical Clamping: Erase any ghost negative stock from the engine
         await customStatement("UPDATE stock_balances SET quantity = '0' WHERE CAST(quantity AS REAL) < 0");
         // Cleanup: Remove orphaned stock_balances pointing to deleted products

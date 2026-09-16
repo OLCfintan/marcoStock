@@ -156,5 +156,8 @@
   "convertBonToInvoice": "Convert this Bon to an Invoice?",
   "convertedSuccessfully": "Bon converted to Invoice successfully!",
   "searchSupplier": "Search Supplier...",
-  "pdfBonTo": "Delivery Note To:"
+  "pdfBonTo": "Delivery Note To:",
+  "pdfTotalDebt": "Total Debt",
+  "pdfRemainingInInvoice": "Remaining in this Invoice",
+  "pdfRemainingInBon": "Remaining in this Delivery Note"
 }

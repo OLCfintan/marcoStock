@@ -156,5 +156,8 @@
   "convertBonToInvoice": "تحويل هذا البون إلى فاتورة؟",
   "convertedSuccessfully": "تم تحويل البون إلى فاتورة بنجاح!",
   "searchSupplier": "البحث عن مورد...",
-  "pdfBonTo": "تسليم إلى:"
+  "pdfBonTo": "تسليم إلى:",
+  "pdfTotalDebt": "مجموع الديون",
+  "pdfRemainingInInvoice": "المتبقي في هذه الفاتورة",
+  "pdfRemainingInBon": "المتبقي في هذا البون"
 }
