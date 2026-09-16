@@ -62,6 +62,25 @@ Decimal getBaseValue(String unit) {
   }
 }
 
+String getSIUnit(String unit) {
+  switch (unit.toLowerCase().trim()) {
+    case 'ml':
+    case 'cl':
+    case 'dl':
+    case 'l':
+      return 'l';
+    case 'mg':
+    case 'g':
+    case 'kg':
+    case 't':
+      return 'kg';
+    case 'm3':
+      return 'm3';
+    default:
+      return unit.toLowerCase().trim();
+  }
+}
+
 Decimal getConversionFactor(String oldUnit, String newUnit) {
   final oldBase = getBaseValue(oldUnit);
   final newBase = getBaseValue(newUnit);
@@ -80,11 +99,16 @@ String extractUnitFromName(String name, String fallbackUnit) {
 Decimal convertQuantityToBase(Decimal quantity, ProductEntity variant, ProductEntity baseProduct) {
   final rawVariantMagnitude = quantity * variant.unitSize;
   
-  // Intelligently infer the real unit from the name to fix bad DB entries like 'Unit' for '250ml' variants
+  // Intelligently infer the real unit from the name to fix bad DB entries
   final variantRealUnit = extractUnitFromName(variant.name, variant.unit);
-  final baseRealUnit = extractUnitFromName(baseProduct.name, baseProduct.unit);
   
-  final unitFactor = getConversionFactor(variantRealUnit, baseRealUnit);
+  // The user explicitly requested that all mathematical tracking is standardized 
+  // into absolute 1L / 1KG / 1M3 standard units, regardless of what the baseProduct is.
+  final siUnit = getSIUnit(variantRealUnit);
+  
+  final unitFactor = getConversionFactor(variantRealUnit, siUnit);
   final convertedMagnitude = rawVariantMagnitude * unitFactor;
-  return (convertedMagnitude / baseProduct.unitSize).toDecimal(scaleOnInfinitePrecision: 6);
+  
+  // Return the pure magnitude in SI units (divide by 1 since SI unit size is mathematically 1)
+  return convertedMagnitude.toDecimal(scaleOnInfinitePrecision: 6);
 }
