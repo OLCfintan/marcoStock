@@ -41,7 +41,7 @@ class StockRepository {
     return _db.select(_db.stockBalances).watch().asyncMap((balances) async {
       final items = <StockItem>[];
       for (final balance in balances) {
-        if (balance.quantity <= Decimal.zero) continue;
+        // if (balance.quantity <= Decimal.zero) continue; // Allow viewing zero and negative stocks for auditing
         
         final product = await (_db.select(_db.products)
           ..where((t) => t.id.equals(balance.productId)))

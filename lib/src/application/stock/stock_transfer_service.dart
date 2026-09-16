@@ -40,6 +40,11 @@ class StockTransferService {
             ..where((t) => t.productId.equals(targetProductId) & t.locationId.equals(fromLocationId)))
           .getSingleOrNull();
 
+      final currentQty = sourceBalance?.quantity ?? Decimal.zero;
+      if (currentQty < totalBaseUnits) {
+        throw Exception('Insufficient stock at source location for transfer. Available: ${currentQty.toStringAsFixed(2)}, Requested: ${totalBaseUnits.toStringAsFixed(2)}');
+      }
+
       // Mathematically preserve balances
       final actualTransfer = totalBaseUnits;
 
