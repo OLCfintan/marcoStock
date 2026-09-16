@@ -1,31 +1,20 @@
-import os
 import re
+import glob
 
-lib_path = "/home/limbo/Desktop/marcoStock/lib"
+files = glob.glob('lib/src/presentation/**/*.dart', recursive=True)
 
-def process_file(filepath):
-    with open(filepath, 'r', encoding='utf-8') as f:
-        content = f.read()
+for f in files:
+    with open(f, 'r') as file:
+        content = file.read()
     
-    original_content = content
+    # Remove const from PopupMenuItem when it contains AppLocalizations
+    content = re.sub(r'const\s+PopupMenuItem\(([^)]*AppLocalizations[^)]*)\)', r'PopupMenuItem(\1)', content)
     
-    # Replace 'const Text(AppLocalizations' with 'Text(AppLocalizations'
-    content = re.sub(r'const\s+Text\s*\(\s*AppLocalizations', r'Text(AppLocalizations', content)
+    # Remove unnecessary const in TextStyle inside PopupMenuItem that were left behind if I replaced
+    # wait, the regex above handles the outer const. What about `Text(..., style: const TextStyle(...))`?
+    # the error was `unnecessary_const` for `const TextStyle(color: Colors.red)` inside something that is already not const? No, if we removed the outer const, the inner might need it, which is fine. The error was because I added `const TextStyle` inside a `const PopupMenuItem`! Now that `PopupMenuItem` is not const, `const TextStyle` is perfectly valid and required if we want to save allocations, or maybe just fine.
     
-    # Replace 'const SnackBar(content: Text(AppLocalizations' with 'SnackBar(content: Text(AppLocalizations'
-    content = re.sub(r'const\s+SnackBar\s*\(\s*content:\s*Text\s*\(\s*AppLocalizations', r'SnackBar(content: Text(AppLocalizations', content)
-    
-    # Also replace anything like `const Text('${AppLocalizations`
-    content = re.sub(r'const\s+Text\s*\(\s*\'\$\{AppLocalizations', r'Text(\'${AppLocalizations', content)
-    
-    if content != original_content:
-        with open(filepath, 'w', encoding='utf-8') as f:
-            f.write(content)
-        print(f"Fixed {filepath}")
-
-for root, _, files in os.walk(lib_path):
-    for f in files:
-        if f.endswith('.dart'):
-            process_file(os.path.join(root, f))
-
-print("Done")
+    with open(f, 'w') as file:
+        file.write(content)
+        
+print("Consts fixed.")

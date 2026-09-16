@@ -422,7 +422,20 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
         final payment = payments[index];
         
         return ListTile(
-          leading: CircleAvatar(
+              onTap: payment.method == 'CHECK' && payment.checkImagePath != null && payment.checkImagePath!.isNotEmpty
+                  ? () {
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          content: Image.file(File(payment.checkImagePath!)),
+                          actions: [
+                            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close'))
+                          ],
+                        ),
+                      );
+                    }
+                  : null,
+              leading: CircleAvatar(
             backgroundColor: payment.method == 'CHECK' ? Colors.orange : Colors.blue,
             child: Icon(payment.method == 'CHECK' ? Icons.receipt : Icons.attach_money, color: Colors.white),
           ),

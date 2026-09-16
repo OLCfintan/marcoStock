@@ -112,9 +112,9 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
                           }
                         },
                         itemBuilder: (context) => [
-                          const PopupMenuItem(value: 'ledger', child: Text('Ledger / Payments')),
-                          const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                          const PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: Colors.red))),
+                          PopupMenuItem(value: 'ledger', child: Text(AppLocalizations.of(context)!.ledgerPayments)),
+                          PopupMenuItem(value: 'edit', child: Text(AppLocalizations.of(context)!.edit)),
+                          PopupMenuItem(value: 'delete', child: Text(AppLocalizations.of(context)!.deleteStr, style: const TextStyle(color: Colors.red))),
                         ],
                       ),
                     ],

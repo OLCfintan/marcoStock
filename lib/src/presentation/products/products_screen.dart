@@ -268,11 +268,11 @@ class _ProductDataSource extends DataTableSource {
               if (value == 'family') onAddFamilyMember(p);
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(value: 'consumables', child: Text('Create Consumables')),
-              const PopupMenuItem(value: 'family', child: Text('Add Family Member')),
-              const PopupMenuItem(value: 'edit', child: Text('Edit')),
+              PopupMenuItem(value: 'consumables', child: Text(AppLocalizations.of(context)!.createConsumables)),
+              PopupMenuItem(value: 'family', child: Text(AppLocalizations.of(context)!.addFamilyMember)),
+              PopupMenuItem(value: 'edit', child: Text(AppLocalizations.of(context)!.edit)),
               if (isAdmin)
-                const PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: Colors.red))),
+                PopupMenuItem(value: 'delete', child: Text(AppLocalizations.of(context)!.deleteStr, style: const TextStyle(color: Colors.red))),
             ],
           ),
         ),

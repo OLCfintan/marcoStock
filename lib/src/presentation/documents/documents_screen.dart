@@ -175,13 +175,13 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> with SingleTi
                             }
                           },
                           itemBuilder: (context) => [
-                            const PopupMenuItem(value: 'print', child: Text('Print Document')),
-                            const PopupMenuItem(value: 'record_payment', child: Text('Record Payment')),
-                            const PopupMenuItem(value: 'view_payments', child: Text('View Payments & Checks')),
+                            PopupMenuItem(value: 'print', child: Text(AppLocalizations.of(context)!.printDocument)),
+                            PopupMenuItem(value: 'record_payment', child: Text(AppLocalizations.of(context)!.recordPayment)),
+                            PopupMenuItem(value: 'view_payments', child: Text(AppLocalizations.of(context)!.viewPaymentsChecks)),
                             if (invoice.documentType == 'BON')
                               PopupMenuItem(value: 'convert', child: Text(AppLocalizations.of(context)!.convertToInvoice)),
                             if (ref.watch(currentUserProvider)?.role == 'ADMIN')
-                              const PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: Colors.red))),
+                              PopupMenuItem(value: 'delete', child: Text(AppLocalizations.of(context)!.deleteStr, style: const TextStyle(color: Colors.red))),
                           ],
                         ),
                       onTap: () {
@@ -254,11 +254,11 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> with SingleTi
                           }
                         },
                         itemBuilder: (context) => [
-                          const PopupMenuItem(value: 'print', child: Text('Print Document')),
-                          const PopupMenuItem(value: 'record_payment', child: Text('Record Payment')),
-                          const PopupMenuItem(value: 'view_payments', child: Text('View Payments & Checks')),
+                          PopupMenuItem(value: 'print', child: Text(AppLocalizations.of(context)!.printDocument)),
+                          PopupMenuItem(value: 'record_payment', child: Text(AppLocalizations.of(context)!.recordPayment)),
+                          PopupMenuItem(value: 'view_payments', child: Text(AppLocalizations.of(context)!.viewPaymentsChecks)),
                           if (ref.watch(currentUserProvider)?.role == 'ADMIN')
-                            const PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: Colors.red))),
+                            PopupMenuItem(value: 'delete', child: Text(AppLocalizations.of(context)!.deleteStr, style: const TextStyle(color: Colors.red))),
                         ],
                       ),
                       onTap: () {
