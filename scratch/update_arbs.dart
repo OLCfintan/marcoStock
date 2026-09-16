@@ -1,35 +1,23 @@
-import 'dart:convert';
 import 'dart:io';
+import 'dart:convert';
 
-void main() async {
-  final keys = {
-    "paymentExceedsTotal": "Payment amount cannot exceed the total.",
-    "walkInClient": "Client Passager",
-    "edit": "Edit",
-    "confirmReturn": "CONFIRM RETURN",
-    "processReturn": "Process Return",
-    "garbage": "Garbage / Deleted",
-    "recordPurchase": "RECORD PURCHASE",
-    "recordInboundPurchase": "Record Inbound Purchase (ACH)",
-    "returnCompletedSuccessfully": "Return completed successfully!",
-    "employees": "Employees"
-  };
+void updateArb(String path, String bonLabel, String bonToLabel) {
+  final file = File(path);
+  final content = file.readAsStringSync();
+  final Map<String, dynamic> json = jsonDecode(content);
+  
+  json['bon'] = bonLabel;
+  json['pdfBonTo'] = bonToLabel;
+  
+  // Format beautifully
+  const encoder = JsonEncoder.withIndent('  ');
+  file.writeAsStringSync(encoder.convert(json));
+}
 
-  final dir = Directory('lib/src/localization/arb');
-  final files = dir.listSync().whereType<File>().where((f) => f.path.endsWith('.arb'));
-
-  for (final file in files) {
-    final content = await file.readAsString();
-    final json = jsonDecode(content) as Map<String, dynamic>;
-    
-    for (final entry in keys.entries) {
-      if (!json.containsKey(entry.key)) {
-        json[entry.key] = entry.value;
-      }
-    }
-
-    final encoder = JsonEncoder.withIndent('  ');
-    await file.writeAsString('${encoder.convert(json)}\n');
-    print('Updated ${file.path}');
-  }
+void main() {
+  updateArb('lib/src/localization/arb/app_fr.arb', 'Bon de livraison', 'Bon de livraison à :');
+  updateArb('lib/src/localization/arb/app_en.arb', 'Delivery Note', 'Delivery Note To:');
+  updateArb('lib/src/localization/arb/app_es.arb', 'Albarán de entrega', 'Albarán a:');
+  updateArb('lib/src/localization/arb/app_ar.arb', 'وصل تسليم', 'تسليم إلى:');
+  print('ARBs updated');
 }

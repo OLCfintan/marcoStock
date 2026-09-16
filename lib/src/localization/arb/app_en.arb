@@ -69,7 +69,7 @@
   "saleCompletedSuccessfully": "Sale completed successfully!",
   "newSalePos": "New Sale (POS)",
   "invoice": "Invoice",
-  "bon": "Bon",
+  "bon": "Delivery Note",
   "ticket": "Ticket",
   "addPaymentMethod": "Add Payment Method",
   "adjustQuantity": "Adjust Quantity - ",
@@ -155,5 +155,6 @@
   "convertToInvoice": "Convert to Invoice",
   "convertBonToInvoice": "Convert this Bon to an Invoice?",
   "convertedSuccessfully": "Bon converted to Invoice successfully!",
-  "searchSupplier": "Search Supplier..."
+  "searchSupplier": "Search Supplier...",
+  "pdfBonTo": "Delivery Note To:"
 }

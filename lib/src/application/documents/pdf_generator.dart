@@ -276,7 +276,7 @@ class PdfGeneratorService {
         pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.end,
           children: [
-            pw.Text(l10n.pdfBillTo, style: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.grey700)),
+            pw.Text(invoice.documentType == 'BON' ? l10n.pdfBonTo : l10n.pdfBillTo, style: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.grey700)),
             pw.SizedBox(height: 4),
             pw.Text(client?.name ?? 'N/A', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
             if (client?.address != null && client!.address!.isNotEmpty) pw.Text(client.address!),

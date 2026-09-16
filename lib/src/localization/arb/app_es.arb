@@ -69,7 +69,7 @@
   "saleCompletedSuccessfully": "¡Venta completada exitosamente!",
   "newSalePos": "Nueva Venta (TPV)",
   "invoice": "Factura",
-  "bon": "Bono",
+  "bon": "Albarán de entrega",
   "ticket": "Ticket",
   "addPaymentMethod": "Añadir Método de Pago",
   "adjustQuantity": "Ajustar Cantidad - ",
@@ -155,5 +155,6 @@
   "convertToInvoice": "Convertir a Factura",
   "convertBonToInvoice": "¿Convertir este Bon a Factura?",
   "convertedSuccessfully": "¡Bon convertido a Factura con éxito!",
-  "searchSupplier": "Buscar Proveedor..."
+  "searchSupplier": "Buscar Proveedor...",
+  "pdfBonTo": "Albarán a:"
 }

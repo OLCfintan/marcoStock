@@ -69,7 +69,7 @@
   "saleCompletedSuccessfully": "اكتملت عملية البيع بنجاح!",
   "newSalePos": "بيع جديد (نقاط البيع)",
   "invoice": "فاتورة",
-  "bon": "بون",
+  "bon": "وصل تسليم",
   "ticket": "تذكرة",
   "addPaymentMethod": "إضافة طريقة دفع",
   "adjustQuantity": "تعديل الكمية - ",
@@ -155,5 +155,6 @@
   "convertToInvoice": "تحويل إلى فاتورة",
   "convertBonToInvoice": "تحويل هذا البون إلى فاتورة؟",
   "convertedSuccessfully": "تم تحويل البون إلى فاتورة بنجاح!",
-  "searchSupplier": "البحث عن مورد..."
+  "searchSupplier": "البحث عن مورد...",
+  "pdfBonTo": "تسليم إلى:"
 }
