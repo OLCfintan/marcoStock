@@ -23,7 +23,7 @@ class PosScreen extends ConsumerStatefulWidget {
 
 class _PosScreenState extends ConsumerState<PosScreen> {
   String? _selectedClientId;
-  String _selectedDocumentType = 'FACTURE';
+  String _selectedDocumentType = 'BON';
   final List<SaleLineRequest> _cart = [];
   final List<_PaymentEntry> _payments = [_PaymentEntry(method: 'CASH')];
   
@@ -255,8 +255,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                       color: theme.colorScheme.onSurface,
                     ),
                     items: [
-                      DropdownMenuItem(value: 'FACTURE', child: Text(AppLocalizations.of(context)!.invoice)),
                       DropdownMenuItem(value: 'BON', child: Text(AppLocalizations.of(context)!.bon)),
+                      DropdownMenuItem(value: 'FACTURE', child: Text(AppLocalizations.of(context)!.invoice)),
                     ],
                     onChanged: (val) => setState(() => _selectedDocumentType = val!),
                   ),
