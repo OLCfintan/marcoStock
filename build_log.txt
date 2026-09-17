@@ -1,0 +1,3 @@
+Synthetic package output (package:flutter_gen) is deprecated: https://flutter.dev/to/flutter-gen-deprecation. In a future release, synthetic-package will default to `false` and will later be removed entirely.
+
+Building Linux application...                                   

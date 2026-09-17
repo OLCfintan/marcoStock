@@ -411,19 +411,17 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    if (_packagingType == 'Unit') ...[
-                      TextFormField(
-                        controller: _unitsPerBoxController,
-                        decoration: _inputDecoration('Units Per Box (For Inventory Math)'),
-                        keyboardType: TextInputType.number,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) return 'Required';
-                          if (int.tryParse(value) == null) return 'Must be integer';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                    ],
+                    TextFormField(
+                      controller: _unitsPerBoxController,
+                      decoration: _inputDecoration('Units Per Box (For Inventory Math)'),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) return 'Required';
+                        if (int.tryParse(value) == null) return 'Must be integer';
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
                     ImagePickerField(
                       label: 'Product Image',
                       onChanged: (val) => setState(() => _imagePath = val),
