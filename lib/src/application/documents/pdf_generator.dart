@@ -29,13 +29,10 @@ class PdfGeneratorService {
   void _addPages(pw.Document doc, PrintOptions options, pw.TextDirection textDir, pw.ImageProvider? bgImage, List<pw.Widget> Function() buildContent) {
     pw.Widget backgroundBuilder(pw.Context context) {
       if (bgImage == null) return pw.Container();
-      return pw.FullPage(
-        ignoreMargins: true,
-        child: pw.Center(
-          child: pw.Opacity(
-            opacity: 0.15,
-            child: pw.Image(bgImage, fit: pw.BoxFit.contain),
-          ),
+      return pw.Watermark(
+        child: pw.Opacity(
+          opacity: 0.25,
+          child: pw.Image(bgImage, fit: pw.BoxFit.contain),
         ),
       );
     }
@@ -150,9 +147,13 @@ class PdfGeneratorService {
 
     pw.ImageProvider? watermarkBg;
     try {
-      final ByteData data = await rootBundle.load('assets/images/pdf_logo.jpeg');
-      final Uint8List watermarkBytes = data.buffer.asUint8List();
-      watermarkBg = pw.MemoryImage(watermarkBytes);
+      final file = File('assets/images/pdf_logo.jpeg');
+      if (file.existsSync()) {
+        watermarkBg = pw.MemoryImage(file.readAsBytesSync());
+      } else {
+        final ByteData data = await rootBundle.load('assets/images/pdf_logo.jpeg');
+        watermarkBg = pw.MemoryImage(data.buffer.asUint8List());
+      }
     } catch (e) {
       print('Could not load watermark: $e');
     }
@@ -209,9 +210,13 @@ class PdfGeneratorService {
 
     pw.ImageProvider? watermarkBg;
     try {
-      final ByteData data = await rootBundle.load('assets/images/pdf_logo.jpeg');
-      final Uint8List watermarkBytes = data.buffer.asUint8List();
-      watermarkBg = pw.MemoryImage(watermarkBytes);
+      final file = File('assets/images/pdf_logo.jpeg');
+      if (file.existsSync()) {
+        watermarkBg = pw.MemoryImage(file.readAsBytesSync());
+      } else {
+        final ByteData data = await rootBundle.load('assets/images/pdf_logo.jpeg');
+        watermarkBg = pw.MemoryImage(data.buffer.asUint8List());
+      }
     } catch (e) {
       print('Could not load watermark: $e');
     }
