@@ -1,4 +1,4 @@
-import "dart:typed_data";
+import 'package:flutter/services.dart';
 import 'dart:io';
 import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,13 +26,29 @@ class PdfGeneratorService {
 
   PdfGeneratorService(this._db, this._settings);
 
-  void _addPages(pw.Document doc, PrintOptions options, pw.TextDirection textDir, List<pw.Widget> Function() buildContent) {
+  void _addPages(pw.Document doc, PrintOptions options, pw.TextDirection textDir, pw.ImageProvider? bgImage, List<pw.Widget> Function() buildContent) {
+    pw.Widget backgroundBuilder(pw.Context context) {
+      if (bgImage == null) return pw.Container();
+      return pw.FullPage(
+        ignoreMargins: true,
+        child: pw.Center(
+          child: pw.Opacity(
+            opacity: 0.15,
+            child: pw.Image(bgImage, fit: pw.BoxFit.contain),
+          ),
+        ),
+      );
+    }
+
     if (options.layout == PrintLayout.a4_2up) {
       doc.addPage(
         pw.Page(
-          pageFormat: PdfPageFormat.a4.landscape,
-          textDirection: textDir,
-          margin: const pw.EdgeInsets.all(24),
+          pageTheme: pw.PageTheme(
+            pageFormat: PdfPageFormat.a4.landscape,
+            textDirection: textDir,
+            margin: const pw.EdgeInsets.all(24),
+            buildBackground: backgroundBuilder,
+          ),
           build: (context) {
             return pw.Row(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -48,9 +64,12 @@ class PdfGeneratorService {
     } else {
       doc.addPage(
         pw.MultiPage(
-          pageFormat: options.layout == PrintLayout.a5 ? PdfPageFormat.a5 : PdfPageFormat.a4,
-          textDirection: textDir,
-          margin: const pw.EdgeInsets.all(32),
+          pageTheme: pw.PageTheme(
+            pageFormat: options.layout == PrintLayout.a5 ? PdfPageFormat.a5 : PdfPageFormat.a4,
+            textDirection: textDir,
+            margin: const pw.EdgeInsets.all(32),
+            buildBackground: backgroundBuilder,
+          ),
           build: (context) => buildContent(),
         ),
       );
@@ -129,7 +148,16 @@ class PdfGeneratorService {
 
     final textDir = l10n.localeName.startsWith('ar') ? pw.TextDirection.rtl : pw.TextDirection.ltr;
 
-    _addPages(doc, options, textDir, () => [
+    pw.ImageProvider? watermarkBg;
+    try {
+      final ByteData data = await rootBundle.load('assets/images/pdf_logo.jpeg');
+      final Uint8List watermarkBytes = data.buffer.asUint8List();
+      watermarkBg = pw.MemoryImage(watermarkBytes);
+    } catch (e) {
+      print('Could not load watermark: $e');
+    }
+
+    _addPages(doc, options, textDir, watermarkBg, () => [
       _buildHeader(invoice, client, companyName, companyAddress, companyPhone, companyTaxId, logoImage, l10n),
       pw.SizedBox(height: 32),
       _buildInvoiceTable(lines, productMap, l10n),
@@ -179,7 +207,16 @@ class PdfGeneratorService {
 
     final textDir = l10n.localeName.startsWith('ar') ? pw.TextDirection.rtl : pw.TextDirection.ltr;
 
-    _addPages(doc, options, textDir, () => [
+    pw.ImageProvider? watermarkBg;
+    try {
+      final ByteData data = await rootBundle.load('assets/images/pdf_logo.jpeg');
+      final Uint8List watermarkBytes = data.buffer.asUint8List();
+      watermarkBg = pw.MemoryImage(watermarkBytes);
+    } catch (e) {
+      print('Could not load watermark: $e');
+    }
+
+    _addPages(doc, options, textDir, watermarkBg, () => [
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
