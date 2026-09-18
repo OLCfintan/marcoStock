@@ -16,14 +16,20 @@ import '../widgets/autocomplete_search_field.dart';
 
 
 
+
+final List<PosSession> globalPosSessions = [];
+int globalPosActiveSessionIndex = 0;
+
 class PosScreen extends ConsumerStatefulWidget {
+
   const PosScreen({super.key});
   @override ConsumerState<PosScreen> createState() => _PosScreenState();
 }
 
 class _PosScreenState extends ConsumerState<PosScreen> {
-  final List<PosSession> _sessions = [];
-  int _activeSessionIndex = 0;
+  List<PosSession> get _sessions => globalPosSessions;
+  int get _activeSessionIndex => globalPosActiveSessionIndex;
+  set _activeSessionIndex(int val) => globalPosActiveSessionIndex = val;
 
   PosSession get _activeSession => _sessions[_activeSessionIndex];
 
@@ -33,7 +39,9 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   @override
   void initState() {
     super.initState();
-    _sessions.add(PosSession(id: DateTime.now().millisecondsSinceEpoch.toString(), title: 'Cart 1'));
+    if (globalPosSessions.isEmpty) {
+      globalPosSessions.add(PosSession(id: DateTime.now().millisecondsSinceEpoch.toString(), title: 'Cart 1'));
+    }
   }
 
   Decimal get _cartTotal {
@@ -60,9 +68,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   void dispose() {
     _barcodeController.dispose();
     _barcodeFocusNode.dispose();
-    for (var s in _sessions) {
-      s.dispose();
-    }
+    // Do NOT dispose _sessions so they survive screen transitions!
     super.dispose();
   }
 

@@ -15,7 +15,12 @@ import '../../application/purchases/purchase_service.dart';
 import '../../domain/products/product.dart';
 import '../../infrastructure/repositories/supplier_repository.dart';
 
+
+final List<PurchaseSession> globalPurchaseSessions = [];
+int globalPurchaseActiveSessionIndex = 0;
+
 class PurchasesScreen extends ConsumerStatefulWidget {
+
   const PurchasesScreen({super.key});
 
   @override
@@ -37,15 +42,18 @@ class _PaymentEntry {
 
 class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
   final String _selectedDocumentType = 'FACTURE';
-  final List<PurchaseSession> _sessions = [];
-  int _activeSessionIndex = 0;
+  List<PurchaseSession> get _sessions => globalPurchaseSessions;
+  int get _activeSessionIndex => globalPurchaseActiveSessionIndex;
+  set _activeSessionIndex(int val) => globalPurchaseActiveSessionIndex = val;
 
   PurchaseSession get _activeSession => _sessions[_activeSessionIndex];
 
   @override
   void initState() {
     super.initState();
-    _sessions.add(PurchaseSession(id: DateTime.now().millisecondsSinceEpoch.toString(), title: 'Cart 1'));
+    if (globalPurchaseSessions.isEmpty) {
+      globalPurchaseSessions.add(PurchaseSession(id: DateTime.now().millisecondsSinceEpoch.toString(), title: 'Cart 1'));
+    }
   }
 
   @override
