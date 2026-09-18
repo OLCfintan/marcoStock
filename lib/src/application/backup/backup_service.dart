@@ -171,10 +171,10 @@ class BackupService {
     final tempDb = sqlite.sqlite3.open(tempDbFile.path);
 
     // 3. Process Products Images Dynamic Mapping
-    final products = tempDb.select("SELECT id, imagePath FROM products WHERE imagePath IS NOT NULL AND imagePath != '';");
+    final products = tempDb.select("SELECT id, image_path FROM products WHERE image_path IS NOT NULL AND image_path != '';");
     for (var row in products) {
       final id = row['id'] as String;
-      final oldPath = row['imagePath'] as String;
+      final oldPath = row['image_path'] as String;
       final basename = p.basename(oldPath);
       
       final expectedExportPath = File(p.join(srcDir.path, 'Products', 'images', '${id}_$basename'));
@@ -182,16 +182,16 @@ class BackupService {
       
       if (await expectedExportPath.exists()) {
         await expectedExportPath.copy(newAssetPath.path);
-        tempDb.execute("UPDATE products SET imagePath = ? WHERE id = ?", [newAssetPath.path, id]);
+        tempDb.execute("UPDATE products SET image_path = ? WHERE id = ?", [newAssetPath.path, id]);
       }
     }
 
     // 4. Process Clients Images Dynamic Mapping
-    final clients = tempDb.select("SELECT id, name, imagePath FROM clients WHERE imagePath IS NOT NULL AND imagePath != '';");
+    final clients = tempDb.select("SELECT id, name, image_path FROM clients WHERE image_path IS NOT NULL AND image_path != '';");
     for (var row in clients) {
       final id = row['id'] as String;
       final name = row['name'] as String;
-      final oldPath = row['imagePath'] as String;
+      final oldPath = row['image_path'] as String;
       final basename = p.basename(oldPath);
       
       final cleanName = _cleanFileName(name);
@@ -200,16 +200,16 @@ class BackupService {
       
       if (await expectedExportPath.exists()) {
         await expectedExportPath.copy(newAssetPath.path);
-        tempDb.execute("UPDATE clients SET imagePath = ? WHERE id = ?", [newAssetPath.path, id]);
+        tempDb.execute("UPDATE clients SET image_path = ? WHERE id = ?", [newAssetPath.path, id]);
       }
     }
 
     // 5. Process Suppliers Images Dynamic Mapping
-    final suppliers = tempDb.select("SELECT id, name, imagePath FROM suppliers WHERE imagePath IS NOT NULL AND imagePath != '';");
+    final suppliers = tempDb.select("SELECT id, name, image_path FROM suppliers WHERE image_path IS NOT NULL AND image_path != '';");
     for (var row in suppliers) {
       final id = row['id'] as String;
       final name = row['name'] as String;
-      final oldPath = row['imagePath'] as String;
+      final oldPath = row['image_path'] as String;
       final basename = p.basename(oldPath);
       
       final cleanName = _cleanFileName(name);
@@ -218,7 +218,7 @@ class BackupService {
       
       if (await expectedExportPath.exists()) {
         await expectedExportPath.copy(newAssetPath.path);
-        tempDb.execute("UPDATE suppliers SET imagePath = ? WHERE id = ?", [newAssetPath.path, id]);
+        tempDb.execute("UPDATE suppliers SET image_path = ? WHERE id = ?", [newAssetPath.path, id]);
       }
     }
 
