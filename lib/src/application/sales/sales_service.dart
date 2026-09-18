@@ -315,7 +315,17 @@ class SalesService {
           locationId: locationId,
         );
 
-
+        // Re-apply Magazin transfer if special client
+        if ((client?.type == 'MAGAZIN' || client?.type == 'SPECIAL' || client?.id == 'MAGAZIN_01')) {
+          await _restoreStock(
+            productId: line.productId,
+            quantity: line.quantity,
+            reason: 'TRANSFER_IN_RESTORED',
+            referenceOperationId: invoiceId,
+            userId: userId,
+            locationId: AppLocations.magazin,
+          );
+        }
 
         // Re-apply Consumables Deduction
         await _deductConsumables(

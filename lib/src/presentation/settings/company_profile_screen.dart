@@ -15,6 +15,7 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
   final _addressCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
   final _taxIdCtrl = TextEditingController();
   final _taxRateCtrl = TextEditingController();
   final _logoCtrl = TextEditingController();
@@ -32,6 +33,7 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
     final settings = await service.getAllCompanySettings();
     _nameCtrl.text = settings['companyName'] ?? '';
     _addressCtrl.text = settings['companyAddress'] ?? '';
+    _phoneCtrl.text = settings['companyPhone'] ?? '';
     _taxIdCtrl.text = settings['companyTaxId'] ?? '';
     _taxRateCtrl.text = settings['companyTaxRate'] ?? '0.0';
     _logoCtrl.text = settings['companyLogoPath'] ?? '';
@@ -44,6 +46,7 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
     final service = ref.read(settingsServiceProvider);
     await service.setSetting('companyName', _nameCtrl.text);
     await service.setSetting('companyAddress', _addressCtrl.text);
+    await service.setSetting('companyPhone', _phoneCtrl.text);
     await service.setSetting('companyTaxId', _taxIdCtrl.text);
     await service.setSetting('companyTaxRate', _taxRateCtrl.text);
     await service.setSetting('companyLogoPath', _logoCtrl.text);
@@ -74,6 +77,11 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
                 TextFormField(
                   controller: _addressCtrl,
                   decoration: const InputDecoration(labelText: 'Company Address'),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _phoneCtrl,
+                  decoration: const InputDecoration(labelText: 'Company Phone'),
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -111,6 +119,7 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
   void dispose() {
     _nameCtrl.dispose();
     _addressCtrl.dispose();
+    _phoneCtrl.dispose();
     _taxIdCtrl.dispose();
     _taxRateCtrl.dispose();
     _logoCtrl.dispose();

@@ -1,3 +1,6 @@
+import '../../application/auth/auth_service.dart';
+import '../../application/purchases/purchase_service.dart';
+import '../../application/sales/sales_service.dart';
 import '../../application/hr/hr_providers.dart';
 import '../../application/suppliers/supplier_providers.dart';
 import '../../application/clients/client_providers.dart';
@@ -334,7 +337,8 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
                       }),
                       if (ref.watch(currentUserProvider)?.role == 'ADMIN')
                          IconButton(icon: const Icon(Icons.delete, color: Colors.red, size: 20), onPressed: () async {
-                             await (db.update(db.invoices)..where((t) => t.id.equals(inv.id))).write(const InvoicesCompanion(isActive: drift.Value(false)));
+                             final userId = ref.read(currentUserProvider)?.id ?? '';
+                             await ref.read(salesServiceProvider).deleteInvoice(inv.id, userId);
                          }),
                     ]
                   ),
@@ -392,7 +396,8 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
                       }),
                       if (ref.watch(currentUserProvider)?.role == 'ADMIN')
                          IconButton(icon: const Icon(Icons.delete, color: Colors.red, size: 20), onPressed: () async {
-                             await (db.update(db.purchases)..where((t) => t.id.equals(pur.id))).write(const PurchasesCompanion(isActive: drift.Value(false)));
+                             final userId = ref.read(currentUserProvider)?.id ?? '';
+                             await ref.read(purchaseServiceProvider).deletePurchase(pur.id, userId);
                          }),
                     ]
                   ),

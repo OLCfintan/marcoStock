@@ -468,7 +468,6 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                       items: [
                                         DropdownMenuItem(value: 'CASH', child: Text(AppLocalizations.of(context)!.cash.toUpperCase())),
                                         DropdownMenuItem(value: 'CHECK', child: Text(AppLocalizations.of(context)!.check.toUpperCase())),
-                                        DropdownMenuItem(value: 'CREDIT', child: Text(AppLocalizations.of(context)!.credit.toUpperCase())),
                                       ],
                                       onChanged: (val) {
                                         setState(() {
@@ -487,7 +486,6 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                     flex: 3,
                                     child: TextField(
                                       controller: p.amountController,
-                                      enabled: p.method != 'CREDIT',
                                       decoration: const InputDecoration(
                                         labelText: 'Amount',
                                         prefixIcon: Icon(Icons.attach_money, size: 16),

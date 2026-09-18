@@ -179,7 +179,6 @@ class _PaymentLedgerDialogState extends ConsumerState<PaymentLedgerDialog> {
                                   items: [
                                     DropdownMenuItem(value: 'CASH', child: Text(AppLocalizations.of(context)!.cash.toUpperCase())),
                                     DropdownMenuItem(value: 'CHECK', child: Text(AppLocalizations.of(context)!.check.toUpperCase())),
-                                    DropdownMenuItem(value: 'CREDIT', child: Text(AppLocalizations.of(context)!.credit.toUpperCase())),
                                   ],
                                   onChanged: (val) {
                                     setState(() {
@@ -196,7 +195,6 @@ class _PaymentLedgerDialogState extends ConsumerState<PaymentLedgerDialog> {
                                 flex: 3,
                                 child: TextField(
                                   controller: p.amountController,
-                                  enabled: p.method != 'CREDIT',
                                   decoration: const InputDecoration(labelText: 'Amount', prefixText: '\$'),
                                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                   onChanged: (val) => setState(() {}),

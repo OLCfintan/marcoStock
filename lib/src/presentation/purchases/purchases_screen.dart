@@ -360,7 +360,6 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
                               items: [
                                 DropdownMenuItem(value: 'CASH', child: Text(AppLocalizations.of(context)?.cash.toUpperCase() ?? 'CASH')),
                                 DropdownMenuItem(value: 'CHECK', child: Text(AppLocalizations.of(context)?.check.toUpperCase() ?? 'CHECK')),
-                                DropdownMenuItem(value: 'CREDIT', child: Text(AppLocalizations.of(context)?.credit.toUpperCase() ?? 'CREDIT')),
                               ],
                               onChanged: (val) {
                                 setState(() {
@@ -379,7 +378,6 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
                             flex: 3,
                             child: TextField(
                               controller: p.amountController,
-                              enabled: p.method != 'CREDIT',
                               decoration: const InputDecoration(
                                 labelText: 'Amount',
                                 prefixIcon: Icon(Icons.attach_money, size: 16),

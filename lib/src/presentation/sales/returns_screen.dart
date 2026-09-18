@@ -440,7 +440,6 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen> {
                                         items: [
                                           DropdownMenuItem(value: 'CASH', child: Text(AppLocalizations.of(context)!.cash.toUpperCase())),
                                           const DropdownMenuItem(value: 'CHECK', child: Text('CHECK')),
-                                          const DropdownMenuItem(value: 'CREDIT', child: Text('CREDIT')),
                                         ],
                                         onChanged: (val) {
                                           setState(() {
@@ -459,7 +458,6 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen> {
                                       flex: 3,
                                       child: TextField(
                                         controller: p.amountController,
-                                        enabled: p.method != 'CREDIT',
                                         decoration: const InputDecoration(
                                           labelText: 'Amount',
                                           prefixIcon: Icon(Icons.attach_money, size: 16),

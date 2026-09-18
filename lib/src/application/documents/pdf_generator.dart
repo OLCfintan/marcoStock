@@ -231,6 +231,7 @@ class PdfGeneratorService {
                     if (logoImage != null) pw.Container(height: 50, margin: const pw.EdgeInsets.only(bottom: 8), child: pw.Image(logoImage)),
                     pw.Text(companyName, style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
                     if (companyAddress.isNotEmpty) pw.Text(companyAddress),
+            if (companyPhone.isNotEmpty) pw.Text(companyPhone),
                     if (companyPhone.isNotEmpty) pw.Text(companyPhone),
                     if (companyTaxId.isNotEmpty) pw.Text('Tax ID: $companyTaxId'),
                     pw.SizedBox(height: 16),
@@ -303,6 +304,7 @@ class PdfGeneratorService {
               ),
             pw.Text(companyName, style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
             if (companyAddress.isNotEmpty) pw.Text(companyAddress),
+            if (companyPhone.isNotEmpty) pw.Text(companyPhone),
             if (companyTaxId.isNotEmpty) pw.Text('Tax ID: $companyTaxId'),
             pw.SizedBox(height: 16),
             pw.Text((invoice.documentType == 'BON' ? l10n.bon : (invoice.documentType == 'TICKET' ? l10n.ticket : l10n.invoice)).toUpperCase(), style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold, color: PdfColors.blueGrey800)),
@@ -315,10 +317,11 @@ class PdfGeneratorService {
         pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.end,
           children: [
-            pw.Text(invoice.documentType == 'BON' ? l10n.pdfBonTo : l10n.pdfBillTo, style: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.grey700)),
+            pw.Text('Client:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.grey700)),
             pw.SizedBox(height: 4),
             pw.Text(client?.name ?? 'N/A', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
-            if (client?.address != null && client!.address!.isNotEmpty) pw.Text(client.address!),
+                        if (client?.address != null && client!.address!.isNotEmpty) pw.Text(client.address!),
+            if (client?.phone != null && client!.phone!.isNotEmpty) pw.Text(client.phone!),
             if (client?.contactDetails != null && client!.contactDetails!.isNotEmpty) pw.Text(client.contactDetails!),
             if (client != null) pw.Text('${l10n.pdfTotalDebt}: ${client.balance.toStringAsFixed(2)} Dhs', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.blueGrey800)),
           ],
@@ -329,7 +332,7 @@ class PdfGeneratorService {
 
   pw.Widget _buildInvoiceTable(List<InvoiceLineEntity> lines, Map<String, ProductEntity> productMap, AppLocalizations l10n) {
     return pw.TableHelper.fromTextArray(
-      headers: [l10n.pdfItem, l10n.pdfQty, l10n.pdfPrice, l10n.pdfDiscount, l10n.pdfTotal],
+      headers: [l10n.pdfItem, l10n.pdfQty, l10n.pdfPrice, l10n.pdfTotal],
       data: lines.map((line) {
         final product = productMap[line.productId];
         String productName = _localizedProductName(product, l10n.localeName);
@@ -338,7 +341,6 @@ class PdfGeneratorService {
           productName,
           line.quantity.toStringAsFixed(2),
           line.unitPrice.toStringAsFixed(2),
-          line.discount.toStringAsFixed(2),
           line.lineTotal.toStringAsFixed(2),
         ];
       }).toList(),
@@ -377,7 +379,7 @@ class PdfGeneratorService {
             pw.SizedBox(height: 8),
             _buildTotalRow('${l10n.pdfPaid}:', invoice.paidAmount.toStringAsFixed(2)),
             pw.Divider(color: PdfColors.grey400),
-            _buildTotalRow('${invoice.documentType == 'BON' ? l10n.pdfRemainingInBon : l10n.pdfRemainingInInvoice}:', balance.toStringAsFixed(2), isBold: true, color: PdfColors.red700),
+            _buildTotalRow('${l10n.pdfBalance}:', balance.toStringAsFixed(2), isBold: true, color: PdfColors.red700),
           ],
         ),
       ),
