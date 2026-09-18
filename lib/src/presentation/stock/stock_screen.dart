@@ -107,10 +107,11 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
                       const CircleAvatar(child: Icon(Icons.inventory_2)),
                     ],
                   ),
-                  title: Text('${item.productName} (Base Family)'),
+                  title: Text(item.locationId == 'MAGAZIN_01' ? item.productName : '${item.productName} (Base Family)'),
                   subtitle: Text('Ref: ${item.productReference} | Loc: ${item.locationName}'),
                   trailing: Text(
                     '${item.quantity.toStringAsFixed(2)} ${() {
+                      if (item.locationId == 'MAGAZIN_01') return 'Units';
                       final u = item.unit.toLowerCase();
                       if (['ml', 'cl', 'dl', 'l'].contains(u)) return 'L';
                       if (['mg', 'g', 'kg', 't'].contains(u)) return 'KG';

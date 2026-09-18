@@ -401,9 +401,9 @@ class SalesService {
     final product = await (_db.select(_db.products)..where((t) => t.id.equals(productId))).getSingleOrNull();
     if (product == null) return;
     
-    final baseProduct = await getDeterministicBaseProduct(_db, product);
-    String targetProductId = baseProduct.id;
-    Decimal actualQuantityToDeduct = convertQuantityToBase(quantity, product, baseProduct);
+    final trackingInfo = await getStockTrackingInfo(_db, product, quantity, locationId);
+    String targetProductId = trackingInfo.productId;
+    Decimal actualQuantityToDeduct = trackingInfo.quantity;
     
     final balanceQuery = _db.select(_db.stockBalances)..where((t) => t.productId.equals(targetProductId) & t.locationId.equals(locationId));
     final balance = await balanceQuery.getSingleOrNull();

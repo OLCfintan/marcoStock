@@ -1,3 +1,6 @@
+import '../../application/hr/hr_providers.dart';
+import '../../application/suppliers/supplier_providers.dart';
+import '../../application/clients/client_providers.dart';
 import "../documents/pdf_preview_screen.dart";
 import '../../application/auth/auth_service.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -162,7 +165,22 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
   Widget build(BuildContext context) {
     final db = ref.watch(databaseProvider);
     
-    final balanceColor = widget.balance > Decimal.zero ? Colors.red : Colors.green;
+    Decimal currentBalance = widget.balance;
+    if (widget.type == HumanType.client) {
+      final clientsAsync = ref.watch(clientsStreamProvider);
+      final c = clientsAsync.value?.where((e) => e.id == widget.id).firstOrNull;
+      if (c != null) currentBalance = c.balance;
+    } else if (widget.type == HumanType.supplier) {
+      final suppliersAsync = ref.watch(suppliersStreamProvider);
+      final s = suppliersAsync.value?.where((e) => e.id == widget.id).firstOrNull;
+      if (s != null) currentBalance = s.balance;
+    } else if (widget.type == HumanType.employee) {
+      final employeesAsync = ref.watch(employeesStreamProvider);
+      final e = employeesAsync.value?.where((e) => e.id == widget.id).firstOrNull;
+      if (e != null) currentBalance = e.remainingSalary;
+    }
+    
+    final balanceColor = currentBalance > Decimal.zero ? Colors.red : Colors.green;
     final String balanceLabel = widget.type == HumanType.employee ? 'Salary Owed' : 'Balance';
 
     return Scaffold(
@@ -233,7 +251,7 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(balanceLabel, style: const TextStyle(fontSize: 14, color: Colors.grey)),
-                    Text('${widget.balance.toStringAsFixed(2)} Dhs', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: balanceColor)),
+                    Text('${currentBalance.toStringAsFixed(2)} Dhs', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: balanceColor)),
                   ],
                 ),
               ],

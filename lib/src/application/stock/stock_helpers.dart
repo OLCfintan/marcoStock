@@ -112,3 +112,27 @@ Decimal convertQuantityToBase(Decimal quantity, ProductEntity variant, ProductEn
   // Return the pure magnitude in SI units (divide by 1 since SI unit size is mathematically 1)
   return convertedMagnitude;
 }
+
+class StockTrackingInfo {
+  final String productId;
+  final Decimal quantity;
+
+  StockTrackingInfo(this.productId, this.quantity);
+}
+
+Future<StockTrackingInfo> getStockTrackingInfo(
+  AppDatabase db,
+  ProductEntity product,
+  Decimal physicalQuantity,
+  String locationId,
+) async {
+  // Magazin tracks independent physical counts
+  if (locationId == 'MAGAZIN_01') {
+    return StockTrackingInfo(product.id, physicalQuantity);
+  }
+  
+  // Base warehouse tracks mathematically aggregated SI units at the family head
+  final baseProduct = await getDeterministicBaseProduct(db, product);
+  final siUnits = convertQuantityToBase(physicalQuantity, product, baseProduct);
+  return StockTrackingInfo(baseProduct.id, siUnits);
+}

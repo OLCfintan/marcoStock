@@ -1,3 +1,6 @@
+import '../../application/hr/hr_providers.dart';
+import '../../application/suppliers/supplier_providers.dart';
+import '../../application/clients/client_providers.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:decimal/decimal.dart';
@@ -107,7 +110,22 @@ class _PaymentLedgerDialogState extends ConsumerState<PaymentLedgerDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final remainingBalance = widget.initialBalance - _totalPaid;
+    Decimal currentBalance = widget.initialBalance;
+    if (widget.clientId != null) {
+      final clientsAsync = ref.watch(clientsStreamProvider);
+      final c = clientsAsync.value?.where((e) => e.id == widget.clientId).firstOrNull;
+      if (c != null) currentBalance = c.balance;
+    } else if (widget.supplierId != null) {
+      final suppliersAsync = ref.watch(suppliersStreamProvider);
+      final s = suppliersAsync.value?.where((e) => e.id == widget.supplierId).firstOrNull;
+      if (s != null) currentBalance = s.balance;
+    } else if (widget.employeeId != null) {
+      final employeesAsync = ref.watch(employeesStreamProvider);
+      final e = employeesAsync.value?.where((e) => e.id == widget.employeeId).firstOrNull;
+      if (e != null) currentBalance = e.remainingSalary;
+    }
+    
+    final remainingBalance = currentBalance - _totalPaid;
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -125,7 +143,7 @@ class _PaymentLedgerDialogState extends ConsumerState<PaymentLedgerDialog> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text('Current Balance:', style: TextStyle(fontSize: 16)),
-                Text('${widget.initialBalance.toStringAsFixed(2)} Dhs', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                Text('${currentBalance.toStringAsFixed(2)} Dhs', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ],
             ),
             const SizedBox(height: 8),
