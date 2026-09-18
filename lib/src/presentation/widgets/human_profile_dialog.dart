@@ -5,7 +5,6 @@ import '../../application/hr/hr_providers.dart';
 import '../../application/suppliers/supplier_providers.dart';
 import '../../application/clients/client_providers.dart';
 import "../documents/pdf_preview_screen.dart";
-import '../../application/auth/auth_service.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -319,28 +318,29 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
                       Text('${inv.total.toStringAsFixed(2)} Dhs - ${inv.status}', style: TextStyle(fontWeight: FontWeight.bold, color: inv.status == 'PAID' ? Colors.green : (inv.status == 'PARTIAL' ? Colors.orange : Colors.red))),
                     ]
                   ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(icon: const Icon(Icons.print, color: Colors.blueGrey, size: 20), tooltip: 'Print Invoice', onPressed: () async {
+                  trailing: PopupMenuButton<String>(
+                    onSelected: (value) async {
+                      if (value == 'print') {
                         final options = await PrintDialog.show(context, defaultLanguageCode: Localizations.localeOf(context).languageCode);
                         if (options != null && context.mounted) {
                           Navigator.push(context, MaterialPageRoute(builder: (_) => PdfPreviewScreen(title: "Invoice ${inv.invoiceNumber}", buildPdf: () => ref.read(pdfGeneratorProvider).generateInvoicePdf(inv.id, options))));
                         }
-                      }),
-                      
-                        IconButton(icon: const Icon(Icons.attach_money, color: Colors.green, size: 20), tooltip: 'Record Payment', onPressed: () {
-                          PaymentDialog.show(context, entityId: inv.id, entityType: 'INVOICE', partnerId: widget.id, currentTotal: inv.total, currentlyPaid: inv.paidAmount);
-                        }),
-                      IconButton(icon: const Icon(Icons.receipt_long, color: Colors.teal, size: 20), tooltip: 'View Payments & Checks', onPressed: () {
+                      } else if (value == 'record_payment') {
+                        PaymentDialog.show(context, entityId: inv.id, entityType: 'INVOICE', partnerId: widget.id, currentTotal: inv.total, currentlyPaid: inv.paidAmount);
+                      } else if (value == 'view_payments') {
                         ViewPaymentsDialog.show(context, entityId: inv.id, entityType: 'INVOICE');
-                      }),
+                      } else if (value == 'delete') {
+                        final userId = ref.read(currentUserProvider)?.id ?? '';
+                        await ref.read(salesServiceProvider).deleteInvoice(inv.id, userId);
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      PopupMenuItem(value: 'print', child: Text(AppLocalizations.of(context)?.printDocument ?? 'Print')),
+                      PopupMenuItem(value: 'record_payment', child: Text(AppLocalizations.of(context)?.recordPayment ?? 'Record Payment')),
+                      PopupMenuItem(value: 'view_payments', child: Text(AppLocalizations.of(context)?.viewPaymentsChecks ?? 'View Payments')),
                       if (ref.watch(currentUserProvider)?.role == 'ADMIN')
-                         IconButton(icon: const Icon(Icons.delete, color: Colors.red, size: 20), onPressed: () async {
-                             final userId = ref.read(currentUserProvider)?.id ?? '';
-                             await ref.read(salesServiceProvider).deleteInvoice(inv.id, userId);
-                         }),
-                    ]
+                        PopupMenuItem(value: 'delete', child: Text(AppLocalizations.of(context)?.deleteStr ?? 'Delete', style: const TextStyle(color: Colors.red))),
+                    ],
                   ),
                 ),
               );
@@ -378,28 +378,29 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
                       Text('${pur.total.toStringAsFixed(2)} Dhs - ${pur.status}', style: TextStyle(fontWeight: FontWeight.bold, color: pur.status == 'PAID' ? Colors.green : (pur.status == 'PARTIAL' ? Colors.orange : Colors.red))),
                     ]
                   ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(icon: const Icon(Icons.print, color: Colors.blueGrey, size: 20), tooltip: 'Print Purchase', onPressed: () async {
+                  trailing: PopupMenuButton<String>(
+                    onSelected: (value) async {
+                      if (value == 'print') {
                         final options = await PrintDialog.show(context, defaultLanguageCode: Localizations.localeOf(context).languageCode);
                         if (options != null && context.mounted) {
                           Navigator.push(context, MaterialPageRoute(builder: (_) => PdfPreviewScreen(title: "Purchase ${pur.purchaseNumber}", buildPdf: () => ref.read(pdfGeneratorProvider).generatePurchasePdf(pur.id, options))));
                         }
-                      }),
-                      
-                        IconButton(icon: const Icon(Icons.attach_money, color: Colors.green, size: 20), tooltip: 'Record Payment', onPressed: () {
-                          PaymentDialog.show(context, entityId: pur.id, entityType: 'PURCHASE', partnerId: widget.id, currentTotal: pur.total, currentlyPaid: pur.paidAmount);
-                        }),
-                      IconButton(icon: const Icon(Icons.receipt_long, color: Colors.teal, size: 20), tooltip: 'View Payments & Checks', onPressed: () {
+                      } else if (value == 'record_payment') {
+                        PaymentDialog.show(context, entityId: pur.id, entityType: 'PURCHASE', partnerId: widget.id, currentTotal: pur.total, currentlyPaid: pur.paidAmount);
+                      } else if (value == 'view_payments') {
                         ViewPaymentsDialog.show(context, entityId: pur.id, entityType: 'PURCHASE');
-                      }),
+                      } else if (value == 'delete') {
+                        final userId = ref.read(currentUserProvider)?.id ?? '';
+                        await ref.read(purchaseServiceProvider).deletePurchase(pur.id, userId);
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      PopupMenuItem(value: 'print', child: Text(AppLocalizations.of(context)?.printDocument ?? 'Print')),
+                      PopupMenuItem(value: 'record_payment', child: Text(AppLocalizations.of(context)?.recordPayment ?? 'Record Payment')),
+                      PopupMenuItem(value: 'view_payments', child: Text(AppLocalizations.of(context)?.viewPaymentsChecks ?? 'View Payments')),
                       if (ref.watch(currentUserProvider)?.role == 'ADMIN')
-                         IconButton(icon: const Icon(Icons.delete, color: Colors.red, size: 20), onPressed: () async {
-                             final userId = ref.read(currentUserProvider)?.id ?? '';
-                             await ref.read(purchaseServiceProvider).deletePurchase(pur.id, userId);
-                         }),
-                    ]
+                        PopupMenuItem(value: 'delete', child: Text(AppLocalizations.of(context)?.deleteStr ?? 'Delete', style: const TextStyle(color: Colors.red))),
+                    ],
                   ),
                 ),
               );
@@ -474,15 +475,22 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (ref.watch(currentUserProvider)?.role == 'ADMIN')
-                IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () async {
-                   final db = ref.read(databaseProvider);
-                   await (db.update(db.payments)..where((t) => t.id.equals(payment.id))).write(const PaymentsCompanion(isActive: drift.Value(false)));
-                }),
               Text(payment.status, style: TextStyle(
                 color: payment.status == 'CLEARED' ? Colors.green : Colors.orange,
                 fontWeight: FontWeight.bold
               )),
+              if (ref.watch(currentUserProvider)?.role == 'ADMIN')
+                PopupMenuButton<String>(
+                  onSelected: (val) async {
+                    if (val == 'delete') {
+                       final db = ref.read(databaseProvider);
+                       await (db.update(db.payments)..where((t) => t.id.equals(payment.id))).write(const PaymentsCompanion(isActive: drift.Value(false)));
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    PopupMenuItem(value: 'delete', child: Text(AppLocalizations.of(context)?.deleteStr ?? 'Delete', style: const TextStyle(color: Colors.red))),
+                  ],
+                ),
             ]
           ),
         );

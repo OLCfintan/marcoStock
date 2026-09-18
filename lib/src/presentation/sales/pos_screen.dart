@@ -22,21 +22,27 @@ class PosScreen extends ConsumerStatefulWidget {
 }
 
 class _PosScreenState extends ConsumerState<PosScreen> {
-  String? _selectedClientId;
-  String _selectedDocumentType = 'BON';
-  final List<SaleLineRequest> _cart = [];
-  final List<_PaymentEntry> _payments = [_PaymentEntry(method: 'CASH')];
-  
+  final List<PosSession> _sessions = [];
+  int _activeSessionIndex = 0;
+
+  PosSession get _activeSession => _sessions[_activeSessionIndex];
+
   final TextEditingController _barcodeController = TextEditingController();
   final FocusNode _barcodeFocusNode = FocusNode();
 
+  @override
+  void initState() {
+    super.initState();
+    _sessions.add(PosSession(id: DateTime.now().millisecondsSinceEpoch.toString(), title: 'Cart 1'));
+  }
+
   Decimal get _cartTotal {
-    return _cart.fold(Decimal.zero, (total, line) => total + line.calculatedTotal);
+    return _activeSession.cart.fold(Decimal.zero, (total, line) => total + line.calculatedTotal);
   }
 
   Decimal get _totalPaid {
     Decimal total = Decimal.zero;
-    for (final p in _payments) {
+    for (final p in _activeSession.payments) {
       if (p.method != 'CREDIT') {
         final val = Decimal.tryParse(p.amountController.text) ?? Decimal.zero;
         total += val;
@@ -54,15 +60,15 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   void dispose() {
     _barcodeController.dispose();
     _barcodeFocusNode.dispose();
-    for (var p in _payments) {
-      p.amountController.dispose();
+    for (var s in _sessions) {
+      s.dispose();
     }
     super.dispose();
   }
 
   Future<void> _addToCart(Product p) async {
-    final existingIndex = _cart.indexWhere((l) => l.productId == p.id);
-    final Decimal initialQty = existingIndex >= 0 ? _cart[existingIndex].quantity : Decimal.one;
+    final existingIndex = _activeSession.cart.indexWhere((l) => l.productId == p.id);
+    final Decimal initialQty = existingIndex >= 0 ? _activeSession.cart[existingIndex].quantity : Decimal.one;
 
     final Decimal? newQty = await showDialog<Decimal>(
       context: context,
@@ -76,7 +82,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       if (newQty <= Decimal.zero) {
         setState(() {
           if (existingIndex >= 0) {
-            _cart.removeAt(existingIndex);
+            _activeSession.cart.removeAt(existingIndex);
           }
         });
         return;
@@ -84,15 +90,15 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
       setState(() {
         if (existingIndex >= 0) {
-          final existing = _cart[existingIndex];
-          _cart[existingIndex] = SaleLineRequest(
+          final existing = _activeSession.cart[existingIndex];
+          _activeSession.cart[existingIndex] = SaleLineRequest(
             productId: existing.productId,
             quantity: newQty,
             unitPrice: existing.unitPrice,
             discount: existing.discount,
           );
         } else {
-          _cart.add(SaleLineRequest(
+          _activeSession.cart.add(SaleLineRequest(
             productId: p.id,
             quantity: newQty,
             unitPrice: p.sellingPrice,
@@ -123,12 +129,12 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   }
 
   Future<void> _processSale() async {
-    if (_selectedClientId == null || _cart.isEmpty) {
+    if (_activeSession.selectedClientId == null || _activeSession.cart.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.pleaseSelectClientAndProducts)));
       return;
     }
 
-    final paymentRequests = _payments.map((p) {
+    final paymentRequests = _activeSession.payments.map((p) {
       Decimal amount = Decimal.tryParse(p.amountController.text) ?? Decimal.zero;
       return SalePaymentRequest(
         amount: amount,
@@ -137,7 +143,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       );
     }).toList();
 
-    final total = _cart.fold(Decimal.zero, (sum, line) => sum + ((line.quantity * line.unitPrice) - line.discount));
+    final total = _activeSession.cart.fold(Decimal.zero, (sum, line) => sum + ((line.quantity * line.unitPrice) - line.discount));
     final paidAmount = paymentRequests.fold(Decimal.zero, (sum, p) => sum + p.amount);
     
     if (paidAmount > total) {
@@ -146,10 +152,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     }
 
     final req = SaleRequest(
-      documentType: _selectedDocumentType,
-      clientId: _selectedClientId!,
+      documentType: _activeSession.selectedDocumentType,
+      clientId: _activeSession.selectedClientId!,
       currentUserId: 'ADMIN_01', 
-      lines: _cart,
+      lines: _activeSession.cart,
       payments: paymentRequests,
     );
 
@@ -158,12 +164,14 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.saleCompletedSuccessfully)));
         setState(() { 
-          _cart.clear(); 
-          for (var p in _payments) {
-            p.amountController.dispose();
+          _activeSession.dispose();
+          _sessions.removeAt(_activeSessionIndex);
+          if (_sessions.isEmpty) {
+            _sessions.add(PosSession(id: DateTime.now().millisecondsSinceEpoch.toString(), title: 'Cart 1'));
+            _activeSessionIndex = 0;
+          } else if (_activeSessionIndex >= _sessions.length) {
+            _activeSessionIndex = _sessions.length - 1;
           }
-          _payments.clear();
-          _payments.add(_PaymentEntry(method: 'CASH'));
         });
       }
     } catch (e) {
@@ -239,10 +247,70 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             color: theme.colorScheme.surface,
             child: Column(
               children: [
+                // Sessions Tabs
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      ..._sessions.asMap().entries.map((entry) {
+                        final idx = entry.key;
+                        final session = entry.value;
+                        final isActive = idx == _activeSessionIndex;
+                        return InkWell(
+                          onTap: () {
+                            setState(() {
+                              _activeSessionIndex = idx;
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: isActive ? theme.colorScheme.primaryContainer : theme.colorScheme.surfaceContainerHighest,
+                              border: Border(bottom: BorderSide(color: isActive ? theme.colorScheme.primary : Colors.transparent, width: 2)),
+                            ),
+                            child: Row(
+                              children: [
+                                Text(session.title, style: TextStyle(fontWeight: isActive ? FontWeight.bold : FontWeight.normal)),
+                                const SizedBox(width: 8),
+                                InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      session.dispose();
+                                      _sessions.removeAt(idx);
+                                      if (_sessions.isEmpty) {
+                                        _sessions.add(PosSession(id: DateTime.now().millisecondsSinceEpoch.toString(), title: 'Cart 1'));
+                                        _activeSessionIndex = 0;
+                                      } else if (_activeSessionIndex >= _sessions.length) {
+                                        _activeSessionIndex = _sessions.length - 1;
+                                      }
+                                    });
+                                  },
+                                  child: const Icon(Icons.close, size: 16),
+                                )
+                              ],
+                            ),
+                          ),
+                        );
+                      }),
+                      IconButton(
+                        icon: const Icon(Icons.add),
+                        onPressed: () {
+                          setState(() {
+                            _sessions.add(PosSession(
+                              id: DateTime.now().millisecondsSinceEpoch.toString(), 
+                              title: 'Cart ${_sessions.length + 1}'
+                            ));
+                            _activeSessionIndex = _sessions.length - 1;
+                          });
+                        },
+                      )
+                    ],
+                  ),
+                ),
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: DropdownButtonFormField<String>(
-                    value: _selectedDocumentType,
+                    value: _activeSession.selectedDocumentType,
                     decoration: InputDecoration(
                       labelText: 'Document Type',
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -258,7 +326,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                       DropdownMenuItem(value: 'BON', child: Text(AppLocalizations.of(context)!.bon)),
                       DropdownMenuItem(value: 'FACTURE', child: Text(AppLocalizations.of(context)!.invoice)),
                     ],
-                    onChanged: (val) => setState(() => _selectedDocumentType = val!),
+                    onChanged: (val) => setState(() => _activeSession.selectedDocumentType = val!),
                   ),
                 ),
                 Padding(
@@ -290,7 +358,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                     },
                     onSelected: (client) {
                       setState(() {
-                        _selectedClientId = client.id;
+                        _activeSession.selectedClientId = client.id;
                       });
                     },
                   ),
@@ -312,10 +380,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                           child: ListView.separated(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
-                            itemCount: _cart.length,
+                            itemCount: _activeSession.cart.length,
                             separatorBuilder: (context, index) => const Divider(height: 1),
                             itemBuilder: (context, index) {
-                              final line = _cart[index];
+                              final line = _activeSession.cart[index];
                               final product = productMap[line.productId] ?? productsAsync.valueOrNull!.first;
                               final variantLabel = product.localizedLabel(loc);
                               final lineTotal = line.calculatedTotal;
@@ -360,9 +428,9 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                             final newPrice = Decimal.tryParse(priceCtrl.text) ?? line.unitPrice;
                                             setState(() {
                                               if (newQty <= Decimal.zero) {
-                                                _cart.removeAt(index);
+                                                _activeSession.cart.removeAt(index);
                                               } else {
-                                                _cart[index] = SaleLineRequest(
+                                                _activeSession.cart[index] = SaleLineRequest(
                                                   productId: product.id,
                                                   quantity: newQty,
                                                   unitPrice: newPrice,
@@ -442,7 +510,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                       const Divider(height: 24),
                       
                       // Payments List
-                      ..._payments.asMap().entries.map((entry) {
+                      ..._activeSession.payments.asMap().entries.map((entry) {
                         final idx = entry.key;
                         final p = entry.value;
                         return Container(
@@ -500,7 +568,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                     onPressed: () {
                                       setState(() {
                                         p.amountController.dispose();
-                                        _payments.removeAt(idx);
+                                        _activeSession.payments.removeAt(idx);
                                       });
                                     },
                                   ),
@@ -522,7 +590,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                       TextButton.icon(
                         onPressed: () {
                           setState(() {
-                            _payments.add(_PaymentEntry(
+                            _activeSession.payments.add(_PaymentEntry(
                               method: 'CASH',
                               initialAmount: _remainingBalance > Decimal.zero ? _remainingBalance.toStringAsFixed(2) : '',
                             ));
@@ -610,3 +678,21 @@ class _PaymentEntry {
   }
 }
 
+class PosSession {
+  final String id;
+  String title;
+  String? selectedClientId;
+  String selectedDocumentType = 'BON';
+  List<SaleLineRequest> cart = [];
+  List<_PaymentEntry> payments = [];
+
+  PosSession({required this.id, required this.title}) {
+    payments.add(_PaymentEntry(method: 'CASH'));
+  }
+
+  void dispose() {
+    for (var p in payments) {
+      p.amountController.dispose();
+    }
+  }
+}

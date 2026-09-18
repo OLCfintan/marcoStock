@@ -36,13 +36,28 @@ class _PaymentEntry {
 }
 
 class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
-  String? _selectedSupplierId;
   final String _selectedDocumentType = 'FACTURE';
-  final List<PurchaseLineRequest> _cart = [];
-  final List<_PaymentEntry> _payments = [_PaymentEntry(method: 'CASH')];
+  final List<PurchaseSession> _sessions = [];
+  int _activeSessionIndex = 0;
+
+  PurchaseSession get _activeSession => _sessions[_activeSessionIndex];
+
+  @override
+  void initState() {
+    super.initState();
+    _sessions.add(PurchaseSession(id: DateTime.now().millisecondsSinceEpoch.toString(), title: 'Cart 1'));
+  }
+
+  @override
+  void dispose() {
+    for (final s in _sessions) {
+      s.dispose();
+    }
+    super.dispose();
+  }
 
   Decimal get _cartTotal {
-    return _cart.fold(
+    return _activeSession.cart.fold(
       Decimal.zero,
       (sum, line) => sum + line.calculatedTotal,
     );
@@ -50,7 +65,7 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
 
   Decimal get _totalPaid {
     Decimal total = Decimal.zero;
-    for (final p in _payments) {
+    for (final p in _activeSession.payments) {
       if (p.method != 'CREDIT') {
         final val = Decimal.tryParse(p.amountController.text) ?? Decimal.zero;
         total += val;
@@ -65,9 +80,9 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
   }
 
   Future<void> _editQuantity(Product product, Decimal initialQty) async {
-    final index = _cart.indexWhere((item) => item.productId == product.id);
+    final index = _activeSession.cart.indexWhere((item) => item.productId == product.id);
     if (index < 0) return;
-    final old = _cart[index];
+    final old = _activeSession.cart[index];
     
     final qtyCtrl = TextEditingController(text: initialQty.toString());
     final priceCtrl = TextEditingController(text: old.unitPrice.toStringAsFixed(2));
@@ -99,9 +114,9 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
               final newPrice = Decimal.tryParse(priceCtrl.text) ?? old.unitPrice;
               setState(() {
                 if (newQty <= Decimal.zero) {
-                  _cart.removeWhere((item) => item.productId == product.id);
+                  _activeSession.cart.removeWhere((item) => item.productId == product.id);
                 } else {
-                  _cart[index] = PurchaseLineRequest(
+                  _activeSession.cart[index] = PurchaseLineRequest(
                     productId: old.productId,
                     quantity: newQty,
                     unitPrice: newPrice,
@@ -118,12 +133,12 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
   }
 
   void _addToPurchase(Product product) {
-    final index = _cart.indexWhere((item) => item.productId == product.id);
+    final index = _activeSession.cart.indexWhere((item) => item.productId == product.id);
     if (index >= 0) {
-      _editQuantity(product, _cart[index].quantity);
+      _editQuantity(product, _activeSession.cart[index].quantity);
     } else {
       setState(() {
-        _cart.add(PurchaseLineRequest(
+        _activeSession.cart.add(PurchaseLineRequest(
           productId: product.id,
           quantity: Decimal.parse('1'),
           unitPrice: product.purchasePrice,
@@ -134,7 +149,7 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
   }
 
   Future<void> _processPurchase() async {
-    if (_selectedSupplierId == null || _cart.isEmpty) {
+    if (_activeSession.selectedSupplierId == null || _activeSession.cart.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppLocalizations.of(context)?.pleaseSelectClientAndProducts ?? 'Please select a supplier and add products.')),
       );
@@ -146,7 +161,7 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
       return;
     }
 
-    final paymentReqs = _payments.map((p) => PurchasePaymentRequest(
+    final paymentReqs = _activeSession.payments.map((p) => PurchasePaymentRequest(
       amount: Decimal.tryParse(p.amountController.text) ?? Decimal.zero,
       method: p.method,
       checkImagePath: p.checkImagePath,
@@ -154,9 +169,9 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
 
     final req = PurchaseRequest(
       documentType: _selectedDocumentType,
-      supplierId: _selectedSupplierId!,
+      supplierId: _activeSession.selectedSupplierId!,
       currentUserId: 'ADMIN_01', 
-      lines: _cart,
+      lines: _activeSession.cart,
       payments: paymentReqs,
     );
 
@@ -167,10 +182,14 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
           SnackBar(content: Text(AppLocalizations.of(context)?.savedSuccessfully ?? 'Purchase recorded successfully!')),
         );
         setState(() {
-          _cart.clear();
-          for (var p in _payments) { p.amountController.dispose(); }
-          _payments.clear();
-          _payments.add(_PaymentEntry(method: 'CASH'));
+          _activeSession.dispose();
+          _sessions.removeAt(_activeSessionIndex);
+          if (_sessions.isEmpty) {
+            _sessions.add(PurchaseSession(id: DateTime.now().millisecondsSinceEpoch.toString(), title: 'Cart 1'));
+          }
+          if (_activeSessionIndex >= _sessions.length) {
+            _activeSessionIndex = _sessions.length - 1;
+          }
         });
       }
     } catch (e) {
@@ -257,16 +276,79 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
     final cartWidget = SingleChildScrollView(
       child: Column(
         children: [
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                ..._sessions.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final session = entry.value;
+                  final isActive = index == _activeSessionIndex;
+                  return InkWell(
+                    onTap: () {
+                      setState(() {
+                        _activeSessionIndex = index;
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isActive ? Colors.teal.shade100 : Colors.grey.shade200,
+                        border: Border(
+                          bottom: BorderSide(
+                            color: isActive ? Colors.teal : Colors.transparent,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Text(session.title, style: TextStyle(fontWeight: isActive ? FontWeight.bold : FontWeight.normal)),
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                session.dispose();
+                                _sessions.removeAt(index);
+                                if (_sessions.isEmpty) {
+                                  _sessions.add(PurchaseSession(id: DateTime.now().millisecondsSinceEpoch.toString(), title: 'Cart 1'));
+                                  _activeSessionIndex = 0;
+                                } else if (_activeSessionIndex >= _sessions.length) {
+                                  _activeSessionIndex = _sessions.length - 1;
+                                }
+                              });
+                            },
+                            child: const Icon(Icons.close, size: 16),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+                IconButton(
+                  icon: const Icon(Icons.add),
+                  onPressed: () {
+                    setState(() {
+                      _sessions.add(PurchaseSession(id: DateTime.now().millisecondsSinceEpoch.toString(), title: 'Cart ${_sessions.length + 1}'));
+                      _activeSessionIndex = _sessions.length - 1;
+                    });
+                  },
+                ),
+              ],
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: suppliersAsync.when(
               data: (suppliers) => AutocompleteSearchField<Supplier>(
+                key: ValueKey(_activeSession.id),
+                initialValue: suppliers.where((s) => s.id == _activeSession.selectedSupplierId).firstOrNull,
                 displayStringForOption: (s) => '${s.name} (${s.type})',
                 getSuggestions: (pattern) async {
                   if (pattern.isEmpty) return suppliers;
                   return suppliers.where((s) => s.name.toLowerCase().contains(pattern.toLowerCase())).toList();
                 },
-                onSelected: (s) => setState(() => _selectedSupplierId = s.id),
+                onSelected: (s) => setState(() => _activeSession.selectedSupplierId = s.id),
                 labelText: l10n?.suppliers ?? 'Search Supplier...',
               ),
               loading: () => const CircularProgressIndicator(),
@@ -280,9 +362,9 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
               return ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: _cart.length,
+                itemCount: _activeSession.cart.length,
                 itemBuilder: (context, index) {
-                  final line = _cart[index];
+                  final line = _activeSession.cart[index];
                   final lineTotal = line.calculatedTotal;
                   
                   final product = productMap[line.productId] ?? Product(id: line.productId, name: 'Unknown', reference: '', purchasePrice: Decimal.zero, sellingPrice: Decimal.zero, minimumStock: Decimal.zero, baseMinimumStock: Decimal.zero, magazinMinimumStock: Decimal.zero, packagingType: 'Unit', unitsPerBox: 1, unitSize: Decimal.one, unit: 'Unit', isActive: true, createdAt: DateTime.now(), updatedAt: DateTime.now());
@@ -334,7 +416,7 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
               const Divider(height: 24),
               
               // Payments List
-              ..._payments.asMap().entries.map((entry) {
+              ..._activeSession.payments.asMap().entries.map((entry) {
                 final idx = entry.key;
                 final p = entry.value;
                 return Container(
@@ -387,13 +469,13 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
                               onChanged: (val) => setState(() {}),
                             ),
                           ),
-                          if (_payments.length > 1)
+                          if (_activeSession.payments.length > 1)
                             IconButton(
                               icon: const Icon(Icons.delete, color: Colors.red),
                               onPressed: () {
                                 setState(() {
                                   p.amountController.dispose();
-                                  _payments.removeAt(idx);
+                                  _activeSession.payments.removeAt(idx);
                                 });
                               },
                             ),
@@ -415,7 +497,7 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
               TextButton.icon(
                 onPressed: () {
                   setState(() {
-                    _payments.add(_PaymentEntry(method: 'CASH'));
+                    _activeSession.payments.add(_PaymentEntry(method: 'CASH'));
                   });
                 },
                 icon: const Icon(Icons.add),
@@ -482,5 +564,23 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
         },
       ),
     );
+  }
+}
+
+class PurchaseSession {
+  final String id;
+  String title;
+  String? selectedSupplierId;
+  List<PurchaseLineRequest> cart = [];
+  List<_PaymentEntry> payments = [];
+
+  PurchaseSession({required this.id, required this.title}) {
+    payments.add(_PaymentEntry(method: 'CASH'));
+  }
+
+  void dispose() {
+    for (var p in payments) {
+      p.amountController.dispose();
+    }
   }
 }
