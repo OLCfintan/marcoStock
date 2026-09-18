@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:path/path.dart' as p;
+import 'package:sqlite3/sqlite3.dart' as sqlite;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:file_picker/file_picker.dart';
@@ -156,22 +157,77 @@ class BackupService {
       throw Exception('Valid Marko-Save system_backup.sqlite not found in the selected folder!');
     }
 
-    // Replace Database
     final appDocs = await getApplicationDocumentsDirectory();
-    final dbFile = File(p.join(appDocs.path, 'markogroup_erp.sqlite'));
-    
-    // Copy new DB
-    await systemBackup.copy(dbFile.path);
-    
-    // Wait for the app to be restarted or we could hot-reload.
-    // Let's copy all images we can find in Marko-Save to an imported_images directory and fix paths
-    final importedImagesDir = Directory(p.join(appDocs.path, 'imported_images'));
-    if (!await importedImagesDir.exists()) {
-      await importedImagesDir.create(recursive: true);
+    final markoAssetsDir = Directory(p.join(appDocs.path, 'marko_assets'));
+    if (!await markoAssetsDir.exists()) {
+      await markoAssetsDir.create(recursive: true);
     }
-    
-    // We'll leave the image path remapping out if the paths are still valid,
-    // but typically to be super robust we'd scan and UPDATE tables.
-    // For now, restoring the database restores 100% of the mathematical state correctly!
+
+    // 1. Copy backup to a temporary file so we can safely mutate image paths BEFORE overwriting active DB
+    final tempDbFile = File(p.join(appDocs.path, 'temp_restore.sqlite'));
+    await systemBackup.copy(tempDbFile.path);
+
+    // 2. Open temporary DB with raw sqlite3
+    final tempDb = sqlite.sqlite3.open(tempDbFile.path);
+
+    // 3. Process Products Images Dynamic Mapping
+    final products = tempDb.select("SELECT id, imagePath FROM products WHERE imagePath IS NOT NULL AND imagePath != '';");
+    for (var row in products) {
+      final id = row['id'] as String;
+      final oldPath = row['imagePath'] as String;
+      final basename = p.basename(oldPath);
+      
+      final expectedExportPath = File(p.join(srcDir.path, 'Products', 'images', '${id}_$basename'));
+      final newAssetPath = File(p.join(markoAssetsDir.path, 'prod_${id}_$basename'));
+      
+      if (await expectedExportPath.exists()) {
+        await expectedExportPath.copy(newAssetPath.path);
+        tempDb.execute("UPDATE products SET imagePath = ? WHERE id = ?", [newAssetPath.path, id]);
+      }
+    }
+
+    // 4. Process Clients Images Dynamic Mapping
+    final clients = tempDb.select("SELECT id, name, imagePath FROM clients WHERE imagePath IS NOT NULL AND imagePath != '';");
+    for (var row in clients) {
+      final id = row['id'] as String;
+      final name = row['name'] as String;
+      final oldPath = row['imagePath'] as String;
+      final basename = p.basename(oldPath);
+      
+      final cleanName = _cleanFileName(name);
+      final expectedExportPath = File(p.join(srcDir.path, 'Clients', cleanName, 'profileImage_$basename'));
+      final newAssetPath = File(p.join(markoAssetsDir.path, 'client_${id}_$basename'));
+      
+      if (await expectedExportPath.exists()) {
+        await expectedExportPath.copy(newAssetPath.path);
+        tempDb.execute("UPDATE clients SET imagePath = ? WHERE id = ?", [newAssetPath.path, id]);
+      }
+    }
+
+    // 5. Process Suppliers Images Dynamic Mapping
+    final suppliers = tempDb.select("SELECT id, name, imagePath FROM suppliers WHERE imagePath IS NOT NULL AND imagePath != '';");
+    for (var row in suppliers) {
+      final id = row['id'] as String;
+      final name = row['name'] as String;
+      final oldPath = row['imagePath'] as String;
+      final basename = p.basename(oldPath);
+      
+      final cleanName = _cleanFileName(name);
+      final expectedExportPath = File(p.join(srcDir.path, 'Suppliers', cleanName, 'profileImage_$basename'));
+      final newAssetPath = File(p.join(markoAssetsDir.path, 'supplier_${id}_$basename'));
+      
+      if (await expectedExportPath.exists()) {
+        await expectedExportPath.copy(newAssetPath.path);
+        tempDb.execute("UPDATE suppliers SET imagePath = ? WHERE id = ?", [newAssetPath.path, id]);
+      }
+    }
+
+    tempDb.dispose();
+
+    // 6. Execute Algebric Replacement of active DB
+    final dbFile = File(p.join(appDocs.path, 'markogroup_erp.sqlite'));
+    await tempDbFile.copy(dbFile.path);
+    await tempDbFile.delete(); // Cleanup
   }
 }
+
