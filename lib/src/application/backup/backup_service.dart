@@ -32,7 +32,10 @@ class BackupService {
 
     final db = await _db;
 
-    // 1. Backup raw database
+    // 1. Force a WAL checkpoint to ensure all data is written to the main .sqlite file before copying
+    await db.customStatement('PRAGMA wal_checkpoint(TRUNCATE);');
+
+    // Backup raw database
     final appDocs = await getApplicationDocumentsDirectory();
     final dbFile = File(p.join(appDocs.path, 'markogroup_erp.sqlite'));
     final systemBackupFile = File(p.join(destDir.path, 'system_backup.sqlite'));
@@ -255,6 +258,13 @@ class BackupService {
     // 6. Execute Algebric Replacement of active DB
     final dbFile = File(p.join(appDocs.path, 'markogroup_erp.sqlite'));
     await tempDbFile.copy(dbFile.path);
+    
+    // Crucial: Delete WAL and SHM files so they don't overwrite our newly imported DB
+    final walFile = File('${dbFile.path}-wal');
+    final shmFile = File('${dbFile.path}-shm');
+    if (await walFile.exists()) await walFile.delete();
+    if (await shmFile.exists()) await shmFile.delete();
+
     await tempDbFile.delete(); // Cleanup
   }
 }
