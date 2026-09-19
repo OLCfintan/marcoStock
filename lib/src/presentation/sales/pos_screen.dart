@@ -35,6 +35,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
   final TextEditingController _barcodeController = TextEditingController();
   final FocusNode _barcodeFocusNode = FocusNode();
+  Set<String> _multiSelectedProductIds = {};
 
   @override
   void initState() {
@@ -94,6 +95,65 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           discount: line.discount,
         );
       }
+    }
+  }
+
+  Future<void> _addMultiSelectedToCart(List<Product> allProducts) async {
+    final qtyController = TextEditingController(text: '1');
+    final Decimal? qty = await showDialog<Decimal>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Add ${_multiSelectedProductIds.length} items'),
+        content: TextField(
+          controller: qtyController,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: InputDecoration(
+            labelText: AppLocalizations.of(context)?.quantity ?? 'Quantity',
+          ),
+          autofocus: true,
+          onSubmitted: (val) {
+            Navigator.pop(context, Decimal.tryParse(val) ?? Decimal.one);
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(AppLocalizations.of(context)?.cancel ?? 'Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context, Decimal.tryParse(qtyController.text) ?? Decimal.one);
+            },
+            child: Text('Add'),
+          ),
+        ],
+      ),
+    );
+
+    if (qty != null && qty > Decimal.zero) {
+      setState(() {
+        for (final pid in _multiSelectedProductIds) {
+          final p = allProducts.firstWhere((prod) => prod.id == pid);
+          final existingIndex = _activeSession.cart.indexWhere((l) => l.productId == p.id);
+          if (existingIndex >= 0) {
+            final existing = _activeSession.cart[existingIndex];
+            _activeSession.cart[existingIndex] = SaleLineRequest(
+              productId: existing.productId,
+              quantity: qty,
+              unitPrice: existing.unitPrice,
+              discount: existing.discount,
+            );
+          } else {
+            _activeSession.cart.add(SaleLineRequest(
+              productId: p.id,
+              quantity: qty,
+              unitPrice: _getPriceForTier(p, _activeSession.selectedClientTier),
+              discount: Decimal.zero,
+            ));
+          }
+        }
+        _multiSelectedProductIds.clear();
+      });
     }
   }
 
@@ -220,6 +280,16 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(AppLocalizations.of(context)!.newSalePos)),
+      floatingActionButton: _multiSelectedProductIds.isNotEmpty
+          ? FloatingActionButton.extended(
+              onPressed: () {
+                final allProducts = productsAsync.valueOrNull ?? [];
+                _addMultiSelectedToCart(allProducts);
+              },
+              icon: const Icon(Icons.add_shopping_cart),
+              label: Text('${'Add'} ${_multiSelectedProductIds.length}'),
+            )
+          : null,
       body: LayoutBuilder(
         builder: (context, constraints) {
           final productsWidget = productsAsync.when(
@@ -236,11 +306,32 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 itemCount: products.length,
                 itemBuilder: (context, index) {
                   final p = products[index];
+                  final isSelected = _multiSelectedProductIds.contains(p.id);
                   return Card(
-                    elevation: 2,
+                    elevation: isSelected ? 8 : 2,
                     clipBehavior: Clip.antiAlias,
+                    shape: isSelected 
+                        ? RoundedRectangleBorder(
+                            side: BorderSide(color: theme.colorScheme.primary, width: 3),
+                            borderRadius: BorderRadius.circular(12))
+                        : null,
                     child: InkWell(
-                      onTap: () => _addToCart(p),
+                      onTap: () {
+                        if (_multiSelectedProductIds.isNotEmpty) {
+                          setState(() {
+                            if (isSelected) _multiSelectedProductIds.remove(p.id);
+                            else _multiSelectedProductIds.add(p.id);
+                          });
+                        } else {
+                          _addToCart(p);
+                        }
+                      },
+                      onLongPress: () {
+                        setState(() {
+                          if (isSelected) _multiSelectedProductIds.remove(p.id);
+                          else _multiSelectedProductIds.add(p.id);
+                        });
+                      },
                       onDoubleTap: () => ItemNavigator.openProduct(context, p),
                       child: Container(
                         padding: const EdgeInsets.all(8),

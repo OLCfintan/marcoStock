@@ -41,6 +41,7 @@ class _PaymentEntry {
 }
 
 class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
+  Set<String> _multiSelectedProductIds = {};
   final String _selectedDocumentType = 'FACTURE';
   List<PurchaseSession> get _sessions => globalPurchaseSessions;
   int get _activeSessionIndex => globalPurchaseActiveSessionIndex;
@@ -138,6 +139,63 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
         ]
       )
     );
+  }
+
+  Future<void> _addMultiSelectedToCart(List<Product> allProducts) async {
+    final qtyController = TextEditingController(text: '1');
+    final Decimal? qty = await showDialog<Decimal>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('${'Add'} ${_multiSelectedProductIds.length} items'),
+        content: TextField(
+          controller: qtyController,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: InputDecoration(
+            labelText: AppLocalizations.of(context)?.quantity ?? 'Quantity',
+          ),
+          autofocus: true,
+          onSubmitted: (val) {
+            Navigator.pop(context, Decimal.tryParse(val) ?? Decimal.one);
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(AppLocalizations.of(context)?.cancel ?? 'Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context, Decimal.tryParse(qtyController.text) ?? Decimal.one);
+            },
+            child: Text('Add'),
+          ),
+        ],
+      ),
+    );
+
+    if (qty != null && qty > Decimal.zero) {
+      setState(() {
+        for (final pid in _multiSelectedProductIds) {
+          final p = allProducts.firstWhere((prod) => prod.id == pid);
+          final existingIndex = _activeSession.cart.indexWhere((l) => l.productId == p.id);
+          if (existingIndex >= 0) {
+            final existing = _activeSession.cart[existingIndex];
+            _activeSession.cart[existingIndex] = PurchaseLineRequest(
+              productId: existing.productId,
+              quantity: qty,
+              unitPrice: existing.unitPrice,
+            );
+          } else {
+            _activeSession.cart.add(PurchaseLineRequest(
+              productId: p.id,
+              quantity: qty,
+              unitPrice: p.purchasePrice,
+            ));
+          }
+        }
+        _multiSelectedProductIds.clear();
+      });
+    }
   }
 
   void _addToPurchase(Product product) {
@@ -248,11 +306,33 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
           itemCount: products.length,
           itemBuilder: (context, index) {
             final p = products[index];
+            final isSelected = _multiSelectedProductIds.contains(p.id);
             return InkWell(
-              onTap: () => _addToPurchase(p),
+              onTap: () {
+                if (_multiSelectedProductIds.isNotEmpty) {
+                  setState(() {
+                    if (isSelected) _multiSelectedProductIds.remove(p.id);
+                    else _multiSelectedProductIds.add(p.id);
+                  });
+                } else {
+                  _addToPurchase(p);
+                }
+              },
+              onLongPress: () {
+                setState(() {
+                  if (isSelected) _multiSelectedProductIds.remove(p.id);
+                  else _multiSelectedProductIds.add(p.id);
+                });
+              },
               onDoubleTap: () => ItemNavigator.openProduct(context, p),
               child: Card(
                 color: Colors.teal.shade50,
+                elevation: isSelected ? 8 : 2,
+                shape: isSelected 
+                    ? RoundedRectangleBorder(
+                        side: BorderSide(color: Colors.teal, width: 3),
+                        borderRadius: BorderRadius.circular(12))
+                    : null,
                 child: Padding(
                   padding: const EdgeInsets.all(4.0),
                   child: Column(
@@ -530,6 +610,16 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
 
   return Scaffold(
       appBar: AppBar(title: Text(l10n?.purchases ?? AppLocalizations.of(context)!.recordInboundPurchase)),
+      floatingActionButton: _multiSelectedProductIds.isNotEmpty
+          ? FloatingActionButton.extended(
+              onPressed: () {
+                final allProducts = productsAsync.valueOrNull ?? [];
+                _addMultiSelectedToCart(allProducts);
+              },
+              icon: const Icon(Icons.add_shopping_cart),
+              label: Text('Add ${_multiSelectedProductIds.length}'),
+            )
+          : null,
       body: LayoutBuilder(
         builder: (context, constraints) {
           if (constraints.maxWidth < 600) {
