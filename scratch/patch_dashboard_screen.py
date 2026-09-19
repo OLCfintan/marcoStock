@@ -3,216 +3,184 @@ import re
 with open('lib/src/presentation/dashboard/dashboard_screen.dart', 'r') as f:
     content = f.read()
 
+# 1. Update the watched provider in _MetricsGrid
+old_watch = """    final salesAsync = ref.watch(todaySalesProvider);
+    final debtAsync = ref.watch(outstandingDebtProvider);
+    final marginAsync = ref.watch(profitMarginProvider);"""
 
-# 1. Update _MetricCard definition to include onTap
-metric_card_old = """class _MetricCard extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final Color color;
-  final AsyncValue<dynamic> asyncValue;
-  final String prefix;
-  final String suffix;
-  final bool isDouble;
+new_watch = """    final salesAsync = ref.watch(todaySalesProvider);
+    final debtAsync = ref.watch(outstandingDebtProvider);
+    final creditAsync = ref.watch(todaysCreditProvider);"""
 
-  const _MetricCard({
-    required this.title,
-    required this.icon,
-    required this.color,
-    required this.asyncValue,
-    this.prefix = '',
-    this.suffix = '',
-    this.isDouble = false,
-  });
+content = content.replace(old_watch, new_watch)
 
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      child: Padding("""
 
-metric_card_new = """class _MetricCard extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final Color color;
-  final AsyncValue<dynamic> asyncValue;
-  final String prefix;
-  final String suffix;
-  final bool isDouble;
-  final VoidCallback? onTap;
-
-  const _MetricCard({
-    required this.title,
-    required this.icon,
-    required this.color,
-    required this.asyncValue,
-    this.prefix = '',
-    this.suffix = '',
-    this.isDouble = false,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding("""
-
-content = content.replace(metric_card_old, metric_card_new)
-
-# 2. Add onTap to the MetricsGrid
-metrics_grid_old = """          children: [
-            _MetricCard(
-              title: "Today's Sales",
-              icon: Icons.point_of_sale,
-              color: Colors.green,
-              asyncValue: salesAsync,
-              prefix: 'Dhs ',
-            ),
-            _MetricCard(
+# 2. Update the third _MetricCard (Profit Margin -> Today's Credit) and rename the second one.
+old_cards = """            _MetricCard(
               title: 'Outstanding Client Debt',
               icon: Icons.money_off,
               color: Colors.orange,
               asyncValue: debtAsync,
               prefix: 'Dhs ',
-            ),
-            _MetricCard(
-              title: 'Profit Margin (Month)',
-              icon: Icons.trending_up,
-              color: Colors.blue,
-              asyncValue: marginAsync,
-              suffix: '%',
-              isDouble: true,
-            ),
-          ],"""
-
-metrics_grid_new = """          children: [
-            _MetricCard(
-              title: "Today's Sales",
-              icon: Icons.point_of_sale,
-              color: Colors.green,
-              asyncValue: salesAsync,
-              prefix: 'Dhs ',
-              onTap: () {
-                showDialog(context: context, builder: (_) => const AlertDialog(title: Text("Today's Sales"), content: Text("Normal Client Sales details will appear here.")));
-              },
-            ),
-            _MetricCard(
-              title: 'Outstanding Client Debt',
-              icon: Icons.money_off,
-              color: Colors.orange,
-              asyncValue: debtAsync,
-              prefix: 'Dhs ',
-              onTap: () {
-                showDialog(context: context, builder: (_) => const AlertDialog(title: Text("Outstanding Debt"), content: Text("Normal Client Debt details will appear here.")));
-              },
-            ),
-            _MetricCard(
-              title: 'Profit Margin (Month)',
-              icon: Icons.trending_up,
-              color: Colors.blue,
-              asyncValue: marginAsync,
-              suffix: '%',
-              isDouble: true,
-              onTap: () {
-                showDialog(context: context, builder: (_) => const AlertDialog(title: Text("Profit Margin"), content: Text("Detailed margin calculations (excluding special clients) will appear here.")));
-              },
-            ),
-          ],"""
-
-content = content.replace(metrics_grid_old, metrics_grid_new)
-
-# 3. Inject StockPieCharts widget
-pie_chart_code = """
-class _StockPieCharts extends ConsumerWidget {
-  const _StockPieCharts();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final baseAsync = ref.watch(baseStockPieProvider);
-    final magazinAsync = ref.watch(magazinStockPieProvider);
-    
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isWide = constraints.maxWidth > 800;
-        final children = [
-          Expanded(
-            flex: isWide ? 1 : 0,
-            child: _buildPieCard(context, 'Base Warehouse Stock Value', baseAsync),
-          ),
-          if (isWide) const SizedBox(width: 16) else const SizedBox(height: 16),
-          Expanded(
-            flex: isWide ? 1 : 0,
-            child: _buildPieCard(context, 'Magazin Stock Value', magazinAsync),
-          ),
-        ];
-        
-        return isWide ? Row(children: children) : Column(children: children);
-      }
-    );
-  }
-
-  Widget _buildPieCard(BuildContext context, String title, AsyncValue<List<StockChartData>> asyncData) {
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Text(title, style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 24),
-            SizedBox(
-              height: 250,
-              child: asyncData.when(
-                data: (data) {
-                  if (data.isEmpty) return const Center(child: Text('No stock data'));
-                  final colors = [Colors.blue, Colors.red, Colors.green, Colors.orange, Colors.purple, Colors.teal, Colors.amber, Colors.cyan];
-                  return PieChart(
-                    PieChartData(
-                      sectionsSpace: 2,
-                      centerSpaceRadius: 40,
-                      sections: data.asMap().entries.map((e) {
-                        return PieChartSectionData(
-                          color: colors[e.key % colors.length],
-                          value: e.value.value,
-                          title: e.value.label,
-                          radius: 80,
-                          titleStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
-                        );
-                      }).toList(),
+              onTap: () async {
+                final db = ref.read(databaseProvider);
+                final normalClients = await (db.select(db.clients)..where((t) => t.type.equals('NORMAL') & t.isActive.equals(true))).get();
+                final debtClients = normalClients.where((c) => c.balance > Decimal.zero).toList();
+                debtClients.sort((a, b) => b.balance.compareTo(a.balance));
+                if (!context.mounted) return;
+                showDialog(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    title: const Text("Outstanding Debt Details"),
+                    content: SizedBox(
+                      width: 400,
+                      height: 400,
+                      child: ListView.builder(
+                        itemCount: debtClients.length,
+                        itemBuilder: (context, index) {
+                          final c = debtClients[index];
+                          return ListTile(
+                            title: Text(c.name),
+                            trailing: Text('${c.balance} Dhs'),
+                          );
+                        }
+                      ),
                     ),
-                  );
-                },
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, stack) => Center(child: Text('Error: $err')),
-              ),
+                  )
+                );
+              },
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-"""
+            _MetricCard(
+              title: 'Profit Margin',
+              icon: Icons.trending_up,
+              color: Colors.blue,
+              asyncValue: marginAsync,
+              suffix: '%',
+              isDouble: true,
+              onTap: () async {
+                final db = ref.read(databaseProvider);
+                final normalClients = await (db.select(db.clients)..where((t) => t.type.equals('NORMAL'))).get();
+                final normalIds = normalClients.map((c) => c.id).toList();
+                final invoices = await (db.select(db.invoices)..where((t) => t.isActive.equals(true) & t.clientId.isIn(normalIds))).get();
+                final activeInvoiceIds = invoices.map((i) => i.id).toList();
+                
+                Decimal totalRev = Decimal.zero;
+                Decimal totalCost = Decimal.zero;
+                
+                if (activeInvoiceIds.isNotEmpty) {
+                  final lines = await (db.select(db.invoiceLines)..where((t) => t.invoiceId.isIn(activeInvoiceIds))).get();
+                  for (final line in lines) {
+                    final product = await (db.select(db.products)..where((t) => t.id.equals(line.productId))).getSingleOrNull();
+                    if (product == null) continue;
+                    final cost = line.quantity * product.purchasePrice;
+                    totalRev += line.lineTotal;
+                    totalCost += cost;
+                  }
+                }
+                
+                if (!context.mounted) return;
+                showDialog(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    title: const Text("Profit Margin Details"),
+                    content: SizedBox(
+                      width: 400,
+                      height: 150,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Total Revenue (Normal Clients): $totalRev Dhs', style: const TextStyle(fontSize: 16)),
+                          const SizedBox(height: 8),
+                          Text('Total Cost (Normal Clients): $totalCost Dhs', style: const TextStyle(fontSize: 16)),
+                          const SizedBox(height: 8),
+                          const Divider(),
+                          const SizedBox(height: 8),
+                          Text('Net Profit: ${totalRev - totalCost} Dhs', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green)),
+                        ],
+                      ),
+                    ),
+                  )
+                );
+              },
+            ),"""
 
-content = content + "\n" + pie_chart_code
+new_cards = """            _MetricCard(
+              title: 'Total Credit',
+              icon: Icons.money_off,
+              color: Colors.orange,
+              asyncValue: debtAsync,
+              prefix: 'Dhs ',
+              onTap: () async {
+                final db = ref.read(databaseProvider);
+                final normalClients = await (db.select(db.clients)..where((t) => t.type.equals('NORMAL') & t.isActive.equals(true))).get();
+                final debtClients = normalClients.where((c) => c.balance > Decimal.zero).toList();
+                debtClients.sort((a, b) => b.balance.compareTo(a.balance));
+                if (!context.mounted) return;
+                showDialog(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    title: const Text("Total Credit Details"),
+                    content: SizedBox(
+                      width: 400,
+                      height: 400,
+                      child: ListView.builder(
+                        itemCount: debtClients.length,
+                        itemBuilder: (context, index) {
+                          final c = debtClients[index];
+                          return ListTile(
+                            title: Text(c.name),
+                            trailing: Text('${c.balance} Dhs'),
+                          );
+                        }
+                      ),
+                    ),
+                  )
+                );
+              },
+            ),
+            _MetricCard(
+              title: "Today's Credit",
+              icon: Icons.credit_card,
+              color: Colors.redAccent,
+              asyncValue: creditAsync,
+              prefix: 'Dhs ',
+              onTap: () async {
+                final db = ref.read(databaseProvider);
+                final now = DateTime.now();
+                final startOfDay = DateTime(now.year, now.month, now.day);
+                final normalClients = await (db.select(db.clients)..where((t) => t.type.equals('NORMAL'))).get();
+                final normalIds = normalClients.map((c) => c.id).toList();
+                final invoices = await (db.select(db.invoices)..where((t) => t.date.isBiggerOrEqualValue(startOfDay) & t.isActive.equals(true) & t.clientId.isIn(normalIds))).get();
+                
+                final creditInvoices = invoices.where((inv) => (inv.total - inv.paidAmount) > Decimal.zero).toList();
+                
+                if (!context.mounted) return;
+                showDialog(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    title: const Text("Today's Credit Details"),
+                    content: SizedBox(
+                      width: 400,
+                      height: 400,
+                      child: ListView.builder(
+                        itemCount: creditInvoices.length,
+                        itemBuilder: (context, index) {
+                          final inv = creditInvoices[index];
+                          final clientName = normalClients.firstWhere((c) => c.id == inv.clientId).name;
+                          return ListTile(
+                            title: Text(clientName),
+                            subtitle: Text(inv.date.toString()),
+                            trailing: Text('${inv.total - inv.paidAmount} Dhs (from ${inv.total})'),
+                          );
+                        }
+                      ),
+                    ),
+                  )
+                );
+              },
+            ),"""
 
-
-# 4. Insert _StockPieCharts into DashboardScreen body
-insert_point = """            const _SalesChart(),
-            const SizedBox(height: 32),
-            LayoutBuilder("""
-
-insert_code = """            const _SalesChart(),
-            const SizedBox(height: 32),
-            const _StockPieCharts(),
-            const SizedBox(height: 32),
-            LayoutBuilder("""
-
-content = content.replace(insert_point, insert_code)
-
+content = content.replace(old_cards, new_cards)
 
 with open('lib/src/presentation/dashboard/dashboard_screen.dart', 'w') as f:
     f.write(content)

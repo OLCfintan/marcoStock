@@ -56,7 +56,7 @@ final todaySalesProvider = StreamProvider<Decimal>((ref) {
   return db.select(db.clients).watch().asyncMap((clients) async {
     final normalIds = clients.where((c) => c.type == 'NORMAL').map((c) => c.id).toList();
     if (normalIds.isEmpty) return Decimal.zero;
-    final invoices = await (db.select(db.invoices)..where((t) => t.date.isBiggerOrEqualValue(startOfDay) & t.isActive.equals(true) & t.clientId.isIn(normalIds))).get();
+    final invoices = await (db.select(db.invoices)..where((t) => t.date.isBiggerOrEqualValue(startOfDay) & t.isActive.equals(true) & ((t.clientId.isIn(normalIds) | t.clientId.isNull()) | t.clientId.isNull()))).get();
     return invoices.fold<Decimal>(Decimal.zero, (sum, inv) => sum + inv.total);
   });
 });
@@ -69,37 +69,17 @@ final outstandingDebtProvider = StreamProvider<Decimal>((ref) {
   );
 });
 
-// --- Profit Margin ---
-final profitMarginProvider = StreamProvider<double>((ref) {
+// --- Today's Credit ---
+final todaysCreditProvider = StreamProvider<Decimal>((ref) {
   final db = ref.watch(databaseProvider);
+  final now = DateTime.now();
+  final startOfDay = DateTime(now.year, now.month, now.day);
+  
   return db.select(db.clients).watch().asyncMap((clients) async {
     final normalIds = clients.where((c) => c.type == 'NORMAL').map((c) => c.id).toList();
-    if (normalIds.isEmpty) return 0.0;
-    final invoices = await (db.select(db.invoices)..where((t) => t.isActive.equals(true) & t.clientId.isIn(normalIds))).get();
-    Decimal totalRevenue = Decimal.zero;
-    Decimal totalCost = Decimal.zero;
-    final activeInvoiceIds = invoices.map((i) => i.id).toList();
-    if (activeInvoiceIds.isEmpty) return 0.0;
-    
-    final lines = await (db.select(db.invoiceLines)..where((t) => t.invoiceId.isIn(activeInvoiceIds))).get();
-    
-    for (final line in lines) {
-      final product = await (db.select(db.products)..where((t) => t.id.equals(line.productId))).getSingleOrNull();
-      if (product == null) continue;
-      
-      // Since stock deducts base units, the line.quantity is base units (from our previous fix).
-      // product.purchasePrice is the cost per base unit.
-      final cost = line.quantity * product.purchasePrice;
-      
-      totalRevenue += line.lineTotal;
-      totalCost += cost;
-    }
-    
-    if (totalRevenue <= Decimal.zero) return 0.0;
-    
-    final profit = totalRevenue - totalCost;
-    final margin = double.parse(profit.toString()) / double.parse(totalRevenue.toString());
-    return margin * 100.0; // Return as percentage
+    if (normalIds.isEmpty) return Decimal.zero;
+    final invoices = await (db.select(db.invoices)..where((t) => t.date.isBiggerOrEqualValue(startOfDay) & t.isActive.equals(true) & ((t.clientId.isIn(normalIds) | t.clientId.isNull()) | t.clientId.isNull()))).get();
+    return invoices.fold<Decimal>(Decimal.zero, (sum, inv) => sum + (inv.total - inv.paidAmount));
   });
 });
 
@@ -109,7 +89,7 @@ final topSellingProductsProvider = StreamProvider<List<TopProduct>>((ref) {
   return db.select(db.clients).watch().asyncMap((clients) async {
     final normalIds = clients.where((c) => c.type == 'NORMAL').map((c) => c.id).toList();
     if (normalIds.isEmpty) return [];
-    final invoices = await (db.select(db.invoices)..where((t) => t.isActive.equals(true) & t.clientId.isIn(normalIds))).get();
+    final invoices = await (db.select(db.invoices)..where((t) => t.isActive.equals(true) & ((t.clientId.isIn(normalIds) | t.clientId.isNull()) | t.clientId.isNull()))).get();
     final activeInvoiceIds = invoices.map((i) => i.id).toList();
     final map = <String, TopProduct>{};
     if (activeInvoiceIds.isEmpty) return [];
@@ -217,7 +197,7 @@ final salesChartDataProvider = StreamProvider<List<ChartDataPoint>>((ref) {
   return db.select(db.clients).watch().asyncMap((clients) async {
     final normalIds = clients.where((c) => c.type == 'NORMAL').map((c) => c.id).toList();
     if (normalIds.isEmpty) return [];
-    final invoices = await (db.select(db.invoices)..where((t) => t.isActive.equals(true) & t.clientId.isIn(normalIds))).get();
+    final invoices = await (db.select(db.invoices)..where((t) => t.isActive.equals(true) & ((t.clientId.isIn(normalIds) | t.clientId.isNull()) | t.clientId.isNull()))).get();
     final now = DateTime.now();
     final data = <String, Decimal>{};
     
