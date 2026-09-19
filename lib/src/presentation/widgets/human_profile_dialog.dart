@@ -5,7 +5,7 @@ import '../../application/hr/hr_providers.dart';
 import '../../application/suppliers/supplier_providers.dart';
 import '../../application/clients/client_providers.dart';
 import "../documents/pdf_preview_screen.dart";
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:marko_group/src/localization/arb/app_localizations.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:decimal/decimal.dart';

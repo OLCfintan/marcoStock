@@ -7,7 +7,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:decimal/decimal.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:marko_group/src/localization/arb/app_localizations.dart';
 
 import 'package:drift/drift.dart' as drift;
 import '../../infrastructure/database/app_database.dart';

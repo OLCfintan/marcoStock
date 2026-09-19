@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:decimal/decimal.dart';
 import '../../domain/products/product.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:marko_group/src/localization/arb/app_localizations.dart';
 
 class QuantitySelectorDialog extends StatefulWidget {
   final Product product;

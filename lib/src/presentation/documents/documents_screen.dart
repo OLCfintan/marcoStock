@@ -7,7 +7,7 @@ import '../widgets/print_dialog.dart';
 import '../../application/auth/auth_service.dart';
 import 'package:drift/drift.dart' as drift;
 import 'package:intl/intl.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:marko_group/src/localization/arb/app_localizations.dart';
 
 import '../../infrastructure/database/app_database.dart';
 import '../../infrastructure/database/providers.dart';

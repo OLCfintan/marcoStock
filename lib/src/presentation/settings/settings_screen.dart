@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../application/auth/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:marko_group/src/localization/arb/app_localizations.dart';
 
 import '../../application/settings/settings_service.dart';
 import '../../application/system/sync_service.dart';
