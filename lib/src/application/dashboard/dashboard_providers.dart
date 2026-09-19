@@ -53,16 +53,18 @@ final todaySalesProvider = StreamProvider<Decimal>((ref) {
   final now = DateTime.now();
   final startOfDay = DateTime(now.year, now.month, now.day);
   
-  return (db.select(db.invoices)
-        ..where((t) => t.date.isBiggerOrEqualValue(startOfDay) & t.isActive.equals(true)))
-      .watch()
-      .map((sales) => sales.fold<Decimal>(Decimal.zero, (sum, inv) => sum + inv.total));
+  return db.select(db.clients).watch().asyncMap((clients) async {
+    final normalIds = clients.where((c) => c.type == 'NORMAL').map((c) => c.id).toList();
+    if (normalIds.isEmpty) return Decimal.zero;
+    final invoices = await (db.select(db.invoices)..where((t) => t.date.isBiggerOrEqualValue(startOfDay) & t.isActive.equals(true) & t.clientId.isIn(normalIds))).get();
+    return invoices.fold<Decimal>(Decimal.zero, (sum, inv) => sum + inv.total);
+  });
 });
 
 // --- Outstanding Debt ---
 final outstandingDebtProvider = StreamProvider<Decimal>((ref) {
   final db = ref.watch(databaseProvider);
-  return (db.select(db.clients)..where((t) => t.isActive.equals(true))).watch().map((clients) => 
+  return (db.select(db.clients)..where((t) => t.isActive.equals(true) & t.type.equals('NORMAL'))).watch().map((clients) => 
     clients.fold<Decimal>(Decimal.zero, (sum, c) => sum + (c.balance > Decimal.zero ? c.balance : Decimal.zero))
   );
 });
@@ -70,7 +72,10 @@ final outstandingDebtProvider = StreamProvider<Decimal>((ref) {
 // --- Profit Margin ---
 final profitMarginProvider = StreamProvider<double>((ref) {
   final db = ref.watch(databaseProvider);
-  return (db.select(db.invoices)..where((t) => t.isActive.equals(true))).watch().asyncMap((invoices) async {
+  return db.select(db.clients).watch().asyncMap((clients) async {
+    final normalIds = clients.where((c) => c.type == 'NORMAL').map((c) => c.id).toList();
+    if (normalIds.isEmpty) return 0.0;
+    final invoices = await (db.select(db.invoices)..where((t) => t.isActive.equals(true) & t.clientId.isIn(normalIds))).get();
     Decimal totalRevenue = Decimal.zero;
     Decimal totalCost = Decimal.zero;
     final activeInvoiceIds = invoices.map((i) => i.id).toList();
@@ -101,7 +106,10 @@ final profitMarginProvider = StreamProvider<double>((ref) {
 // --- Top Selling Products ---
 final topSellingProductsProvider = StreamProvider<List<TopProduct>>((ref) {
   final db = ref.watch(databaseProvider);
-  return (db.select(db.invoices)..where((t) => t.isActive.equals(true))).watch().asyncMap((invoices) async {
+  return db.select(db.clients).watch().asyncMap((clients) async {
+    final normalIds = clients.where((c) => c.type == 'NORMAL').map((c) => c.id).toList();
+    if (normalIds.isEmpty) return [];
+    final invoices = await (db.select(db.invoices)..where((t) => t.isActive.equals(true) & t.clientId.isIn(normalIds))).get();
     final activeInvoiceIds = invoices.map((i) => i.id).toList();
     final map = <String, TopProduct>{};
     if (activeInvoiceIds.isEmpty) return [];
@@ -206,7 +214,10 @@ final salesChartDataProvider = StreamProvider<List<ChartDataPoint>>((ref) {
   final period = ref.watch(salesChartPeriodProvider);
   final db = ref.watch(databaseProvider);
   
-  return (db.select(db.invoices)..where((t) => t.isActive.equals(true))).watch().map((invoices) {
+  return db.select(db.clients).watch().asyncMap((clients) async {
+    final normalIds = clients.where((c) => c.type == 'NORMAL').map((c) => c.id).toList();
+    if (normalIds.isEmpty) return [];
+    final invoices = await (db.select(db.invoices)..where((t) => t.isActive.equals(true) & t.clientId.isIn(normalIds))).get();
     final now = DateTime.now();
     final data = <String, Decimal>{};
     
@@ -239,7 +250,7 @@ final salesChartDataProvider = StreamProvider<List<ChartDataPoint>>((ref) {
 // --- Top Clients ---
 final topClientsProvider = StreamProvider<List<TopHuman>>((ref) {
   final db = ref.watch(databaseProvider);
-  return (db.select(db.clients)..where((t) => t.isActive.equals(true))).watch().map((clients) {
+  return (db.select(db.clients)..where((t) => t.isActive.equals(true) & t.type.equals('NORMAL'))).watch().map((clients) {
     final list = clients.map((c) => TopHuman(c.name, c.balance)).toList();
     list.sort((a, b) => b.balance.compareTo(a.balance));
     return list.take(5).toList();
@@ -285,5 +296,54 @@ final remindersProvider = StreamProvider<List<ReminderInfo>>((ref) {
     }
     
     return reminders;
+  });
+});
+
+// --- Stock Distribution (Base vs Magazin) ---
+class StockChartData {
+  final String label;
+  final double value;
+  StockChartData(this.label, this.value);
+}
+
+final baseStockPieProvider = StreamProvider<List<StockChartData>>((ref) {
+  final db = ref.watch(databaseProvider);
+  return db.customSelect('SELECT 1', readsFrom: {db.products, db.stockBalances}).watch().asyncMap((_) async {
+    final balances = await (db.select(db.stockBalances)..where((t) => t.locationId.equals(AppLocations.baseWarehouse))).get();
+    
+    final map = <String, double>{};
+    for (final b in balances) {
+      if (b.quantity <= Decimal.zero) continue;
+      final product = await (db.select(db.products)..where((t) => t.id.equals(b.productId))).getSingleOrNull();
+      if (product == null) continue;
+      
+      final family = extractFamilyName(product.name);
+      // Value = quantity * purchasePrice
+      final val = double.parse(b.quantity.toString()) * double.parse(product.purchasePrice.toString());
+      map[family] = (map[family] ?? 0.0) + val;
+    }
+    
+    return map.entries.map((e) => StockChartData(e.key, e.value)).toList();
+  });
+});
+
+final magazinStockPieProvider = StreamProvider<List<StockChartData>>((ref) {
+  final db = ref.watch(databaseProvider);
+  return db.customSelect('SELECT 1', readsFrom: {db.products, db.stockBalances}).watch().asyncMap((_) async {
+    final balances = await (db.select(db.stockBalances)..where((t) => t.locationId.equals(AppLocations.magazin))).get();
+    
+    final map = <String, double>{};
+    for (final b in balances) {
+      if (b.quantity <= Decimal.zero) continue;
+      final product = await (db.select(db.products)..where((t) => t.id.equals(b.productId))).getSingleOrNull();
+      if (product == null) continue;
+      
+      final family = extractFamilyName(product.name);
+      // Value = quantity * purchasePrice
+      final val = double.parse(b.quantity.toString()) * double.parse(product.purchasePrice.toString());
+      map[family] = (map[family] ?? 0.0) + val;
+    }
+    
+    return map.entries.map((e) => StockChartData(e.key, e.value)).toList();
   });
 });
