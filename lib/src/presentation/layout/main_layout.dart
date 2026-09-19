@@ -138,6 +138,7 @@ class MainLayout extends ConsumerWidget {
           }
         },
       ),
+      ),
     );
   }
 }
