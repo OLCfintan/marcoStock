@@ -113,8 +113,10 @@ class MainLayout extends ConsumerWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-      child: ListTile(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      child: Material(
+        type: MaterialType.transparency,
+        child: ListTile(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         selected: isSelected,
         selectedTileColor: colorScheme.primaryContainer,
         leading: Icon(icon, color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant),
