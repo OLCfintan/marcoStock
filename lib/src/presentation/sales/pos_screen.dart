@@ -455,8 +455,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: AutocompleteSearchField<Client>(
+                    key: ValueKey(_activeSession.id),
                     labelText: 'Select Client',
                     prefixIcon: const Icon(Icons.person_search),
+                    initialText: _activeSession.selectedClientName,
                     displayStringForOption: (client) => client.name,
                     getSuggestions: (query) async {
                       return ref.read(clientRepositoryProvider).searchClients(query);
@@ -464,6 +466,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                     onSelected: (client) {
                       setState(() {
                         _activeSession.selectedClientId = client.id;
+                        _activeSession.selectedClientName = client.name;
                         _activeSession.selectedClientTier = client.tier;
                         _recalculateCartPrices();
                       });
@@ -789,6 +792,7 @@ class PosSession {
   final String id;
   String title;
   String? selectedClientId;
+  String? selectedClientName;
   String? selectedClientTier;
   String selectedDocumentType = 'BON';
   List<SaleLineRequest> cart = [];

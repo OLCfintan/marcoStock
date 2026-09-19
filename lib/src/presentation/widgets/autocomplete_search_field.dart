@@ -8,6 +8,7 @@ class AutocompleteSearchField<T extends Object> extends StatelessWidget {
   final String? labelText;
   final Widget? prefixIcon;
   final T? initialValue;
+  final String? initialText;
 
   const AutocompleteSearchField({
     super.key,
@@ -17,6 +18,7 @@ class AutocompleteSearchField<T extends Object> extends StatelessWidget {
     this.labelText,
     this.prefixIcon,
     this.initialValue,
+    this.initialText,
   });
 
   @override
@@ -24,9 +26,11 @@ class AutocompleteSearchField<T extends Object> extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) => Autocomplete<T>(
         displayStringForOption: displayStringForOption,
-        initialValue: initialValue != null 
-            ? TextEditingValue(text: displayStringForOption(initialValue!))
-            : TextEditingValue.empty,
+        initialValue: initialText != null 
+            ? TextEditingValue(text: initialText!)
+            : initialValue != null 
+                ? TextEditingValue(text: displayStringForOption(initialValue!))
+                : TextEditingValue.empty,
         optionsBuilder: (TextEditingValue textEditingValue) async {
           return await getSuggestions(textEditingValue.text);
         },

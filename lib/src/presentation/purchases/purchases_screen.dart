@@ -652,6 +652,7 @@ class PurchaseSession {
   final String id;
   String title;
   String? selectedSupplierId;
+  String? selectedSupplierName;
   List<PurchaseLineRequest> cart = [];
   List<_PaymentEntry> payments = [];
 
