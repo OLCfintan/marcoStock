@@ -72,7 +72,33 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     super.dispose();
   }
 
+
+  Decimal _getPriceForTier(Product p, String? tier) {
+    if (tier == 'Tier 2') return p.tier2Price ?? p.sellingPrice;
+    if (tier == 'Tier 3') return p.tier3Price ?? p.sellingPrice;
+    return p.sellingPrice;
+  }
+
+  void _recalculateCartPrices() {
+    final products = ref.read(productsStreamProvider).valueOrNull ?? [];
+    final productMap = {for (final p in products) p.id: p};
+    
+    for (int i = 0; i < _activeSession.cart.length; i++) {
+      final line = _activeSession.cart[i];
+      final product = productMap[line.productId];
+      if (product != null) {
+        _activeSession.cart[i] = SaleLineRequest(
+          productId: line.productId,
+          quantity: line.quantity,
+          unitPrice: _getPriceForTier(product, _activeSession.selectedClientTier),
+          discount: line.discount,
+        );
+      }
+    }
+  }
+
   Future<void> _addToCart(Product p) async {
+
     final existingIndex = _activeSession.cart.indexWhere((l) => l.productId == p.id);
     final Decimal initialQty = existingIndex >= 0 ? _activeSession.cart[existingIndex].quantity : Decimal.one;
 
@@ -107,7 +133,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           _activeSession.cart.add(SaleLineRequest(
             productId: p.id,
             quantity: newQty,
-            unitPrice: p.sellingPrice,
+            unitPrice: _getPriceForTier(p, _activeSession.selectedClientTier),
             discount: Decimal.zero,
           ));
         }
@@ -365,6 +391,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                     onSelected: (client) {
                       setState(() {
                         _activeSession.selectedClientId = client.id;
+                        _activeSession.selectedClientTier = client.tier;
+                        _recalculateCartPrices();
                       });
                     },
                   ),
@@ -688,6 +716,7 @@ class PosSession {
   final String id;
   String title;
   String? selectedClientId;
+  String? selectedClientTier;
   String selectedDocumentType = 'BON';
   List<SaleLineRequest> cart = [];
   List<_PaymentEntry> payments = [];
