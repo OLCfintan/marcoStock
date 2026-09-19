@@ -35,9 +35,13 @@ class BackupService {
     // 1. Backup raw database
     final appDocs = await getApplicationDocumentsDirectory();
     final dbFile = File(p.join(appDocs.path, 'markogroup_erp.sqlite'));
+    final systemBackupFile = File(p.join(destDir.path, 'system_backup.sqlite'));
     if (await dbFile.exists()) {
-      await dbFile.copy(p.join(destDir.path, 'system_backup.sqlite'));
+      await dbFile.copy(systemBackupFile.path);
     }
+    
+    // Open backup db to rewrite image paths
+    final backupDb = sqlite.sqlite3.open(systemBackupFile.path);
 
     // 2. Export Products
     final productsDir = Directory(p.join(destDir.path, 'Products'));
@@ -56,8 +60,13 @@ class BackupService {
       if (prod.imagePath != null && prod.imagePath!.isNotEmpty) {
         final imgFile = File(prod.imagePath!);
         if (await imgFile.exists()) {
-          final destImg = p.join(prodImagesDir.path, '${prod.id}_${p.basename(prod.imagePath!)}');
+          final ext = p.extension(prod.imagePath!);
+          final cleanName = _cleanFileName('${prod.name}_${prod.unitSize}${prod.unit}');
+          final newImageName = '$cleanName$ext';
+          final destImg = p.join(prodImagesDir.path, newImageName);
           await imgFile.copy(destImg);
+          
+          backupDb.execute("UPDATE products SET image_path = ? WHERE id = ?", [newImageName, prod.id]);
         }
       }
     }
@@ -88,7 +97,12 @@ class BackupService {
         if (humanImg != null && humanImg.isNotEmpty) {
           final imgFile = File(humanImg);
           if (await imgFile.exists()) {
-            await imgFile.copy(p.join(hDir.path, 'profileImage_${p.basename(humanImg)}'));
+            final ext = p.extension(humanImg);
+            final newImageName = '${_cleanFileName(humanName)}_profile$ext';
+            await imgFile.copy(p.join(hDir.path, newImageName));
+            
+            final table = isClient ? 'clients' : 'suppliers';
+            backupDb.execute("UPDATE $table SET image_path = ? WHERE id = ?", [newImageName, humanId]);
           }
         }
 
@@ -144,6 +158,8 @@ class BackupService {
 
     await exportHuman(true);  // Clients
     await exportHuman(false); // Suppliers
+    
+    backupDb.dispose();
   }
 
   Future<void> importData() async {
@@ -174,10 +190,14 @@ class BackupService {
     final products = tempDb.select("SELECT id, image_path FROM products WHERE image_path IS NOT NULL AND image_path != '';");
     for (var row in products) {
       final id = row['id'] as String;
-      final oldPath = row['image_path'] as String;
-      final basename = p.basename(oldPath);
+      final oldPathOrName = row['image_path'] as String;
+      final basename = p.basename(oldPathOrName);
       
-      final expectedExportPath = File(p.join(srcDir.path, 'Products', 'images', '${id}_$basename'));
+      File expectedExportPath = File(p.join(srcDir.path, 'Products', 'images', basename));
+      if (!await expectedExportPath.exists()) {
+        expectedExportPath = File(p.join(srcDir.path, 'Products', 'images', '${id}_$basename'));
+      }
+      
       final newAssetPath = File(p.join(markoAssetsDir.path, 'prod_${id}_$basename'));
       
       if (await expectedExportPath.exists()) {
@@ -191,11 +211,15 @@ class BackupService {
     for (var row in clients) {
       final id = row['id'] as String;
       final name = row['name'] as String;
-      final oldPath = row['image_path'] as String;
-      final basename = p.basename(oldPath);
+      final oldPathOrName = row['image_path'] as String;
+      final basename = p.basename(oldPathOrName);
       
       final cleanName = _cleanFileName(name);
-      final expectedExportPath = File(p.join(srcDir.path, 'Clients', cleanName, 'profileImage_$basename'));
+      File expectedExportPath = File(p.join(srcDir.path, 'Clients', cleanName, basename));
+      if (!await expectedExportPath.exists()) {
+        expectedExportPath = File(p.join(srcDir.path, 'Clients', cleanName, 'profileImage_$basename'));
+      }
+      
       final newAssetPath = File(p.join(markoAssetsDir.path, 'client_${id}_$basename'));
       
       if (await expectedExportPath.exists()) {
@@ -209,11 +233,15 @@ class BackupService {
     for (var row in suppliers) {
       final id = row['id'] as String;
       final name = row['name'] as String;
-      final oldPath = row['image_path'] as String;
-      final basename = p.basename(oldPath);
+      final oldPathOrName = row['image_path'] as String;
+      final basename = p.basename(oldPathOrName);
       
       final cleanName = _cleanFileName(name);
-      final expectedExportPath = File(p.join(srcDir.path, 'Suppliers', cleanName, 'profileImage_$basename'));
+      File expectedExportPath = File(p.join(srcDir.path, 'Suppliers', cleanName, basename));
+      if (!await expectedExportPath.exists()) {
+        expectedExportPath = File(p.join(srcDir.path, 'Suppliers', cleanName, 'profileImage_$basename'));
+      }
+      
       final newAssetPath = File(p.join(markoAssetsDir.path, 'supplier_${id}_$basename'));
       
       if (await expectedExportPath.exists()) {
@@ -230,4 +258,3 @@ class BackupService {
     await tempDbFile.delete(); // Cleanup
   }
 }
-
