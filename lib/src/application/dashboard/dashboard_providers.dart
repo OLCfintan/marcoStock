@@ -319,7 +319,7 @@ final baseStockPieProvider = StreamProvider<List<StockChartData>>((ref) {
       
       final family = extractFamilyName(product.name);
       // Value = quantity * purchasePrice
-      final val = double.parse(b.quantity.toString()) * double.parse(product.purchasePrice.toString());
+      final val = double.parse(b.quantity.toString()) * 1.0;
       map[family] = (map[family] ?? 0.0) + val;
     }
     
@@ -340,7 +340,7 @@ final magazinStockPieProvider = StreamProvider<List<StockChartData>>((ref) {
       
       final family = extractFamilyName(product.name);
       // Value = quantity * purchasePrice
-      final val = double.parse(b.quantity.toString()) * double.parse(product.purchasePrice.toString());
+      final val = double.parse(b.quantity.toString()) * 1.0;
       map[family] = (map[family] ?? 0.0) + val;
     }
     

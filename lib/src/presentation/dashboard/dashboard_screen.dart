@@ -415,8 +415,10 @@ class _SalesChart extends ConsumerWidget {
         padding: const EdgeInsets.all(16.0),
         child: SizedBox(
           height: 300,
-          child: salesAsync.when(
-            data: (sales) {
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return salesAsync.when(
+                data: (sales) {
               final double maxY = sales.isEmpty 
                   ? 100 
                   : (sales.map((e) => e.value.toDouble()).reduce((a, b) => a > b ? a : b) * 1.2).clamp(100.0, double.infinity);
@@ -463,7 +465,7 @@ class _SalesChart extends ConsumerWidget {
                         BarChartRodData(
                           toY: entry.value.value.toDouble(),
                           color: Colors.blueAccent,
-                          width: 32,
+                          width: sales.isEmpty ? 32 : (constraints.maxWidth / sales.length).clamp(10.0, 100.0) * 0.9,
                           borderRadius: BorderRadius.zero,
                         ),
                       ],
@@ -474,6 +476,8 @@ class _SalesChart extends ConsumerWidget {
             },
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (err, stack) => Center(child: Text('Failed to load chart data: $err')),
+          );
+            }
           ),
         ),
       ),
@@ -788,13 +792,14 @@ class _StockPieCharts extends ConsumerWidget {
               height: 250,
               child: asyncData.when(
                 data: (data) {
-                  if (data.isEmpty) return const Center(child: Text('No stock data'));
+                  final validData = data.where((d) => d.value > 0).toList();
+                  if (validData.isEmpty) return const Center(child: Text('No stock data', style: TextStyle(color: Colors.black)));
                   final colors = [Colors.blue, Colors.red, Colors.green, Colors.orange, Colors.purple, Colors.teal, Colors.amber, Colors.cyan];
                   return PieChart(
                     PieChartData(
                       sectionsSpace: 2,
                       centerSpaceRadius: 40,
-                      sections: data.asMap().entries.map((e) {
+                      sections: validData.asMap().entries.map((e) {
                         return PieChartSectionData(
                           color: colors[e.key % colors.length],
                           value: e.value.value,
