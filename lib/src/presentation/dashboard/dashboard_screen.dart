@@ -425,7 +425,8 @@ class _SalesChart extends ConsumerWidget {
                   
               return BarChart(
                 BarChartData(
-                  alignment: BarChartAlignment.spaceAround,
+                  alignment: BarChartAlignment.center,
+                  groupsSpace: 0,
                   maxY: maxY,
                   barTouchData: BarTouchData(enabled: true),
                   titlesData: FlTitlesData(
@@ -465,8 +466,9 @@ class _SalesChart extends ConsumerWidget {
                         BarChartRodData(
                           toY: entry.value.value.toDouble(),
                           color: Colors.blueAccent,
-                          width: sales.isEmpty ? 32 : (constraints.maxWidth / sales.length).clamp(10.0, 100.0) * 0.9,
+                          width: sales.isEmpty ? 32 : ((constraints.maxWidth - 60) / sales.length),
                           borderRadius: BorderRadius.zero,
+                          borderSide: const BorderSide(color: Colors.white, width: 1),
                         ),
                       ],
                     );
@@ -793,22 +795,64 @@ class _StockPieCharts extends ConsumerWidget {
               child: asyncData.when(
                 data: (data) {
                   final validData = data.where((d) => d.value > 0).toList();
+                  validData.sort((a, b) => b.value.compareTo(a.value));
                   if (validData.isEmpty) return const Center(child: Text('No stock data', style: TextStyle(color: Colors.black)));
                   final colors = [Colors.blue, Colors.red, Colors.green, Colors.orange, Colors.purple, Colors.teal, Colors.amber, Colors.cyan];
-                  return PieChart(
-                    PieChartData(
-                      sectionsSpace: 2,
-                      centerSpaceRadius: 40,
-                      sections: validData.asMap().entries.map((e) {
-                        return PieChartSectionData(
-                          color: colors[e.key % colors.length],
-                          value: e.value.value,
-                          title: e.value.label,
-                          radius: 80,
-                          titleStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
-                        );
-                      }).toList(),
-                    ),
+                  return Row(
+                    children: [
+                      Expanded(
+                        flex: 1,
+                        child: PieChart(
+                          PieChartData(
+                            sectionsSpace: 2,
+                            centerSpaceRadius: 40,
+                            sections: validData.asMap().entries.map((e) {
+                              return PieChartSectionData(
+                                color: colors[e.key % colors.length],
+                                value: e.value.value,
+                                showTitle: false, // Hide titles inside slices
+                                radius: 80,
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        flex: 1,
+                        child: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: validData.asMap().entries.map((e) {
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 8.0),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 16,
+                                      height: 16,
+                                      decoration: BoxDecoration(
+                                        color: colors[e.key % colors.length],
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        '${e.value.label} (${e.value.value.toInt()})',
+                                        style: const TextStyle(fontSize: 12),
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 2,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ),
+                    ],
                   );
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
