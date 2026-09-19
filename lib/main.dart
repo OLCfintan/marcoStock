@@ -78,7 +78,7 @@ class MarkoGroupApp extends ConsumerWidget {
           elevation: 0,
           scrolledUnderElevation: 0,
         ),
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           elevation: 2,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           margin: const EdgeInsets.all(8),
@@ -108,7 +108,7 @@ class MarkoGroupApp extends ConsumerWidget {
           elevation: 0,
           scrolledUnderElevation: 0,
         ),
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           elevation: 4,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           margin: const EdgeInsets.all(8),
