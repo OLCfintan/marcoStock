@@ -1,3 +1,4 @@
+import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:sqlite3/sqlite3.dart' as sqlite;
@@ -166,6 +167,14 @@ class BackupService {
   }
 
   Future<void> importData() async {
+    if (Platform.isAndroid) {
+      final statusManage = await Permission.manageExternalStorage.request();
+      final statusStorage = await Permission.storage.request();
+      if (!statusManage.isGranted && !statusStorage.isGranted) {
+        throw Exception('Storage permissions are required to import data.');
+      }
+    }
+    
     final srcDirStr = await FilePicker.getDirectoryPath(dialogTitle: 'Select Marko-Save folder to import');
     if (srcDirStr == null) return;
 
@@ -189,7 +198,7 @@ class BackupService {
       await tempDbFile.writeAsBytes(bytes, flush: true);
     } catch (e) {
       if (e.toString().contains('Permission denied')) {
-        throw Exception('Permission Denied by Android Security. Please MOVE the Marko-Save folder out of WhatsApp into your main Downloads or Documents folder, and try importing it from there.');
+        throw Exception('OS Permission Denied (errno = 13). Even with permissions, Android blocks this path. Please move the Marko-Save folder to the root of Downloads or Documents, or grant All Files Access in Android Settings.');
       }
       throw Exception('Failed to read backup: $e');
     }
