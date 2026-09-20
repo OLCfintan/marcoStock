@@ -376,19 +376,17 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isMobile = constraints.maxWidth < 600;
+                        final fields = [
+                          TextFormField(
                             controller: _unitSizeController,
                             decoration: _inputDecoration('Unit Size (e.g. 7 for 7L)'),
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
                             validator: _validateOptionalNumber,
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: DropdownButtonFormField<String>(
+                          DropdownButtonFormField<String>(
                             value: _unit,
                             decoration: _inputDecoration(AppLocalizations.of(context)!.unit),
                             items: UnitConversionService.allUnits.map((String type) {
@@ -398,10 +396,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                               if (newValue != null) setState(() => _unit = newValue);
                             },
                           ),
-                        ),
-
-                        Expanded(
-                          child: DropdownButtonFormField<String>(
+                          DropdownButtonFormField<String>(
                             value: _packagingType,
                             decoration: _inputDecoration('Packaging Type'),
                             items: _packagingOptions.map((String type) {
@@ -411,8 +406,18 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                               if (newValue != null) setState(() => _packagingType = newValue);
                             },
                           ),
-                        ),
-                      ],
+                        ];
+
+                        if (isMobile) {
+                          return Column(
+                            children: fields.map((f) => Padding(padding: const EdgeInsets.only(bottom: 16), child: f)).toList(),
+                          );
+                        } else {
+                          return Row(
+                            children: fields.map((f) => Expanded(child: Padding(padding: const EdgeInsets.only(right: 8), child: f))).toList(),
+                          );
+                        }
+                      }
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
@@ -444,53 +449,52 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                 child: Column(
                   children: [
                     
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isMobile = constraints.maxWidth < 600;
+                        final fields = [
+                          TextFormField(
                             controller: _sellingPriceController,
                             decoration: _inputDecoration('Tier 1 Price (Base)'),
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
                             validator: _validateOptionalNumber,
                           ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: TextFormField(
+                          TextFormField(
                             controller: _tier2PriceController,
                             decoration: _inputDecoration('Tier 2 Price (Opt)'),
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
                             validator: _validateOptionalNumber,
                           ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: TextFormField(
+                          TextFormField(
                             controller: _tier3PriceController,
                             decoration: _inputDecoration('Tier 3 Price (Opt)'),
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
                             validator: _validateOptionalNumber,
                           ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: TextFormField(
+                          TextFormField(
                             controller: _baseMinimumStockController,
                             decoration: _inputDecoration('Base Min Stock'),
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
                             validator: _validateOptionalNumber,
                           ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: TextFormField(
+                          TextFormField(
                             controller: _magazinMinimumStockController,
                             decoration: _inputDecoration('Magazin Min Stock'),
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
                             validator: _validateOptionalNumber,
                           ),
-                        ),
-                      ],
+                        ];
+
+                        if (isMobile) {
+                          return Column(
+                            children: fields.map((f) => Padding(padding: const EdgeInsets.only(bottom: 16), child: f)).toList(),
+                          );
+                        } else {
+                          return Row(
+                            children: fields.map((f) => Expanded(child: Padding(padding: const EdgeInsets.only(right: 16), child: f))).toList(),
+                          );
+                        }
+                      }
                     ),
                   ],
                 ),
