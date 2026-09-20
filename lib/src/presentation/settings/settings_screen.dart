@@ -222,7 +222,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ListTile(
             leading: const Icon(Icons.move_to_inbox, color: Colors.green),
             title: const Text('Import Marko-Save'),
-            subtitle: const Text('Restore database and images from a Marko-Save folder.'),
+            subtitle: const Text('Restore database (select .sqlite) or full backup (select .zip).'),
             onTap: () async {
               try {
                 final confirm = await showDialog<bool>(

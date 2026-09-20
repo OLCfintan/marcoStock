@@ -1,4 +1,4 @@
-import 'package:permission_handler/permission_handler.dart';
+import 'package:archive/archive_io.dart';
 import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:sqlite3/sqlite3.dart' as sqlite;
@@ -167,22 +167,51 @@ class BackupService {
   }
 
   Future<void> importData() async {
-    if (Platform.isAndroid) {
-      final statusManage = await Permission.manageExternalStorage.request();
-      final statusStorage = await Permission.storage.request();
-      if (!statusManage.isGranted && !statusStorage.isGranted) {
-        throw Exception('Storage permissions are required to import data.');
-      }
-    }
-    
-    final srcDirStr = await FilePicker.getDirectoryPath(dialogTitle: 'Select Marko-Save folder to import');
-    if (srcDirStr == null) return;
+    final result = await FilePicker.pickFiles(
+      dialogTitle: 'Select system_backup.sqlite OR Marko-Save.zip',
+      type: FileType.any,
+    );
+    if (result.isEmpty) return;
 
-    final srcDir = Directory(srcDirStr);
-    final systemBackup = File(p.join(srcDir.path, 'system_backup.sqlite'));
+    final pickedPath = result.first.path!;
+    final pickedFile = File(pickedPath);
+    
+    File systemBackup;
+    Directory srcDir;
+    
+    if (pickedPath.toLowerCase().endsWith('.zip')) {
+      final bytes = await pickedFile.readAsBytes();
+      final archive = ZipDecoder().decodeBytes(bytes);
+      
+      final tempDir = await getTemporaryDirectory();
+      srcDir = Directory(p.join(tempDir.path, 'Marko-Save-Extracted'));
+      if (await srcDir.exists()) await srcDir.delete(recursive: true);
+      await srcDir.create();
+      
+      for (final file in archive) {
+        final filename = file.name;
+        if (file.isFile) {
+          final data = file.content as List<int>;
+          final outFile = File(p.join(srcDir.path, filename));
+          await outFile.parent.create(recursive: true);
+          await outFile.writeAsBytes(data);
+        }
+      }
+      
+      systemBackup = File(p.join(srcDir.path, 'system_backup.sqlite'));
+      if (!await systemBackup.exists()) {
+        systemBackup = File(p.join(srcDir.path, 'Marko-Save', 'system_backup.sqlite'));
+        if (await systemBackup.exists()) {
+          srcDir = Directory(p.join(srcDir.path, 'Marko-Save'));
+        }
+      }
+    } else {
+      systemBackup = pickedFile;
+      srcDir = pickedFile.parent;
+    }
 
     if (!await systemBackup.exists()) {
-      throw Exception('Valid Marko-Save system_backup.sqlite not found in the selected folder!');
+      throw Exception('Valid system_backup.sqlite not found in the selected file/folder!');
     }
 
     final appDocs = await getApplicationDocumentsDirectory();
@@ -198,7 +227,7 @@ class BackupService {
       await tempDbFile.writeAsBytes(bytes, flush: true);
     } catch (e) {
       if (e.toString().contains('Permission denied')) {
-        throw Exception('OS Permission Denied (errno = 13). Even with permissions, Android blocks this path. Please move the Marko-Save folder to the root of Downloads or Documents, or grant All Files Access in Android Settings.');
+        throw Exception('OS Permission Denied (errno = 13). Please compress the Marko-Save folder into a .zip file and select the zip file instead, or select the .sqlite file directly.');
       }
       throw Exception('Failed to read backup: $e');
     }

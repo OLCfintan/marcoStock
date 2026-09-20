@@ -47,8 +47,6 @@ dependencies:
   mobile_scanner: ^7.4.2
   syncfusion_flutter_pdf: ^34.2.8
   reorderable_grid_view: ^2.2.8
-  permission_handler: ^13.0.2
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
