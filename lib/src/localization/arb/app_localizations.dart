@@ -519,7 +519,7 @@ abstract class AppLocalizations {
   /// No description provided for @bon.
   ///
   /// In en, this message translates to:
-  /// **'Delivery Note'**
+  /// **'BON'**
   String get bon;
 
   /// No description provided for @ticket.
@@ -1041,7 +1041,7 @@ abstract class AppLocalizations {
   /// No description provided for @pdfBonTo.
   ///
   /// In en, this message translates to:
-  /// **'Delivery Note To:'**
+  /// **'BON To:'**
   String get pdfBonTo;
 
   /// No description provided for @pdfTotalDebt.
@@ -1059,7 +1059,7 @@ abstract class AppLocalizations {
   /// No description provided for @pdfRemainingInBon.
   ///
   /// In en, this message translates to:
-  /// **'Remaining in this Delivery Note'**
+  /// **'Remaining in this BON'**
   String get pdfRemainingInBon;
 
   /// No description provided for @deleteStr.

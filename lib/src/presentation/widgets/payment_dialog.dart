@@ -4,6 +4,7 @@ import 'package:drift/drift.dart' as drift;
 import 'package:decimal/decimal.dart';
 import "image_picker_field.dart";
 import 'package:uuid/uuid.dart';
+import '../widgets/logo_loader.dart';
 
 import '../../infrastructure/database/app_database.dart';
 import '../../infrastructure/database/providers.dart';
@@ -205,7 +206,7 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
         TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
         ElevatedButton(
           onPressed: _isSubmitting ? null : _submit,
-          child: _isSubmitting ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Record'),
+          child: _isSubmitting ? const SizedBox(width: 16, height: 16, child: const LogoLoader(size: 32.0)) : const Text('Record'),
         ),
       ],
     );

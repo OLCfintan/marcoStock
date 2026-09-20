@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../widgets/logo_loader.dart';
 
 
 import '../../application/auth/auth_service.dart';
@@ -116,7 +117,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                       Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
@@ -126,15 +127,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                             ),
                           ],
                         ),
-                        child: ClipOval(
-                          child: Image.asset(
-                            'assets/images/logo.jpeg',
-                            height: 110,
-                            width: 110,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => const Icon(Icons.business, size: 80, color: Colors.indigo),
-                          ),
-                        ),
+                        child: ClipOval(clipBehavior: Clip.antiAliasWithSaveLayer, child: Image.asset('assets/images/logo.jpeg', width: 110, height: 110, fit: BoxFit.cover, filterQuality: FilterQuality.high)),
                       ),
                       const SizedBox(height: 32),
                       
@@ -239,11 +232,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                           style: ElevatedButton.styleFrom(
                             backgroundColor: theme.colorScheme.primary,
                             foregroundColor: theme.colorScheme.onPrimary,
-                            elevation: 0,
+                            
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           ),
                           child: _isLoading 
-                              ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3)) 
+                              ? const SizedBox(height: 24, width: 24, child: const LogoLoader(size: 32.0)) 
                               : Text('LOGIN', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
                         ),
                       ),

@@ -26,6 +26,18 @@ class PdfGeneratorService {
 
   PdfGeneratorService(this._db, this._settings);
 
+  pw.Widget _bidiText(String text, {pw.TextStyle? style, pw.TextAlign? textAlign, int? maxLines, pw.TextOverflow? overflow}) {
+    final isArabic = RegExp(r'[\u0600-\u06FF]').hasMatch(text);
+    return pw.Text(
+      text,
+      style: style,
+      textAlign: textAlign,
+      maxLines: maxLines,
+      overflow: overflow,
+      textDirection: isArabic ? pw.TextDirection.rtl : null,
+    );
+  }
+
   void _addPages(pw.Document doc, PrintOptions options, pw.TextDirection textDir, pw.ImageProvider? bgImage, List<pw.Widget> Function() buildContent) {
     pw.Widget backgroundBuilder(pw.Context context) {
       if (bgImage == null) return pw.Container();
@@ -123,8 +135,8 @@ class PdfGeneratorService {
       invoice = invoice.copyWith(taxes: dynamicTaxes, total: dynamicTotal);
     }
 
-    final font = await PdfGoogleFonts.cairoRegular();
-    final boldFont = await PdfGoogleFonts.cairoBold();
+    final font = await PdfGoogleFonts.amiriRegular();
+    final boldFont = await PdfGoogleFonts.amiriBold();
     
     final doc = pw.Document(
       theme: pw.ThemeData.withFont(
@@ -168,7 +180,7 @@ class PdfGeneratorService {
       pw.Divider(),
       pw.Container(
         alignment: pw.Alignment.center,
-        child: pw.Text(l10n.pdfThankYou, style: const pw.TextStyle(color: PdfColors.grey)),
+        child: _bidiText(l10n.pdfThankYou, style: const pw.TextStyle(color: PdfColors.grey)),
       ),
     ]);
 
@@ -186,8 +198,8 @@ class PdfGeneratorService {
     final productMap = {for (var p in products) p.id: p};
 
     final companySettings = await _settings.getAllCompanySettings();
-    final font = await PdfGoogleFonts.cairoRegular();
-    final boldFont = await PdfGoogleFonts.cairoBold();
+    final font = await PdfGoogleFonts.amiriRegular();
+    final boldFont = await PdfGoogleFonts.amiriBold();
     
     final doc = pw.Document(
       theme: pw.ThemeData.withFont(
@@ -229,26 +241,26 @@ class PdfGeneratorService {
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
                     if (logoImage != null) pw.Container(height: 50, margin: const pw.EdgeInsets.only(bottom: 8), child: pw.Image(logoImage)),
-                    pw.Text(companyName, style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
-                    if (companyAddress.isNotEmpty) pw.Text(companyAddress),
-            if (companyPhone.isNotEmpty) pw.Text(companyPhone),
-                    if (companyPhone.isNotEmpty) pw.Text(companyPhone),
-                    if (companyTaxId.isNotEmpty) pw.Text('Tax ID: $companyTaxId'),
+                    _bidiText(companyName, style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
+                    if (companyAddress.isNotEmpty) _bidiText(companyAddress),
+            if (companyPhone.isNotEmpty) _bidiText(companyPhone),
+                    if (companyPhone.isNotEmpty) _bidiText(companyPhone),
+                    if (companyTaxId.isNotEmpty) _bidiText('Tax ID: $companyTaxId'),
                     pw.SizedBox(height: 16),
-                    pw.Text(l10n.pdfPurchase.toUpperCase(), style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold, color: PdfColors.blueGrey800)),
+                    _bidiText(l10n.pdfPurchase.toUpperCase(), style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold, color: PdfColors.blueGrey800)),
                     pw.SizedBox(height: 8),
-                    pw.Text('${l10n.pdfPurchase} #: ${purchase.purchaseNumber}'),
-                    pw.Text('${l10n.pdfDate}: ${purchase.date.toLocal().toString().split(' ')[0]}'),
-                    pw.Text('${l10n.pdfStatus}: ${purchase.status}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                    _bidiText('${l10n.pdfPurchase} #: ${purchase.purchaseNumber}'),
+                    _bidiText('${l10n.pdfDate}: ${purchase.date.toLocal().toString().split(' ')[0]}'),
+                    _bidiText('${l10n.pdfStatus}: ${purchase.status}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
                   ],
                 ),
                 pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.end,
                   children: [
-                    pw.Text(l10n.pdfSupplier, style: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.grey700)),
+                    _bidiText(l10n.pdfSupplier, style: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.grey700)),
                     pw.SizedBox(height: 4),
-                    pw.Text(supplier?.name ?? 'N/A', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
-                    if (supplier != null) pw.Text('${l10n.pdfTotalDebt}: ${supplier.balance.toStringAsFixed(2)} Dhs', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.blueGrey800)),
+                    _bidiText(supplier?.name ?? 'N/A', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
+                    if (supplier != null) _bidiText('${l10n.pdfTotalDebt}: ${supplier.balance.toStringAsFixed(2)} Dhs', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.blueGrey800)),
                   ],
                 ),
               ],
@@ -302,28 +314,28 @@ class PdfGeneratorService {
                 margin: const pw.EdgeInsets.only(bottom: 8),
                 child: pw.Image(logoImage),
               ),
-            pw.Text(companyName, style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
-            if (companyAddress.isNotEmpty) pw.Text(companyAddress),
-            if (companyPhone.isNotEmpty) pw.Text(companyPhone),
-            if (companyTaxId.isNotEmpty) pw.Text('Tax ID: $companyTaxId'),
+            _bidiText(companyName, style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
+            if (companyAddress.isNotEmpty) _bidiText(companyAddress),
+            if (companyPhone.isNotEmpty) _bidiText(companyPhone),
+            if (companyTaxId.isNotEmpty) _bidiText('Tax ID: $companyTaxId'),
             pw.SizedBox(height: 16),
-            pw.Text((invoice.documentType == 'BON' ? l10n.bon : (invoice.documentType == 'TICKET' ? l10n.ticket : l10n.invoice)).toUpperCase(), style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold, color: PdfColors.blueGrey800)),
+            _bidiText((invoice.documentType == 'BON' ? l10n.bon : (invoice.documentType == 'TICKET' ? l10n.ticket : l10n.invoice)).toUpperCase(), style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold, color: PdfColors.blueGrey800)),
             pw.SizedBox(height: 8),
-            pw.Text('${(invoice.documentType == 'BON' ? l10n.bon : (invoice.documentType == 'TICKET' ? l10n.ticket : l10n.invoice))} #: ${invoice.invoiceNumber}'),
-            pw.Text('${l10n.pdfDate}: ${invoice.date.toLocal().toString().split(' ')[0]}'),
-            pw.Text('${l10n.pdfStatus}: ${invoice.status}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+            _bidiText('${(invoice.documentType == 'BON' ? l10n.bon : (invoice.documentType == 'TICKET' ? l10n.ticket : l10n.invoice))} #: ${invoice.invoiceNumber}'),
+            _bidiText('${l10n.pdfDate}: ${invoice.date.toLocal().toString().split(' ')[0]}'),
+            _bidiText('${l10n.pdfStatus}: ${invoice.status}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
           ],
         ),
         pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.end,
           children: [
-            pw.Text('Client:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.grey700)),
+            _bidiText('Client:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.grey700)),
             pw.SizedBox(height: 4),
-            pw.Text(client?.name ?? 'N/A', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
-                        if (client?.address != null && client!.address!.isNotEmpty) pw.Text(client.address!),
-            if (client?.phone != null && client!.phone!.isNotEmpty) pw.Text(client.phone!),
-            if (client?.contactDetails != null && client!.contactDetails!.isNotEmpty) pw.Text(client.contactDetails!),
-            if (client != null) pw.Text('${l10n.pdfTotalDebt}: ${client.balance.toStringAsFixed(2)} Dhs', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.blueGrey800)),
+            _bidiText(client?.name ?? 'N/A', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
+                        if (client?.address != null && client!.address!.isNotEmpty) _bidiText(client.address!),
+            if (client?.phone != null && client!.phone!.isNotEmpty) _bidiText(client.phone!),
+            if (client?.contactDetails != null && client!.contactDetails!.isNotEmpty) _bidiText(client.contactDetails!),
+            if (client != null) _bidiText('${l10n.pdfTotalDebt}: ${client.balance.toStringAsFixed(2)} Dhs', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.blueGrey800)),
           ],
         ),
       ],
@@ -392,7 +404,7 @@ class PdfGeneratorService {
       child: pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
         children: [
-          pw.Text(
+          _bidiText(
             label, 
             style: pw.TextStyle(
               fontWeight: isBold ? pw.FontWeight.bold : pw.FontWeight.normal,
@@ -400,7 +412,7 @@ class PdfGeneratorService {
               color: color,
             )
           ),
-          pw.Text(
+          _bidiText(
             amount, 
             style: pw.TextStyle(
               fontWeight: isBold ? pw.FontWeight.bold : pw.FontWeight.normal,

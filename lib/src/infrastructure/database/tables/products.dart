@@ -27,6 +27,7 @@ class Products extends Table {
   TextColumn get packagingType => text().nullable()();
   IntColumn get unitsPerBox => integer().withDefault(const Constant(1))();
   BoolColumn get isActive => boolean().withDefault(const Constant(true))();
+  IntColumn get displayOrder => integer().withDefault(const Constant(0))();
   
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();

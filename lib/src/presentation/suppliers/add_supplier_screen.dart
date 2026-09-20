@@ -107,7 +107,7 @@ class _AddSupplierScreenState extends ConsumerState<AddSupplierScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.supplierToEdit != null ? 'Edit Supplier' : AppLocalizations.of(context)!.addNewSupplier),
-        elevation: 0,
+        
         actions: [
           TextButton.icon(
             onPressed: _submit,
@@ -124,7 +124,7 @@ class _AddSupplierScreenState extends ConsumerState<AddSupplierScreen> {
           children: [
             _buildSectionHeader('Basic Information', Icons.info_outline),
             Card(
-              elevation: 2,
+              
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -148,7 +148,7 @@ class _AddSupplierScreenState extends ConsumerState<AddSupplierScreen> {
             const SizedBox(height: 24),
             _buildSectionHeader('Contact Details', Icons.contact_phone),
             Card(
-              elevation: 2,
+              
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),

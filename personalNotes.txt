@@ -1,0 +1,3 @@
+I should add the searsh bar to the stock base/magazin , archives and docs for sales&returns and Purchases and when searching list from the recent one by name of client, in products also , in clients and suppliers , garbage / deleted . and check that all of them has the select and select all option .
+
+I should be able to press and hold pressing in any product in Sales/Purchases yo move it and place it where i want , the same for profuct screen .

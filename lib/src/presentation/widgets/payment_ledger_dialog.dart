@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../infrastructure/database/app_database.dart';
 import '../../infrastructure/database/providers.dart';
+import '../../application/payments/payment_service.dart';
 import 'package:drift/drift.dart' as drift;
 import 'image_picker_field.dart';
 import 'package:uuid/uuid.dart';
@@ -73,31 +74,22 @@ class _PaymentLedgerDialogState extends ConsumerState<PaymentLedgerDialog> {
   }
 
   Future<void> _processPayments() async {
-    final db = ref.read(databaseProvider);
-    final uuid = const Uuid();
+    final paymentService = ref.read(paymentServiceProvider);
     
     try {
-      await db.batch((batch) {
-        for (var p in _payments) {
-          final amt = Decimal.tryParse(p.amountController.text) ?? Decimal.zero;
-          if (amt > Decimal.zero) {
-            batch.insert(
-              db.payments,
-              PaymentsCompanion.insert(
-                id: uuid.v4(),
-                clientId: drift.Value(widget.clientId),
-                supplierId: drift.Value(widget.supplierId),
-                employeeId: drift.Value(widget.employeeId),
-                amount: amt,
-                method: p.method,
-                checkImagePath: drift.Value(p.checkImagePath),
-                date: DateTime.now(),
-                status: 'CLEARED',
-              ),
-            );
-          }
+      for (var p in _payments) {
+        final amt = Decimal.tryParse(p.amountController.text) ?? Decimal.zero;
+        if (amt > Decimal.zero) {
+          await paymentService.allocatePayment(
+            clientId: widget.clientId,
+            supplierId: widget.supplierId,
+            employeeId: widget.employeeId,
+            amount: amt,
+            method: p.method,
+            checkImagePath: p.checkImagePath,
+          );
         }
-      });
+      }
       if (mounted) {
         Navigator.of(context).pop(true);
       }
@@ -163,7 +155,7 @@ class _PaymentLedgerDialogState extends ConsumerState<PaymentLedgerDialog> {
                 itemBuilder: (context, index) {
                   final p = _payments[index];
                   return Card(
-                    elevation: 1,
+                    
                     margin: const EdgeInsets.only(bottom: 12),
                     child: Padding(
                       padding: const EdgeInsets.all(12),

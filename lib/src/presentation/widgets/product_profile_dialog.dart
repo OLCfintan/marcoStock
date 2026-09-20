@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:drift/drift.dart' as drift;
+import '../widgets/logo_loader.dart';
 
 import '../../domain/products/product.dart';
 import '../../infrastructure/database/app_database.dart';
@@ -51,14 +52,15 @@ class _ProductProfileDialogState extends ConsumerState<ProductProfileDialog> wit
             color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
             child: Row(
               children: [
-                CircleAvatar(
-                  radius: 40,
-                  backgroundImage: p.imagePath != null && p.imagePath!.isNotEmpty
-                      ? FileImage(File(p.imagePath!))
-                      : null,
-                  child: p.imagePath == null || p.imagePath!.isEmpty 
-                      ? const Icon(Icons.inventory_2, size: 40) 
-                      : null,
+                ClipOval(
+                  clipBehavior: Clip.antiAliasWithSaveLayer,
+                  child: Container(
+                    width: 80, height: 80,
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                    child: p.imagePath != null && p.imagePath!.isNotEmpty
+                        ? Image.file(File(p.imagePath!), fit: BoxFit.cover, filterQuality: FilterQuality.high)
+                        : const Icon(Icons.inventory_2_outlined, size: 40),
+                  ),
                 ),
                 const SizedBox(width: 24),
                 Expanded(
@@ -141,7 +143,7 @@ class _ProductProfileDialogState extends ConsumerState<ProductProfileDialog> wit
       stream: query.watch(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: const LogoLoader());
         }
         if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
@@ -161,7 +163,7 @@ class _ProductProfileDialogState extends ConsumerState<ProductProfileDialog> wit
             return ListTile(
               leading: const CircleAvatar(
                 backgroundColor: Colors.blueGrey,
-                child: Icon(Icons.warehouse, color: Colors.white),
+                child: Icon(Icons.warehouse, color: const Color(0xff64748b)),
               ),
               title: Text(location.name),
               subtitle: Text('Location Type: ${location.type}'),
@@ -185,7 +187,7 @@ class _ProductProfileDialogState extends ConsumerState<ProductProfileDialog> wit
       stream: query.watch(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: const LogoLoader());
         }
         if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
@@ -205,7 +207,7 @@ class _ProductProfileDialogState extends ConsumerState<ProductProfileDialog> wit
             return ListTile(
               leading: const CircleAvatar(
                 backgroundColor: Colors.teal,
-                child: Icon(Icons.build, color: Colors.white),
+                child: Icon(Icons.build, color: const Color(0xff64748b)),
               ),
               title: Text(product.name),
               subtitle: Text('Reference: ${product.reference}'),

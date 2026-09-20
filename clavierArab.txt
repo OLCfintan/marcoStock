@@ -1,0 +1,31 @@
+Mode d'emploi
+
+Pour écrire directement avec le clavier d'ordinateur :
+
+    Pour les lettres emphatiques, écrire en majuscule : H, S, D, T, Z
+    Pour ajouter un diacritique, taper une apostrophe : t', H', d', s', S', T', g'
+    Caractères spéciaux :
+    pour le caractère : 	taper :
+    hamza 	ء 	-   (tiret)
+      	ئ 	y--
+      	ؤ 	w--
+      	إ 	a--
+      	أ 	-a
+      	ءا 	--a
+      	آ 	aa
+    ʾalif maqṣūra 	ى 	Y
+    tāʾ marbūṭa 	ة 	h'
+      	لا 	la
+    Taper =a, =i, =u pour ajouter un signe de vocalisation ; taper ==a, ==i, ==u pour ajouter un tanwīn
+    Taper =w pour ajouter un šadda
+    Taper =o pour ajouter un sukūn
+    Les lettres correspondant aux sons g, p, v n'existent pas en arabe. Pour retranscrire certains mots d'origine européenne, on utilise ces équivalences :
+    pour le caractère : 	taper :
+    Algérie, Tunisie 	g 	ڨ 	q'
+    Maroc 	g 	ڭ 	k'
+      	p 	پ 	p ou b'
+    Algérie, Tunisie 	v 	ڢ 	v
+    Maroc 	v 	ڤ 	f'
+      	ch 	چ 	c ou j'
+    Taper = après un chiffre pour obtenir le chiffre arabe oriental (exemple : 1=, 2=)
+

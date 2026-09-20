@@ -218,7 +218,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get invoice => 'فاتورة';
 
   @override
-  String get bon => 'وصل تسليم';
+  String get bon => 'بون';
 
   @override
   String get ticket => 'تذكرة';
@@ -482,7 +482,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get searchSupplier => 'البحث عن مورد...';
 
   @override
-  String get pdfBonTo => 'تسليم إلى:';
+  String get pdfBonTo => 'بون إلى:';
 
   @override
   String get pdfTotalDebt => 'مجموع الديون';

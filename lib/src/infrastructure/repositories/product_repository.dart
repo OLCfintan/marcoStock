@@ -1,5 +1,6 @@
 import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart' as drift;
+import 'package:drift/drift.dart' show BooleanExpressionOperators;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../../application/stock/stock_helpers.dart';
@@ -49,38 +50,46 @@ class ProductRepository {
     return ProductsCompanion.insert(
       id: product.id,
       name: product.name,
-      nameAr: driftValue(product.nameAr),
-      nameFr: driftValue(product.nameFr),
-      nameEs: driftValue(product.nameEs),
+      nameAr: drift.Value(product.nameAr),
+      nameFr: drift.Value(product.nameFr),
+      nameEs: drift.Value(product.nameEs),
       reference: product.reference,
-      category: driftValue(product.category),
+      category: drift.Value(product.category),
       unit: product.unit,
       unitSize: drift.Value(product.unitSize),
       unitsPerBox: drift.Value(product.unitsPerBox),
       purchasePrice: product.purchasePrice,
       sellingPrice: product.sellingPrice,
-      tier2Price: driftValue(product.tier2Price),
-      tier3Price: driftValue(product.tier3Price),
+      tier2Price: drift.Value(product.tier2Price),
+      tier3Price: drift.Value(product.tier3Price),
       minimumStock: drift.Value(product.minimumStock),
       baseMinimumStock: drift.Value(product.baseMinimumStock),
       magazinMinimumStock: drift.Value(product.magazinMinimumStock),
-      description: driftValue(product.description),
-      imagePath: driftValue(product.imagePath),
-      packagingType: driftValue(product.packagingType),
-      isActive: driftValue(product.isActive),
-      createdAt: driftValue(product.createdAt),
-      updatedAt: driftValue(product.updatedAt),
+      description: drift.Value(product.description),
+      imagePath: drift.Value(product.imagePath),
+      packagingType: drift.Value(product.packagingType),
+      isActive: drift.Value(product.isActive),
+      createdAt: drift.Value(product.createdAt),
+      updatedAt: drift.Value(product.updatedAt),
     );
   }
 
   drift.Value<T> driftValue<T>(T? value) => value == null ? const drift.Value.absent() : drift.Value(value);
 
+  Future<void> updateProductReorder(List<Product> products) async {
+    await _db.transaction(() async {
+      for (int i = 0; i < products.length; i++) {
+        await (_db.update(_db.products)..where((t) => t.id.equals(products[i].id))).write(ProductsCompanion(displayOrder: drift.Value(i)));
+      }
+    });
+  }
+
   Stream<List<Product>> watchAllProducts() {
-    return (_db.select(_db.products)..where((t) => t.isActive.equals(true))).watch().map((entities) => entities.map(_mapToDomain).toList());
+    return (_db.select(_db.products)..where((t) => t.isActive.equals(true))..orderBy([(t) => drift.OrderingTerm(expression: t.displayOrder)])).watch().map((entities) => entities.map(_mapToDomain).toList());
   }
 
   Future<List<Product>> getAllProducts() async {
-    final entities = await (_db.select(_db.products)..where((t) => t.isActive.equals(true))).get();
+    final entities = await (_db.select(_db.products)..where((t) => t.isActive.equals(true))..orderBy([(t) => drift.OrderingTerm(expression: t.displayOrder)])).get();
     return entities.map(_mapToDomain).toList();
   }
 

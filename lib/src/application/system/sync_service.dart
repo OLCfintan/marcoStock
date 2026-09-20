@@ -66,14 +66,14 @@ class SyncService {
       throw Exception('Database file not found: ${dbFile.path}');
     }
 
-    final outputFile = await FilePicker.saveFile(
+    final outputFileUri = await FilePicker.saveFile(
       dialogTitle: 'Save Database Backup',
       fileName: 'marco_stock_backup.sqlite',
+      bytes: await dbFile.readAsBytes(),
     );
 
-    if (outputFile != null) {
-      await dbFile.copy(outputFile);
-      return outputFile;
+    if (outputFileUri != null) {
+      return outputFileUri.toFilePath(windows: Platform.isWindows);
     }
 
     return null;

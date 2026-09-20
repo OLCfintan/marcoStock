@@ -1,3 +1,4 @@
+import 'dart:collection';
 import "package:drift/drift.dart";
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/constants/locations.dart';
@@ -98,9 +99,11 @@ final topSellingProductsProvider = StreamProvider<List<TopProduct>>((ref) {
     for (final line in lines) {
       final product = await (db.select(db.products)..where((t) => t.id.equals(line.productId))).getSingleOrNull();
       if (product == null) continue;
-      final current = map[product.id] ?? TopProduct(product.name, Decimal.zero, Decimal.zero);
+      final baseLabel = product.unitSize == Decimal.one ? ' ${product.unit}' : ' ${product.unitSize}${product.unit}';
+      final label = '${product.name}$baseLabel';
+      final current = map[product.id] ?? TopProduct(label, Decimal.zero, Decimal.zero);
       map[product.id] = TopProduct(
-        product.name,
+        label,
         current.totalRevenue + line.lineTotal,
         current.totalQuantity + line.quantity,
       );
@@ -108,6 +111,46 @@ final topSellingProductsProvider = StreamProvider<List<TopProduct>>((ref) {
     
     final list = map.values.toList();
     list.sort((a, b) => b.totalRevenue.compareTo(a.totalRevenue));
+    return list.take(5).toList();
+  });
+});
+
+class TopPayer {
+  final String name;
+  final Decimal totalPaid;
+  TopPayer(this.name, this.totalPaid);
+}
+
+final topClientsByRevenueProvider = StreamProvider<List<TopPayer>>((ref) {
+  final db = ref.watch(databaseProvider);
+  return db.select(db.clients).watch().asyncMap((clients) async {
+    final list = <TopPayer>[];
+    for (final c in clients) {
+      if (!c.isActive || c.type != 'NORMAL') continue;
+      final payments = await (db.select(db.payments)..where((t) => t.clientId.equals(c.id) & t.isActive.equals(true))).get();
+      final total = payments.fold(Decimal.zero, (sum, p) => sum + p.amount);
+      if (total > Decimal.zero) {
+        list.add(TopPayer(c.name, total));
+      }
+    }
+    list.sort((a, b) => b.totalPaid.compareTo(a.totalPaid));
+    return list.take(5).toList();
+  });
+});
+
+final topSuppliersByRevenueProvider = StreamProvider<List<TopPayer>>((ref) {
+  final db = ref.watch(databaseProvider);
+  return db.select(db.suppliers).watch().asyncMap((suppliers) async {
+    final list = <TopPayer>[];
+    for (final s in suppliers) {
+      if (!s.isActive) continue;
+      final payments = await (db.select(db.payments)..where((t) => t.supplierId.equals(s.id) & t.isActive.equals(true))).get();
+      final total = payments.fold(Decimal.zero, (sum, p) => sum + p.amount);
+      if (total > Decimal.zero) {
+        list.add(TopPayer(s.name, total));
+      }
+    }
+    list.sort((a, b) => b.totalPaid.compareTo(a.totalPaid));
     return list.take(5).toList();
   });
 });
@@ -199,31 +242,54 @@ final salesChartDataProvider = StreamProvider<List<ChartDataPoint>>((ref) {
     if (normalIds.isEmpty) return [];
     final invoices = await (db.select(db.invoices)..where((t) => t.isActive.equals(true) & ((t.clientId.isIn(normalIds) | t.clientId.isNull()) | t.clientId.isNull()))).get();
     final now = DateTime.now();
-    final data = <String, Decimal>{};
+    
+    final data = LinkedHashMap<String, Decimal>();
+    
+    if (period == SalesChartPeriod.daily) {
+      for (int i = 6; i >= 0; i--) {
+        final d = now.subtract(Duration(days: i));
+        data['${d.month}/${d.day}'] = Decimal.zero;
+      }
+    } else if (period == SalesChartPeriod.weekly) {
+      for (int i = 4; i >= 0; i--) {
+        final d = now.subtract(Duration(days: i * 7));
+        final weekNum = ((d.day - 1) / 7).floor() + 1;
+        data['Week $weekNum, ${d.month}'] = Decimal.zero;
+      }
+    } else {
+      for (int i = 11; i >= 0; i--) {
+        final d = DateTime(now.year, now.month - i, 1);
+        data['${d.year}-${d.month.toString().padLeft(2, '0')}'] = Decimal.zero;
+      }
+    }
     
     for (final inv in invoices) {
       if (period == SalesChartPeriod.daily) {
         if (inv.date.isAfter(now.subtract(const Duration(days: 7)))) {
           final dayStr = '${inv.date.month}/${inv.date.day}';
-          data[dayStr] = (data[dayStr] ?? Decimal.zero) + inv.total;
+          if (data.containsKey(dayStr)) {
+            data[dayStr] = data[dayStr]! + inv.total;
+          }
         }
       } else if (period == SalesChartPeriod.weekly) {
-        if (inv.date.isAfter(now.subtract(const Duration(days: 30)))) {
-          // Simplistic week grouping
+        if (inv.date.isAfter(now.subtract(const Duration(days: 34)))) {
           final weekNum = ((inv.date.day - 1) / 7).floor() + 1;
           final weekStr = 'Week $weekNum, ${inv.date.month}';
-          data[weekStr] = (data[weekStr] ?? Decimal.zero) + inv.total;
+          if (data.containsKey(weekStr)) {
+            data[weekStr] = data[weekStr]! + inv.total;
+          }
         }
       } else {
         if (inv.date.isAfter(now.subtract(const Duration(days: 365)))) {
           final monthStr = '${inv.date.year}-${inv.date.month.toString().padLeft(2, '0')}';
-          data[monthStr] = (data[monthStr] ?? Decimal.zero) + inv.total;
+          if (data.containsKey(monthStr)) {
+            data[monthStr] = data[monthStr]! + inv.total;
+          }
         }
       }
     }
     
-    final sortedKeys = data.keys.toList()..sort();
-    return sortedKeys.map((k) => ChartDataPoint(k, data[k]!)).toList();
+    return data.entries.map((e) => ChartDataPoint(e.key, e.value)).toList();
   });
 });
 

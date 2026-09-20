@@ -137,8 +137,8 @@ class SalesService {
           locationId: locationId,
         );
         
-        // If selling to a Special Client (Magazin), this is a transfer. We must add the stock to MAGAZIN_01.
-        if ((client?.type == 'MAGAZIN' || client?.type == 'SPECIAL' || client?.id == 'MAGAZIN_01')) {
+        // If selling to a Magazin or Special client, this is a transfer. We must add the stock to MAGAZIN_01.
+        if (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL' || client?.id == 'MAGAZIN_01') {
           await _restoreStock(
             productId: line.productId,
             quantity: line.quantity,
@@ -254,8 +254,8 @@ class SalesService {
           locationId: locationId,
         );
 
-        // If it was a special client (transfer), reverse the inbound to Magazin
-        if ((client?.type == 'MAGAZIN' || client?.type == 'SPECIAL' || client?.id == 'MAGAZIN_01')) {
+        // If it was a Magazin or Special client (transfer), reverse the inbound to Magazin
+        if (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL' || client?.id == 'MAGAZIN_01') {
           await _deductStock(
             productId: line.productId,
             quantity: line.quantity,
@@ -315,8 +315,8 @@ class SalesService {
           locationId: locationId,
         );
 
-        // Re-apply Magazin transfer if special client
-        if ((client?.type == 'MAGAZIN' || client?.type == 'SPECIAL' || client?.id == 'MAGAZIN_01')) {
+        // Re-apply Magazin transfer if Magazin or Special client
+        if (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL' || client?.id == 'MAGAZIN_01') {
           await _restoreStock(
             productId: line.productId,
             quantity: line.quantity,
@@ -506,6 +506,18 @@ class SalesService {
         );
         
 
+        // If Magazin or Special client is returning goods to base, deduct from Magazin
+        if (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL' || client?.id == 'MAGAZIN_01') {
+          await _deductStock(
+            productId: line.productId,
+            quantity: line.quantity,
+            reason: 'RETURN_TRANSFER_OUT',
+            allowNegative: true,
+            referenceOperationId: invoiceId,
+            userId: request.currentUserId,
+            locationId: AppLocations.magazin,
+          );
+        }
         
         // 4. Handle Consumables Restore
         await _restoreConsumables(

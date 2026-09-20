@@ -1,3 +1,4 @@
+import '../../utils/arabic_transliterator.dart';
 
 
 import 'package:decimal/decimal.dart';
@@ -9,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/auth/auth_service.dart';
 import 'package:uuid/uuid.dart';
+import '../widgets/logo_loader.dart';
 
 import '../../application/products/product_providers.dart';
 import '../../domain/products/product.dart';
@@ -26,7 +28,7 @@ class ProductsScreen extends ConsumerStatefulWidget {
 
 class _ProductsScreenState extends ConsumerState<ProductsScreen> {
   final Set<String> _selectedProductIds = {};
-
+  String _searchQuery = '';
 
   void _showConsumableDialog(BuildContext context, Product product) {
     bool createBox = false;
@@ -153,15 +155,42 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
         ],
       ),
       body: productsAsync.when(
-        data: (products) {
-          if (products.isEmpty) {
+        data: (allProducts) {
+          final products = allProducts.where((p) {
+            if (_searchQuery.isEmpty) return true;
+            final q = _searchQuery.toLowerCase();
+            final aq = ArabicTransliterator.transliterate(_searchQuery);
+            return p.name.toLowerCase().contains(q) || (p.name.contains(aq)) || p.reference.toLowerCase().contains(q);
+          }).toList();
+          
+          if (products.isEmpty && _searchQuery.isEmpty) {
             return const Center(child: Text('No products available.'));
           }
           return SingleChildScrollView(
             child: SizedBox(
               width: double.infinity,
               child: PaginatedDataTable(
-                header: const Text('Products Inventory'),
+                header: TextField(
+                  decoration: const InputDecoration(
+                    labelText: 'Search Products',
+                    prefixIcon: Icon(Icons.search),
+                    border: InputBorder.none,
+                  ),
+                  onChanged: (val) {
+                    setState(() {
+                      _searchQuery = val;
+                    });
+                  },
+                ),
+                onSelectAll: (val) {
+                  setState(() {
+                    if (val == true) {
+                      _selectedProductIds.addAll(products.map((p) => p.id));
+                    } else {
+                      _selectedProductIds.clear();
+                    }
+                  });
+                },
                 rowsPerPage: (products.length > 20) ? 20 : (products.length < 5 ? 5 : products.length),
                 showCheckboxColumn: true,
                 columns: const [
@@ -202,7 +231,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
             ),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(child: const LogoLoader()),
         error: (err, stack) => Center(child: Text('${(AppLocalizations.of(context)?.errorStr ?? 'Error: ')}$err')),
       ),
       floatingActionButton: FloatingActionButton(

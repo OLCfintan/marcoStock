@@ -4,6 +4,7 @@ import 'package:marko_group/src/localization/arb/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:decimal/decimal.dart';
+import '../widgets/logo_loader.dart';
 
 import '../../application/sales/sales_service.dart';
 import '../../infrastructure/repositories/client_repository.dart';
@@ -186,7 +187,7 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen> {
                   itemBuilder: (context, index) {
                     final p = activeProducts[index];
                     return Card(
-                      elevation: 2,
+                      
                       clipBehavior: Clip.antiAlias,
                       child: InkWell(
                         onTap: () => _addToCart(p),
@@ -216,13 +217,13 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen> {
                   },
                 );
               },
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => const Center(child: const LogoLoader()),
               error: (err, stack) => Center(child: Text('Error: $err')),
           );
           
-          final cartSection = Container(
-              color: theme.colorScheme.surface,
-              child: SingleChildScrollView(
+          final cartSection = Material(
+            color: theme.colorScheme.surface,
+            child: SingleChildScrollView(
                 child: Column(
                   children: [
                     // Document type not needed for return

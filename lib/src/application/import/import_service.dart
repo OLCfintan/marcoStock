@@ -24,16 +24,15 @@ class ImportService {
       final result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['txt', 'csv', 'pdf'],
-        allowMultiple: true,
       );
 
-      if (result == null || result.files.isEmpty) return 'No files selected.';
+      if (result.isEmpty) return 'No files selected.';
 
       int clientsAdded = 0;
       int suppliersAdded = 0;
       int productsAdded = 0;
 
-      for (final file in result.files) {
+      for (final file in result) {
         if (file.path == null) continue;
         
         String content = '';

@@ -104,13 +104,12 @@ class _ImagePickerFieldState extends State<ImagePickerField> {
               border: Border.all(color: Colors.grey),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.file(
-                File(_selectedPath!),
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => const Center(
-                  child: Text('Invalid Image', style: TextStyle(color: Colors.red)),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                image: DecorationImage(
+                  image: FileImage(File(_selectedPath!)),
+                  fit: BoxFit.cover,
                 ),
               ),
             ),

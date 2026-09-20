@@ -1,6 +1,7 @@
 import 'package:marko_group/src/localization/arb/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../widgets/logo_loader.dart';
 
 import '../../application/settings/settings_service.dart';
 
@@ -62,7 +63,7 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(AppLocalizations.of(context)!.companyProfile)),
       body: _isLoading 
-        ? const Center(child: CircularProgressIndicator())
+        ? const Center(child: const LogoLoader())
         : Form(
             key: _formKey,
             child: ListView(

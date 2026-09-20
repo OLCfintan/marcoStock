@@ -234,6 +234,18 @@ class $ProductsTable extends Products
     ),
     defaultValue: const Constant(true),
   );
+  static const VerificationMeta _displayOrderMeta = const VerificationMeta(
+    'displayOrder',
+  );
+  @override
+  late final GeneratedColumn<int> displayOrder = GeneratedColumn<int>(
+    'display_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -281,6 +293,7 @@ class $ProductsTable extends Products
     packagingType,
     unitsPerBox,
     isActive,
+    displayOrder,
     createdAt,
     updatedAt,
   ];
@@ -386,6 +399,15 @@ class $ProductsTable extends Products
       context.handle(
         _isActiveMeta,
         isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta),
+      );
+    }
+    if (data.containsKey('display_order')) {
+      context.handle(
+        _displayOrderMeta,
+        displayOrder.isAcceptableOrUnknown(
+          data['display_order']!,
+          _displayOrderMeta,
+        ),
       );
     }
     if (data.containsKey('created_at')) {
@@ -515,6 +537,11 @@ class $ProductsTable extends Products
             DriftSqlType.bool,
             data['${effectivePrefix}is_active'],
           )!,
+      displayOrder:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}display_order'],
+          )!,
       createdAt:
           attachedDatabase.typeMapping.read(
             DriftSqlType.dateTime,
@@ -577,6 +604,7 @@ class ProductEntity extends DataClass implements Insertable<ProductEntity> {
   final String? packagingType;
   final int unitsPerBox;
   final bool isActive;
+  final int displayOrder;
   final DateTime createdAt;
   final DateTime updatedAt;
   const ProductEntity({
@@ -601,6 +629,7 @@ class ProductEntity extends DataClass implements Insertable<ProductEntity> {
     this.packagingType,
     required this.unitsPerBox,
     required this.isActive,
+    required this.displayOrder,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -674,6 +703,7 @@ class ProductEntity extends DataClass implements Insertable<ProductEntity> {
     }
     map['units_per_box'] = Variable<int>(unitsPerBox);
     map['is_active'] = Variable<bool>(isActive);
+    map['display_order'] = Variable<int>(displayOrder);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -723,6 +753,7 @@ class ProductEntity extends DataClass implements Insertable<ProductEntity> {
               : Value(packagingType),
       unitsPerBox: Value(unitsPerBox),
       isActive: Value(isActive),
+      displayOrder: Value(displayOrder),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -757,6 +788,7 @@ class ProductEntity extends DataClass implements Insertable<ProductEntity> {
       packagingType: serializer.fromJson<String?>(json['packagingType']),
       unitsPerBox: serializer.fromJson<int>(json['unitsPerBox']),
       isActive: serializer.fromJson<bool>(json['isActive']),
+      displayOrder: serializer.fromJson<int>(json['displayOrder']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -786,6 +818,7 @@ class ProductEntity extends DataClass implements Insertable<ProductEntity> {
       'packagingType': serializer.toJson<String?>(packagingType),
       'unitsPerBox': serializer.toJson<int>(unitsPerBox),
       'isActive': serializer.toJson<bool>(isActive),
+      'displayOrder': serializer.toJson<int>(displayOrder),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -813,6 +846,7 @@ class ProductEntity extends DataClass implements Insertable<ProductEntity> {
     Value<String?> packagingType = const Value.absent(),
     int? unitsPerBox,
     bool? isActive,
+    int? displayOrder,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => ProductEntity(
@@ -838,6 +872,7 @@ class ProductEntity extends DataClass implements Insertable<ProductEntity> {
         packagingType.present ? packagingType.value : this.packagingType,
     unitsPerBox: unitsPerBox ?? this.unitsPerBox,
     isActive: isActive ?? this.isActive,
+    displayOrder: displayOrder ?? this.displayOrder,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -886,6 +921,10 @@ class ProductEntity extends DataClass implements Insertable<ProductEntity> {
       unitsPerBox:
           data.unitsPerBox.present ? data.unitsPerBox.value : this.unitsPerBox,
       isActive: data.isActive.present ? data.isActive.value : this.isActive,
+      displayOrder:
+          data.displayOrder.present
+              ? data.displayOrder.value
+              : this.displayOrder,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -915,6 +954,7 @@ class ProductEntity extends DataClass implements Insertable<ProductEntity> {
           ..write('packagingType: $packagingType, ')
           ..write('unitsPerBox: $unitsPerBox, ')
           ..write('isActive: $isActive, ')
+          ..write('displayOrder: $displayOrder, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -944,6 +984,7 @@ class ProductEntity extends DataClass implements Insertable<ProductEntity> {
     packagingType,
     unitsPerBox,
     isActive,
+    displayOrder,
     createdAt,
     updatedAt,
   ]);
@@ -972,6 +1013,7 @@ class ProductEntity extends DataClass implements Insertable<ProductEntity> {
           other.packagingType == this.packagingType &&
           other.unitsPerBox == this.unitsPerBox &&
           other.isActive == this.isActive &&
+          other.displayOrder == this.displayOrder &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -998,6 +1040,7 @@ class ProductsCompanion extends UpdateCompanion<ProductEntity> {
   final Value<String?> packagingType;
   final Value<int> unitsPerBox;
   final Value<bool> isActive;
+  final Value<int> displayOrder;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
@@ -1023,6 +1066,7 @@ class ProductsCompanion extends UpdateCompanion<ProductEntity> {
     this.packagingType = const Value.absent(),
     this.unitsPerBox = const Value.absent(),
     this.isActive = const Value.absent(),
+    this.displayOrder = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -1049,6 +1093,7 @@ class ProductsCompanion extends UpdateCompanion<ProductEntity> {
     this.packagingType = const Value.absent(),
     this.unitsPerBox = const Value.absent(),
     this.isActive = const Value.absent(),
+    this.displayOrder = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -1080,6 +1125,7 @@ class ProductsCompanion extends UpdateCompanion<ProductEntity> {
     Expression<String>? packagingType,
     Expression<int>? unitsPerBox,
     Expression<bool>? isActive,
+    Expression<int>? displayOrder,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
@@ -1107,6 +1153,7 @@ class ProductsCompanion extends UpdateCompanion<ProductEntity> {
       if (packagingType != null) 'packaging_type': packagingType,
       if (unitsPerBox != null) 'units_per_box': unitsPerBox,
       if (isActive != null) 'is_active': isActive,
+      if (displayOrder != null) 'display_order': displayOrder,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -1135,6 +1182,7 @@ class ProductsCompanion extends UpdateCompanion<ProductEntity> {
     Value<String?>? packagingType,
     Value<int>? unitsPerBox,
     Value<bool>? isActive,
+    Value<int>? displayOrder,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
     Value<int>? rowid,
@@ -1161,6 +1209,7 @@ class ProductsCompanion extends UpdateCompanion<ProductEntity> {
       packagingType: packagingType ?? this.packagingType,
       unitsPerBox: unitsPerBox ?? this.unitsPerBox,
       isActive: isActive ?? this.isActive,
+      displayOrder: displayOrder ?? this.displayOrder,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -1251,6 +1300,9 @@ class ProductsCompanion extends UpdateCompanion<ProductEntity> {
     if (isActive.present) {
       map['is_active'] = Variable<bool>(isActive.value);
     }
+    if (displayOrder.present) {
+      map['display_order'] = Variable<int>(displayOrder.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -1287,6 +1339,7 @@ class ProductsCompanion extends UpdateCompanion<ProductEntity> {
           ..write('packagingType: $packagingType, ')
           ..write('unitsPerBox: $unitsPerBox, ')
           ..write('isActive: $isActive, ')
+          ..write('displayOrder: $displayOrder, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -11756,6 +11809,7 @@ typedef $$ProductsTableCreateCompanionBuilder =
       Value<String?> packagingType,
       Value<int> unitsPerBox,
       Value<bool> isActive,
+      Value<int> displayOrder,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<int> rowid,
@@ -11783,6 +11837,7 @@ typedef $$ProductsTableUpdateCompanionBuilder =
       Value<String?> packagingType,
       Value<int> unitsPerBox,
       Value<bool> isActive,
+      Value<int> displayOrder,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<int> rowid,
@@ -11907,6 +11962,11 @@ class $$ProductsTableFilterComposer
 
   ColumnFilters<bool> get isActive => $composableBuilder(
     column: $table.isActive,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get displayOrder => $composableBuilder(
+    column: $table.displayOrder,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -12035,6 +12095,11 @@ class $$ProductsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get displayOrder => $composableBuilder(
+    column: $table.displayOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -12145,6 +12210,11 @@ class $$ProductsTableAnnotationComposer
   GeneratedColumn<bool> get isActive =>
       $composableBuilder(column: $table.isActive, builder: (column) => column);
 
+  GeneratedColumn<int> get displayOrder => $composableBuilder(
+    column: $table.displayOrder,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -12204,6 +12274,7 @@ class $$ProductsTableTableManager
                 Value<String?> packagingType = const Value.absent(),
                 Value<int> unitsPerBox = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
+                Value<int> displayOrder = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -12229,6 +12300,7 @@ class $$ProductsTableTableManager
                 packagingType: packagingType,
                 unitsPerBox: unitsPerBox,
                 isActive: isActive,
+                displayOrder: displayOrder,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -12256,6 +12328,7 @@ class $$ProductsTableTableManager
                 Value<String?> packagingType = const Value.absent(),
                 Value<int> unitsPerBox = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
+                Value<int> displayOrder = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -12281,6 +12354,7 @@ class $$ProductsTableTableManager
                 packagingType: packagingType,
                 unitsPerBox: unitsPerBox,
                 isActive: isActive,
+                displayOrder: displayOrder,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -12290,8 +12364,12 @@ class $$ProductsTableTableManager
                   p0
                       .map(
                         (e) => (
-                          e.readTable(table),
-                          BaseReferences(db, table, e),
+                          e.readTable<$ProductsTable, ProductEntity>(table),
+                          BaseReferences<
+                            _$AppDatabase,
+                            $ProductsTable,
+                            ProductEntity
+                          >(db, table, e),
                         ),
                       )
                       .toList(),
@@ -12496,8 +12574,15 @@ class $$ProductRelationsTableTableManager
                   p0
                       .map(
                         (e) => (
-                          e.readTable(table),
-                          BaseReferences(db, table, e),
+                          e.readTable<
+                            $ProductRelationsTable,
+                            ProductRelationEntity
+                          >(table),
+                          BaseReferences<
+                            _$AppDatabase,
+                            $ProductRelationsTable,
+                            ProductRelationEntity
+                          >(db, table, e),
                         ),
                       )
                       .toList(),
@@ -12883,8 +12968,12 @@ class $$ClientsTableTableManager
                   p0
                       .map(
                         (e) => (
-                          e.readTable(table),
-                          BaseReferences(db, table, e),
+                          e.readTable<$ClientsTable, ClientEntity>(table),
+                          BaseReferences<
+                            _$AppDatabase,
+                            $ClientsTable,
+                            ClientEntity
+                          >(db, table, e),
                         ),
                       )
                       .toList(),
@@ -13121,8 +13210,15 @@ class $$StockLocationsTableTableManager
                   p0
                       .map(
                         (e) => (
-                          e.readTable(table),
-                          BaseReferences(db, table, e),
+                          e.readTable<
+                            $StockLocationsTable,
+                            StockLocationEntity
+                          >(table),
+                          BaseReferences<
+                            _$AppDatabase,
+                            $StockLocationsTable,
+                            StockLocationEntity
+                          >(db, table, e),
                         ),
                       )
                       .toList(),
@@ -13425,8 +13521,15 @@ class $$StockMovementsTableTableManager
                   p0
                       .map(
                         (e) => (
-                          e.readTable(table),
-                          BaseReferences(db, table, e),
+                          e.readTable<
+                            $StockMovementsTable,
+                            StockMovementEntity
+                          >(table),
+                          BaseReferences<
+                            _$AppDatabase,
+                            $StockMovementsTable,
+                            StockMovementEntity
+                          >(db, table, e),
                         ),
                       )
                       .toList(),
@@ -13628,8 +13731,14 @@ class $$StockBalancesTableTableManager
                   p0
                       .map(
                         (e) => (
-                          e.readTable(table),
-                          BaseReferences(db, table, e),
+                          e.readTable<$StockBalancesTable, StockBalanceEntity>(
+                            table,
+                          ),
+                          BaseReferences<
+                            _$AppDatabase,
+                            $StockBalancesTable,
+                            StockBalanceEntity
+                          >(db, table, e),
                         ),
                       )
                       .toList(),
@@ -13818,8 +13927,15 @@ class $$ProductConsumablesTableTableManager
                   p0
                       .map(
                         (e) => (
-                          e.readTable(table),
-                          BaseReferences(db, table, e),
+                          e.readTable<
+                            $ProductConsumablesTable,
+                            ProductConsumableEntity
+                          >(table),
+                          BaseReferences<
+                            _$AppDatabase,
+                            $ProductConsumablesTable,
+                            ProductConsumableEntity
+                          >(db, table, e),
                         ),
                       )
                       .toList(),
@@ -14088,8 +14204,14 @@ class $$SyncOutboxTableTableManager
                   p0
                       .map(
                         (e) => (
-                          e.readTable(table),
-                          BaseReferences(db, table, e),
+                          e.readTable<$SyncOutboxTable, SyncOutboxEntity>(
+                            table,
+                          ),
+                          BaseReferences<
+                            _$AppDatabase,
+                            $SyncOutboxTable,
+                            SyncOutboxEntity
+                          >(db, table, e),
                         ),
                       )
                       .toList(),
@@ -14458,8 +14580,12 @@ class $$InvoicesTableTableManager
                   p0
                       .map(
                         (e) => (
-                          e.readTable(table),
-                          BaseReferences(db, table, e),
+                          e.readTable<$InvoicesTable, InvoiceEntity>(table),
+                          BaseReferences<
+                            _$AppDatabase,
+                            $InvoicesTable,
+                            InvoiceEntity
+                          >(db, table, e),
                         ),
                       )
                       .toList(),
@@ -14712,8 +14838,14 @@ class $$InvoiceLinesTableTableManager
                   p0
                       .map(
                         (e) => (
-                          e.readTable(table),
-                          BaseReferences(db, table, e),
+                          e.readTable<$InvoiceLinesTable, InvoiceLineEntity>(
+                            table,
+                          ),
+                          BaseReferences<
+                            _$AppDatabase,
+                            $InvoiceLinesTable,
+                            InvoiceLineEntity
+                          >(db, table, e),
                         ),
                       )
                       .toList(),
@@ -15099,8 +15231,12 @@ class $$PaymentsTableTableManager
                   p0
                       .map(
                         (e) => (
-                          e.readTable(table),
-                          BaseReferences(db, table, e),
+                          e.readTable<$PaymentsTable, PaymentEntity>(table),
+                          BaseReferences<
+                            _$AppDatabase,
+                            $PaymentsTable,
+                            PaymentEntity
+                          >(db, table, e),
                         ),
                       )
                       .toList(),
@@ -15346,8 +15482,12 @@ class $$AuditLogsTableTableManager
                   p0
                       .map(
                         (e) => (
-                          e.readTable(table),
-                          BaseReferences(db, table, e),
+                          e.readTable<$AuditLogsTable, AuditLogEntity>(table),
+                          BaseReferences<
+                            _$AppDatabase,
+                            $AuditLogsTable,
+                            AuditLogEntity
+                          >(db, table, e),
                         ),
                       )
                       .toList(),
@@ -15534,8 +15674,15 @@ class $$DocumentSequencesTableTableManager
                   p0
                       .map(
                         (e) => (
-                          e.readTable(table),
-                          BaseReferences(db, table, e),
+                          e.readTable<
+                            $DocumentSequencesTable,
+                            DocumentSequenceEntity
+                          >(table),
+                          BaseReferences<
+                            _$AppDatabase,
+                            $DocumentSequencesTable,
+                            DocumentSequenceEntity
+                          >(db, table, e),
                         ),
                       )
                       .toList(),
@@ -15762,8 +15909,12 @@ class $$UsersTableTableManager
                   p0
                       .map(
                         (e) => (
-                          e.readTable(table),
-                          BaseReferences(db, table, e),
+                          e.readTable<$UsersTable, UserEntity>(table),
+                          BaseReferences<
+                            _$AppDatabase,
+                            $UsersTable,
+                            UserEntity
+                          >(db, table, e),
                         ),
                       )
                       .toList(),
@@ -16083,8 +16234,12 @@ class $$SuppliersTableTableManager
                   p0
                       .map(
                         (e) => (
-                          e.readTable(table),
-                          BaseReferences(db, table, e),
+                          e.readTable<$SuppliersTable, SupplierEntity>(table),
+                          BaseReferences<
+                            _$AppDatabase,
+                            $SuppliersTable,
+                            SupplierEntity
+                          >(db, table, e),
                         ),
                       )
                       .toList(),
@@ -16415,8 +16570,12 @@ class $$PurchasesTableTableManager
                   p0
                       .map(
                         (e) => (
-                          e.readTable(table),
-                          BaseReferences(db, table, e),
+                          e.readTable<$PurchasesTable, PurchaseEntity>(table),
+                          BaseReferences<
+                            _$AppDatabase,
+                            $PurchasesTable,
+                            PurchaseEntity
+                          >(db, table, e),
                         ),
                       )
                       .toList(),
@@ -16654,8 +16813,14 @@ class $$PurchaseLinesTableTableManager
                   p0
                       .map(
                         (e) => (
-                          e.readTable(table),
-                          BaseReferences(db, table, e),
+                          e.readTable<$PurchaseLinesTable, PurchaseLineEntity>(
+                            table,
+                          ),
+                          BaseReferences<
+                            _$AppDatabase,
+                            $PurchaseLinesTable,
+                            PurchaseLineEntity
+                          >(db, table, e),
                         ),
                       )
                       .toList(),
@@ -17042,8 +17207,12 @@ class $$EmployeesTableTableManager
                   p0
                       .map(
                         (e) => (
-                          e.readTable(table),
-                          BaseReferences(db, table, e),
+                          e.readTable<$EmployeesTable, EmployeeEntity>(table),
+                          BaseReferences<
+                            _$AppDatabase,
+                            $EmployeesTable,
+                            EmployeeEntity
+                          >(db, table, e),
                         ),
                       )
                       .toList(),
@@ -17281,8 +17450,15 @@ class $$PayrollRecordsTableTableManager
                   p0
                       .map(
                         (e) => (
-                          e.readTable(table),
-                          BaseReferences(db, table, e),
+                          e.readTable<
+                            $PayrollRecordsTable,
+                            PayrollRecordEntity
+                          >(table),
+                          BaseReferences<
+                            _$AppDatabase,
+                            $PayrollRecordsTable,
+                            PayrollRecordEntity
+                          >(db, table, e),
                         ),
                       )
                       .toList(),
@@ -17612,8 +17788,15 @@ class $$EmployeeActivitiesTableTableManager
                   p0
                       .map(
                         (e) => (
-                          e.readTable(table),
-                          BaseReferences(db, table, e),
+                          e.readTable<
+                            $EmployeeActivitiesTable,
+                            EmployeeActivityEntity
+                          >(table),
+                          BaseReferences<
+                            _$AppDatabase,
+                            $EmployeeActivitiesTable,
+                            EmployeeActivityEntity
+                          >(db, table, e),
                         ),
                       )
                       .toList(),
@@ -17762,8 +17945,12 @@ class $$SettingsTableTableManager
                   p0
                       .map(
                         (e) => (
-                          e.readTable(table),
-                          BaseReferences(db, table, e),
+                          e.readTable<$SettingsTable, SettingEntity>(table),
+                          BaseReferences<
+                            _$AppDatabase,
+                            $SettingsTable,
+                            SettingEntity
+                          >(db, table, e),
                         ),
                       )
                       .toList(),

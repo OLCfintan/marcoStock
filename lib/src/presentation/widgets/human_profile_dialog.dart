@@ -1,3 +1,4 @@
+import '../../application/payments/payment_service.dart';
 import '../../application/auth/auth_service.dart';
 import '../../application/purchases/purchase_service.dart';
 import '../../application/sales/sales_service.dart';
@@ -12,6 +13,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'print_dialog.dart';
 import 'package:drift/drift.dart' as drift;
+import '../widgets/logo_loader.dart';
 
 import '../../infrastructure/database/app_database.dart';
 import '../../infrastructure/database/providers.dart';
@@ -211,19 +213,20 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
             color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
             child: Row(
               children: [
-                CircleAvatar(
-                  radius: 40,
-                  backgroundImage: widget.imagePath != null && widget.imagePath!.isNotEmpty
-                      ? FileImage(File(widget.imagePath!))
-                      : null,
-                  child: widget.imagePath == null || widget.imagePath!.isEmpty 
-                      ? Icon(
-                          widget.type == HumanType.client ? Icons.person 
-                        : widget.type == HumanType.supplier ? Icons.business 
-                        : Icons.badge, 
-                          size: 40
-                        ) 
-                      : null,
+                ClipOval(
+                  clipBehavior: Clip.antiAliasWithSaveLayer,
+                  child: Container(
+                    width: 80, height: 80,
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                    child: widget.imagePath != null && widget.imagePath!.isNotEmpty
+                        ? Image.file(File(widget.imagePath!), fit: BoxFit.cover, filterQuality: FilterQuality.high)
+                        : Icon(
+                            widget.type == HumanType.client ? Icons.person 
+                          : widget.type == HumanType.supplier ? Icons.business 
+                          : Icons.badge, 
+                            size: 40
+                          ),
+                  ),
                 ),
                 const SizedBox(width: 24),
                 Expanded(
@@ -237,8 +240,8 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
                         const SizedBox(height: 4),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(color: Colors.blue.shade100, borderRadius: BorderRadius.circular(12)),
-                          child: Text(widget.clientTier!, style: TextStyle(color: Colors.blue.shade900, fontWeight: FontWeight.bold, fontSize: 12)),
+                          decoration: BoxDecoration( borderRadius: BorderRadius.circular(12)),
+                          child: Text(widget.clientTier!, style: TextStyle( fontWeight: FontWeight.bold, fontSize: 12)),
                         ),
                       ],
                       const SizedBox(height: 8),
@@ -266,7 +269,7 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
             unselectedLabelColor: Colors.grey,
             tabs: const [
               Tab(text: 'Transaction History'),
-              Tab(text: 'Checks'),
+              Tab(text: 'Payments & Checks'),
             ],
           ),
           Expanded(
@@ -276,8 +279,8 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
                 // Tab 1: Transactions (Invoices/Purchases)
                 _buildTransactionsTab(db),
                 
-                // Tab 2: Checks
-                _buildChecksTab(db),
+                // Tab 2: Payments
+                _buildPaymentsTab(db),
               ],
             ),
           ),
@@ -292,7 +295,7 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
       return StreamBuilder<List<InvoiceEntity>>(
         stream: (db.select(db.invoices)..where((t) => t.clientId.equals(widget.id) & t.isActive.equals(true))..orderBy([(t) => drift.OrderingTerm(expression: t.date, mode: drift.OrderingMode.desc)])).watch(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+          if (!snapshot.hasData) return const Center(child: const LogoLoader());
           final items = snapshot.data!;
           return ListView.builder(
             itemCount: items.length,
@@ -352,7 +355,7 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
       return StreamBuilder<List<PurchaseEntity>>(
         stream: (db.select(db.purchases)..where((t) => t.supplierId.equals(widget.id) & t.isActive.equals(true))..orderBy([(t) => drift.OrderingTerm(expression: t.date, mode: drift.OrderingMode.desc)])).watch(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+          if (!snapshot.hasData) return const Center(child: const LogoLoader());
           final items = snapshot.data!;
           return ListView.builder(
             itemCount: items.length,
@@ -412,12 +415,12 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
     return const Center(child: Text('No transactions'));
   }
 
-  Widget _buildChecksTab(AppDatabase db) {
+  Widget _buildPaymentsTab(AppDatabase db) {
     return StreamBuilder<List<PaymentEntity>>(
       stream: _watchPayments(db),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-        final payments = snapshot.data!.where((p) => p.method == 'CHECK').toList();
+        if (!snapshot.hasData) return const Center(child: const LogoLoader());
+        final payments = snapshot.data!;
         return _buildLedgerList(payments);
       },
     );
@@ -461,7 +464,7 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
                   : null,
               leading: CircleAvatar(
             backgroundColor: payment.method == 'CHECK' ? Colors.orange : Colors.blue,
-            child: Icon(payment.method == 'CHECK' ? Icons.receipt : Icons.attach_money, color: Colors.white),
+            child: Icon(payment.method == 'CHECK' ? Icons.receipt : Icons.attach_money, color: const Color(0xff64748b)),
           ),
           title: Text('Amount: ${payment.amount.toStringAsFixed(2)}'),
           subtitle: Column(
@@ -483,8 +486,7 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
                 PopupMenuButton<String>(
                   onSelected: (val) async {
                     if (val == 'delete') {
-                       final db = ref.read(databaseProvider);
-                       await (db.update(db.payments)..where((t) => t.id.equals(payment.id))).write(const PaymentsCompanion(isActive: drift.Value(false)));
+                       await ref.read(paymentServiceProvider).deletePayment(payment.id);
                     }
                   },
                   itemBuilder: (context) => [

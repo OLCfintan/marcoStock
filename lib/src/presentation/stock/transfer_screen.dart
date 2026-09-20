@@ -2,6 +2,7 @@ import 'package:marko_group/src/localization/arb/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:decimal/decimal.dart';
+import '../widgets/logo_loader.dart';
 
 import '../../application/stock/stock_providers.dart';
 import '../../application/products/product_providers.dart';
@@ -88,10 +89,10 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Stock Transfer')),
       body: productsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(child: const LogoLoader()),
         error: (e, st) => Center(child: Text('${(AppLocalizations.of(context)?.errorStr ?? 'Error: ')}$e')),
         data: (products) => locationsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const Center(child: const LogoLoader()),
           error: (e, st) => Center(child: Text('${(AppLocalizations.of(context)?.errorStr ?? 'Error: ')}$e')),
           data: (locations) {
             return Padding(
@@ -158,7 +159,7 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                     ElevatedButton(
                       onPressed: _isLoading ? null : _submit,
                       child: _isLoading 
-                        ? const CircularProgressIndicator()
+                        ? const LogoLoader()
                         : const Text('Transfer'),
                     ),
                   ],

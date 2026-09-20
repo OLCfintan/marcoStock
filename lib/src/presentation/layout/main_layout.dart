@@ -23,15 +23,21 @@ class MainLayout extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(24),
               width: double.infinity,
-              color: Theme.of(context).colorScheme.primary,
+              color: const Color(0xff0f172a),
               child: SafeArea(
                 bottom: false,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      l10n?.appTitle ?? 'Marko Group',
-                      style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                    Row(
+                      children: [
+                        ClipOval(clipBehavior: Clip.antiAliasWithSaveLayer, child: Image.asset('assets/images/logo.jpeg', width: 32, height: 32, fit: BoxFit.cover, filterQuality: FilterQuality.high)),
+                        const SizedBox(width: 8),
+                        Text(
+                          l10n?.appTitle ?? 'Marko Group',
+                          style: const TextStyle( fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -82,8 +88,15 @@ class MainLayout extends ConsumerWidget {
         if (constraints.maxWidth < 800) {
           return Scaffold(
             appBar: AppBar(
-              title: Text(l10n?.appTitle ?? 'Marko Group'),
-              elevation: 4,
+              title: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ClipOval(clipBehavior: Clip.antiAliasWithSaveLayer, child: Image.asset('assets/images/logo.jpeg', width: 28, height: 28, fit: BoxFit.cover, filterQuality: FilterQuality.high)),
+                  const SizedBox(width: 8),
+                  Text(l10n?.appTitle ?? 'Marko Group'),
+                ],
+              ),
+              
             ),
             drawer: Drawer(
               child: buildSidebar(),

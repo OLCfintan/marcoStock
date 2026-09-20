@@ -85,7 +85,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 18;
+  int get schemaVersion => 19;
   
   @override
   MigrationStrategy get migration {
@@ -108,7 +108,10 @@ class AppDatabase extends _$AppDatabase {
           tier: const Value('Tier 3'),
         ));
       },
-onUpgrade: (Migrator m, int from, int to) async {
+      onUpgrade: (Migrator m, int from, int to) async {
+        if (from < 19) {
+          await m.addColumn(products, products.displayOrder);
+        }
         if (from < 2) {
           // Add new columns for version 2
           await m.addColumn(clients, clients.phone);
@@ -219,7 +222,7 @@ LazyDatabase _openConnection() {
     final file = File(p.join(dbFolder.path, 'markogroup_erp.sqlite'));
     
     if (Platform.isAndroid) {
-      await applyWorkaroundToOpenSqlite3OnOldAndroidVersions();
+      // applyWorkaround removed
     }
     
     final cachebase = (await getTemporaryDirectory()).path;

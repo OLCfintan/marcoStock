@@ -1,7 +1,9 @@
+import '../../utils/arabic_transliterator.dart';
 import '../../domain/constants/locations.dart';
 import 'package:flutter/material.dart';
 import '../widgets/universal_scanner.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../widgets/logo_loader.dart';
 import '../../application/auth/auth_service.dart';
 import '../../application/stock/stock_providers.dart';
 
@@ -16,6 +18,7 @@ class StockScreen extends ConsumerStatefulWidget {
 
 class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProviderStateMixin {
   final Set<String> _selectedIds = {};
+  String _searchQuery = '';
   late TabController _tabController;
 
   @override
@@ -76,64 +79,116 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
       ),
       body: stockAsync.when(
         data: (items) {
-          final baseItems = items.where((i) => i.locationId == AppLocations.baseWarehouse).toList();
-          final magazinItems = items.where((i) => i.locationId == AppLocations.magazin).toList();
+          final filteredItems = items.where((i) {
+            if (_searchQuery.isEmpty) return true;
+            final query = _searchQuery.toLowerCase();
+            final aQuery = ArabicTransliterator.transliterate(_searchQuery);
+            return i.productName.toLowerCase().contains(query) || (i.productName.contains(aQuery)) || i.productReference.toLowerCase().contains(query);
+          }).toList();
+          final baseItems = filteredItems.where((i) => i.locationId == AppLocations.baseWarehouse).toList();
+          final magazinItems = filteredItems.where((i) => i.locationId == AppLocations.magazin).toList();
           
           Widget buildList(List<StockItem> listItems) {
             if (listItems.isEmpty) return const Center(child: Text('No stock in this section.'));
-            return ListView.builder(
-              itemCount: listItems.length,
-              itemBuilder: (context, index) {
-                final item = listItems[index];
-                final uniqueId = '${item.productId}|${item.locationId}';
-                final isSelected = _selectedIds.contains(uniqueId);
-                
-                return ListTile(
-                  leading: Row(
-                    mainAxisSize: MainAxisSize.min,
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: Row(
                     children: [
                       Checkbox(
-                        value: isSelected,
+                        value: listItems.isNotEmpty && listItems.every((i) => _selectedIds.contains('${i.productId}|${i.locationId}')),
                         onChanged: (val) {
                           setState(() {
                             if (val == true) {
-                              _selectedIds.add(uniqueId);
+                              _selectedIds.addAll(listItems.map((i) => '${i.productId}|${i.locationId}'));
                             } else {
-                              _selectedIds.remove(uniqueId);
+                              _selectedIds.removeAll(listItems.map((i) => '${i.productId}|${i.locationId}'));
                             }
                           });
                         },
                       ),
-                      const CircleAvatar(child: Icon(Icons.inventory_2)),
+                      const Text('Select All'),
                     ],
                   ),
-                  title: Text(item.locationId == 'MAGAZIN_01' ? item.productName : '${item.productName} (Base Family)'),
-                  subtitle: Text('Ref: ${item.productReference} | Loc: ${item.locationName}'),
-                  trailing: Text(
-                    '${item.quantity.toStringAsFixed(2)} ${() {
-                      if (item.locationId == 'MAGAZIN_01') return 'Units';
-                      final u = item.unit.toLowerCase();
-                      if (['ml', 'cl', 'dl', 'l'].contains(u)) return 'L';
-                      if (['mg', 'g', 'kg', 't'].contains(u)) return 'KG';
-                      if (u == 'm3') return 'M3';
-                      return 'Units';
-                    }()}',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: listItems.length,
+                    itemBuilder: (context, index) {
+                      final item = listItems[index];
+                      final uniqueId = '${item.productId}|${item.locationId}';
+                      final isSelected = _selectedIds.contains(uniqueId);
+                      
+                      return ListTile(
+                        leading: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Checkbox(
+                              value: isSelected,
+                              onChanged: (val) {
+                                setState(() {
+                                  if (val == true) {
+                                    _selectedIds.add(uniqueId);
+                                  } else {
+                                    _selectedIds.remove(uniqueId);
+                                  }
+                                });
+                              },
+                            ),
+                            const CircleAvatar(child: Icon(Icons.inventory_2)),
+                          ],
+                        ),
+                        title: Text('${item.productName} (Base Family)'),
+                        subtitle: Text('Ref: ${item.productReference} | Loc: ${item.locationName}'),
+                        trailing: Text(
+                          '${item.quantity.toStringAsFixed(2)} ${() {
+                            final u = item.unit.toLowerCase();
+                            if (['ml', 'cl', 'dl', 'l'].contains(u)) return 'L';
+                            if (['mg', 'g', 'kg', 't'].contains(u)) return 'KG';
+                            if (u == 'm3') return 'M3';
+                            return 'Units';
+                          }()}',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
+                ),
+              ],
             );
           }
           
-          return TabBarView(
-            controller: _tabController,
+          return Column(
             children: [
-              buildList(baseItems),
-              buildList(magazinItems),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TextField(
+                  decoration: const InputDecoration(
+                    labelText: 'Search Stock',
+                    prefixIcon: Icon(Icons.search),
+                    border: OutlineInputBorder(),
+                  ),
+                  onChanged: (val) {
+                    setState(() {
+                      _searchQuery = val;
+                    });
+                  },
+                ),
+              ),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    buildList(baseItems),
+                    buildList(magazinItems),
+                  ],
+                ),
+              ),
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(child: const LogoLoader()),
         error: (e, s) => Center(child: Text('Error: $e')),
       ),
     );

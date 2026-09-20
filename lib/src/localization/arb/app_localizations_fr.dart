@@ -222,7 +222,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get invoice => 'Facture';
 
   @override
-  String get bon => 'Bon de livraison';
+  String get bon => 'BON';
 
   @override
   String get ticket => 'Ticket';
@@ -487,7 +487,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get searchSupplier => 'Rechercher un Fournisseur...';
 
   @override
-  String get pdfBonTo => 'Bon de livraison à :';
+  String get pdfBonTo => 'BON à :';
 
   @override
   String get pdfTotalDebt => 'Crédit total';

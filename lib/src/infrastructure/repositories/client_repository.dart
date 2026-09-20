@@ -1,3 +1,4 @@
+import '../../utils/arabic_transliterator.dart';
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
@@ -123,8 +124,9 @@ class ClientRepository {
 
   Future<List<Client>> searchClients(String query) async {
     final lowerQuery = '%${query.toLowerCase()}%';
+    final aQuery = '%${ArabicTransliterator.transliterate(query)}%';
     final entities = await (_db.select(_db.clients)
-          ..where((t) => t.name.lower().like(lowerQuery) & t.isActive.equals(true)))
+          ..where((t) => (t.name.lower().like(lowerQuery) | t.name.like(aQuery)) & t.isActive.equals(true)))
         .get();
     return entities.map((e) => Client(
       id: e.id,

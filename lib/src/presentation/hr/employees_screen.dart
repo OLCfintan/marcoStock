@@ -1,9 +1,11 @@
+import '../../utils/arabic_transliterator.dart';
 import 'package:marko_group/src/localization/arb/app_localizations.dart';
 import 'package:flutter/material.dart';
 import '../widgets/universal_scanner.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/auth/auth_service.dart';
 import 'package:decimal/decimal.dart';
+import '../widgets/logo_loader.dart';
 
 import '../../application/hr/hr_providers.dart';
 import '../../infrastructure/repositories/employee_repository.dart';
@@ -19,6 +21,7 @@ class EmployeesScreen extends ConsumerStatefulWidget {
 
 class _EmployeesScreenState extends ConsumerState<EmployeesScreen> {
   final Set<String> _selectedIds = {};
+  String _searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
@@ -42,12 +45,18 @@ class _EmployeesScreenState extends ConsumerState<EmployeesScreen> {
             IconButton(
               icon: const Icon(Icons.delete),
               onPressed: () async {
-                for (final id in _selectedIds) {
-                  await ref.read(employeeRepositoryProvider).deleteEmployee(id);
+                try {
+                  for (final id in _selectedIds) {
+                    await ref.read(employeeRepositoryProvider).deleteEmployee(id);
+                  }
+                  setState(() {
+                    _selectedIds.clear();
+                  });
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))));
+                  }
                 }
-                setState(() {
-                  _selectedIds.clear();
-                });
               },
             ),
           IconButton(
@@ -57,11 +66,33 @@ class _EmployeesScreenState extends ConsumerState<EmployeesScreen> {
         ],
       ),
       body: employeesAsync.when(
-        data: (employees) {
-          if (employees.isEmpty) {
-            return const Center(child: Text('No employees found.'));
-          }
-          return ListView.builder(
+        data: (allEmployees) {
+          final employees = allEmployees.where((emp) {
+            if (_searchQuery.isEmpty) return true;
+            final q = _searchQuery.toLowerCase();
+            final aq = ArabicTransliterator.transliterate(_searchQuery);
+            return emp.name.toLowerCase().contains(q) || emp.name.contains(aq) ||
+                   emp.position.toLowerCase().contains(q) ||
+                   (emp.phone?.toLowerCase().contains(q) ?? false);
+          }).toList();
+
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TextField(
+                  decoration: InputDecoration(
+                    labelText: 'Search Employees',
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onChanged: (val) => setState(() => _searchQuery = val),
+                ),
+              ),
+              Expanded(
+                child: employees.isEmpty 
+                  ? const Center(child: Text('No employees found.'))
+                  : ListView.builder(
             itemCount: employees.length,
             itemBuilder: (context, index) {
               final emp = employees[index];
@@ -87,7 +118,7 @@ class _EmployeesScreenState extends ConsumerState<EmployeesScreen> {
                       ),
                       const CircleAvatar(
                         backgroundColor: Colors.indigo,
-                        child: Icon(Icons.badge, color: Colors.white),
+                        child: Icon(Icons.badge, color: const Color(0xff64748b)),
                       ),
                     ],
                   ),
@@ -146,7 +177,11 @@ class _EmployeesScreenState extends ConsumerState<EmployeesScreen> {
                                 onTap: () {
                                   Navigator.pop(context);
                                   if (ref.read(currentUserProvider)?.role == 'ADMIN') {
-                                    ref.read(employeeRepositoryProvider).deleteEmployee(emp.id);
+                                    ref.read(employeeRepositoryProvider).deleteEmployee(emp.id).catchError((e) {
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))));
+                                      }
+                                    });
                                   } else {
                                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Admin access required to delete.')));
                                   }
@@ -161,9 +196,12 @@ class _EmployeesScreenState extends ConsumerState<EmployeesScreen> {
                 ),
               );
             },
+          ),
+              ),
+            ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(child: const LogoLoader()),
         error: (err, stack) => Center(child: Text('${(AppLocalizations.of(context)?.errorStr ?? 'Error: ')}$err')),
       ),
     );

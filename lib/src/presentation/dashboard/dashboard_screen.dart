@@ -5,6 +5,7 @@ import 'package:marko_group/src/localization/arb/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
+import '../widgets/logo_loader.dart';
 import '../../application/auth/auth_service.dart';
 import '../../application/dashboard/dashboard_providers.dart';
 
@@ -15,7 +16,14 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Marko Group'),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ClipOval(clipBehavior: Clip.antiAliasWithSaveLayer, child: Image.asset('assets/images/logo.jpeg', width: 28, height: 28, fit: BoxFit.cover, filterQuality: FilterQuality.high)),
+            const SizedBox(width: 8),
+            const Text('Marko Group'),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -127,6 +135,33 @@ class DashboardScreen extends ConsumerWidget {
                           ),
                         ],
                       ),
+                      const SizedBox(height: 32),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Top Clients (Cash/Revenue)', style: Theme.of(context).textTheme.titleLarge),
+                                const SizedBox(height: 16),
+                                const _TopClientsByRevenueList(),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Top Suppliers (Cash Paid)', style: Theme.of(context).textTheme.titleLarge),
+                                const SizedBox(height: 16),
+                                const _TopSuppliersByRevenueList(),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   );
                 } else {
@@ -148,6 +183,14 @@ class DashboardScreen extends ConsumerWidget {
                       Text('Top Suppliers (Debt)', style: Theme.of(context).textTheme.titleLarge),
                       const SizedBox(height: 16),
                       const _TopSuppliersList(),
+                      const SizedBox(height: 32),
+                      Text('Top Clients (Cash/Revenue)', style: Theme.of(context).textTheme.titleLarge),
+                      const SizedBox(height: 16),
+                      const _TopClientsByRevenueList(),
+                      const SizedBox(height: 32),
+                      Text('Top Suppliers (Cash Paid)', style: Theme.of(context).textTheme.titleLarge),
+                      const SizedBox(height: 16),
+                      const _TopSuppliersByRevenueList(),
                     ],
                   );
                 }
@@ -331,7 +374,7 @@ class _MetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 2,
+      
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
@@ -342,7 +385,7 @@ class _MetricCard extends StatelessWidget {
             CircleAvatar(
               radius: 30,
               backgroundColor: color.withValues(alpha: 0.1),
-              child: Icon(icon, size: 30, color: color),
+              child: Icon(icon, size: 30, color: const Color(0xff64748b)),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -372,7 +415,7 @@ class _MetricCard extends StatelessWidget {
                     loading: () => const SizedBox(
                       height: 24,
                       width: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child: const LogoLoader(size: 32.0),
                     ),
                     error: (err, stack) => Text(
                       (AppLocalizations.of(context)?.errorStr ?? 'Error: ').trim(),
@@ -398,7 +441,7 @@ class _SalesChart extends ConsumerWidget {
     final salesAsync = ref.watch(salesChartDataProvider);
 
     return Card(
-      elevation: 2,
+      
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: SizedBox(
@@ -413,8 +456,8 @@ class _SalesChart extends ConsumerWidget {
                   
               return BarChart(
                 BarChartData(
-                  alignment: BarChartAlignment.center,
-                  groupsSpace: 0,
+                  alignment: BarChartAlignment.spaceAround,
+                  groupsSpace: 32,
                   maxY: maxY,
                   barTouchData: BarTouchData(enabled: true),
                   titlesData: FlTitlesData(
@@ -454,9 +497,9 @@ class _SalesChart extends ConsumerWidget {
                         BarChartRodData(
                           toY: entry.value.value.toDouble(),
                           color: Colors.blueAccent,
-                          width: sales.isEmpty ? 32 : ((constraints.maxWidth - 60) / sales.length),
-                          borderRadius: BorderRadius.zero,
-                          borderSide: const BorderSide(color: Colors.white, width: 1),
+                          width: 32,
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                          borderSide: const BorderSide( width: 1),
                         ),
                       ],
                     );
@@ -464,7 +507,7 @@ class _SalesChart extends ConsumerWidget {
                 ),
               );
             },
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => const Center(child: const LogoLoader()),
             error: (err, stack) => Center(child: Text('Failed to load chart data: $err')),
           );
             }
@@ -483,7 +526,7 @@ class _LowStockList extends ConsumerWidget {
     final alertsAsync = ref.watch(lowStockAlertsProvider);
 
     return Card(
-      elevation: 2,
+      
       child: alertsAsync.when(
         data: (alerts) {
           if (alerts.isEmpty) {
@@ -517,7 +560,7 @@ class _LowStockList extends ConsumerWidget {
         },
         loading: () => const Padding(
           padding: EdgeInsets.all(32.0),
-          child: Center(child: CircularProgressIndicator()),
+          child: Center(child: const LogoLoader()),
         ),
         error: (err, stack) => Padding(
           padding: const EdgeInsets.all(32.0),
@@ -536,7 +579,7 @@ class _TopSellingProductsList extends ConsumerWidget {
     final productsAsync = ref.watch(topSellingProductsProvider);
 
     return Card(
-      elevation: 2,
+      
       child: productsAsync.when(
         data: (products) {
           if (products.isEmpty) {
@@ -569,7 +612,7 @@ class _TopSellingProductsList extends ConsumerWidget {
         },
         loading: () => const Padding(
           padding: EdgeInsets.all(32.0),
-          child: Center(child: CircularProgressIndicator()),
+          child: Center(child: const LogoLoader()),
         ),
         error: (err, stack) => Padding(
           padding: const EdgeInsets.all(32.0),
@@ -588,7 +631,7 @@ class _EmployeePerformanceList extends ConsumerWidget {
     final performanceAsync = ref.watch(employeePerformanceProvider);
 
     return Card(
-      elevation: 2,
+      
       child: performanceAsync.when(
         data: (employees) {
           if (employees.isEmpty) {
@@ -627,7 +670,7 @@ class _EmployeePerformanceList extends ConsumerWidget {
         },
         loading: () => const Padding(
           padding: EdgeInsets.all(32.0),
-          child: Center(child: CircularProgressIndicator()),
+          child: Center(child: const LogoLoader()),
         ),
         error: (err, stack) => Padding(
           padding: const EdgeInsets.all(32.0),
@@ -646,7 +689,7 @@ class _TopClientsList extends ConsumerWidget {
     final clientsAsync = ref.watch(topClientsProvider);
 
     return Card(
-      elevation: 2,
+      
       child: clientsAsync.when(
         data: (clients) {
           if (clients.isEmpty) {
@@ -678,7 +721,7 @@ class _TopClientsList extends ConsumerWidget {
         },
         loading: () => const Padding(
           padding: EdgeInsets.all(32.0),
-          child: Center(child: CircularProgressIndicator()),
+          child: Center(child: const LogoLoader()),
         ),
         error: (err, stack) => Padding(
           padding: const EdgeInsets.all(32.0),
@@ -697,7 +740,7 @@ class _TopSuppliersList extends ConsumerWidget {
     final suppliersAsync = ref.watch(topSuppliersProvider);
 
     return Card(
-      elevation: 2,
+      
       child: suppliersAsync.when(
         data: (suppliers) {
           if (suppliers.isEmpty) {
@@ -729,7 +772,7 @@ class _TopSuppliersList extends ConsumerWidget {
         },
         loading: () => const Padding(
           padding: EdgeInsets.all(32.0),
-          child: Center(child: CircularProgressIndicator()),
+          child: Center(child: const LogoLoader()),
         ),
         error: (err, stack) => Padding(
           padding: const EdgeInsets.all(32.0),
@@ -771,7 +814,7 @@ class _StockPieCharts extends ConsumerWidget {
 
   Widget _buildPieCard(BuildContext context, String title, AsyncValue<List<StockChartData>> asyncData) {
     return Card(
-      elevation: 2,
+      
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -843,11 +886,113 @@ class _StockPieCharts extends ConsumerWidget {
                     ],
                   );
                 },
-                loading: () => const Center(child: CircularProgressIndicator()),
+                loading: () => const Center(child: const LogoLoader()),
                 error: (err, stack) => Center(child: Text('Error: $err')),
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TopClientsByRevenueList extends ConsumerWidget {
+  const _TopClientsByRevenueList();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final clientsAsync = ref.watch(topClientsByRevenueProvider);
+
+    return Card(
+      
+      child: clientsAsync.when(
+        data: (clients) {
+          if (clients.isEmpty) {
+            return const Padding(
+              padding: EdgeInsets.all(32.0),
+              child: Center(child: Text('No payment data available')),
+            );
+          }
+          return ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: clients.length,
+            separatorBuilder: (context, index) => const Divider(height: 1),
+            itemBuilder: (context, index) {
+              final client = clients[index];
+              return ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                  child: Text('${index + 1}'),
+                ),
+                title: Text(client.name),
+                trailing: Text(
+                  '${client.totalPaid} Dhs',
+                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
+                ),
+              );
+            },
+          );
+        },
+        loading: () => const Padding(
+          padding: EdgeInsets.all(32.0),
+          child: Center(child: const LogoLoader()),
+        ),
+        error: (err, stack) => Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Center(child: Text('Failed to load: $err')),
+        ),
+      ),
+    );
+  }
+}
+
+class _TopSuppliersByRevenueList extends ConsumerWidget {
+  const _TopSuppliersByRevenueList();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final suppliersAsync = ref.watch(topSuppliersByRevenueProvider);
+
+    return Card(
+      
+      child: suppliersAsync.when(
+        data: (suppliers) {
+          if (suppliers.isEmpty) {
+            return const Padding(
+              padding: EdgeInsets.all(32.0),
+              child: Center(child: Text('No payment data available')),
+            );
+          }
+          return ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: suppliers.length,
+            separatorBuilder: (context, index) => const Divider(height: 1),
+            itemBuilder: (context, index) {
+              final supplier = suppliers[index];
+              return ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                  child: Text('${index + 1}'),
+                ),
+                title: Text(supplier.name),
+                trailing: Text(
+                  '${supplier.totalPaid} Dhs',
+                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
+                ),
+              );
+            },
+          );
+        },
+        loading: () => const Padding(
+          padding: EdgeInsets.all(32.0),
+          child: Center(child: const LogoLoader()),
+        ),
+        error: (err, stack) => Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Center(child: Text('Failed to load: $err')),
         ),
       ),
     );

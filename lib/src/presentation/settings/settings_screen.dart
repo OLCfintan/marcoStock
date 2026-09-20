@@ -15,6 +15,7 @@ import '../../application/backup/backup_service.dart';
 import '../../infrastructure/database/app_database.dart';
 import '../../infrastructure/database/providers.dart';
 import 'package:drift/drift.dart' as drift;
+import '../widgets/logo_loader.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -171,7 +172,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             leading: const Icon(Icons.download),
             title: Text(AppLocalizations.of(context)!.checkForUpdates),
             subtitle: Text(AppLocalizations.of(context)!.connectsToGithub),
-            trailing: _isCheckingUpdate ? const CircularProgressIndicator() : null,
+            trailing: _isCheckingUpdate ? const LogoLoader() : null,
             onTap: () async {
               setState(() => _isCheckingUpdate = true);
               final hasUpdate = await ref.read(updateServiceProvider).checkForUpdates();
@@ -269,7 +270,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           const Text('Product Template:', style: TextStyle(fontWeight: FontWeight.bold)),
                           Container(
                             padding: const EdgeInsets.all(8),
-                            color: Colors.grey.shade200,
+                            
                             child: const SelectableText(
                                 'TYPE: PRODUCT\n'
                                 'NAME: Your Product Name\n'
@@ -294,7 +295,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           const Text('Client Template:', style: TextStyle(fontWeight: FontWeight.bold)),
                           Container(
                             padding: const EdgeInsets.all(8),
-                            color: Colors.grey.shade200,
+                            
                             child: const SelectableText('TYPE: CLIENT\nNAME: John Doe\nPHONE: 123456789\nADDRESS: 123 Street\n---'),
                           ),
                         ],

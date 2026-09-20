@@ -8,11 +8,9 @@ void main() {
     return;
   }
   final db = sqlite3.open(file.path);
-  final result = db.select('SELECT count(*) as c FROM products');
-  print('Products count: ${result.first['c']}');
-  
-  final res2 = db.select('SELECT * FROM products LIMIT 5');
-  for (var r in res2) {
+  final result = db.select('SELECT id, name, role, pin_code, is_active FROM employees');
+  print('Employees:');
+  for (var r in result) {
     print(r);
   }
 }

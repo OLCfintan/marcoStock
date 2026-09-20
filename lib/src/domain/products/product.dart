@@ -23,6 +23,7 @@ class Product extends Equatable {
   final String? imagePath;
   final String? packagingType;
   final bool isActive;
+  final int displayOrder;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -49,7 +50,7 @@ class Product extends Equatable {
     this.packagingType,
     required this.isActive,
     required this.createdAt,
-    required this.updatedAt,
+    required this.updatedAt, this.displayOrder = 0,
   });
 
   /// Returns the product name for the given locale code.
@@ -90,6 +91,7 @@ class Product extends Equatable {
     String? imagePath,
     String? packagingType,
     bool? isActive,
+    int? displayOrder,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -117,6 +119,7 @@ class Product extends Equatable {
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      displayOrder: displayOrder ?? this.displayOrder,
     );
   }
 

@@ -1,3 +1,4 @@
+import '../widgets/logo_loader.dart';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
@@ -25,6 +26,7 @@ class PdfPreviewScreen extends StatelessWidget {
         canDebug: false,
         allowPrinting: true,
         allowSharing: true,
+        loadingWidget: const LogoLoader(),
       ),
     );
   }

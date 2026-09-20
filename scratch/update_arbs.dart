@@ -15,9 +15,9 @@ void updateArb(String path, String bonLabel, String bonToLabel) {
 }
 
 void main() {
-  updateArb('lib/src/localization/arb/app_fr.arb', 'Bon de livraison', 'Bon de livraison à :');
-  updateArb('lib/src/localization/arb/app_en.arb', 'Delivery Note', 'Delivery Note To:');
-  updateArb('lib/src/localization/arb/app_es.arb', 'Albarán de entrega', 'Albarán a:');
-  updateArb('lib/src/localization/arb/app_ar.arb', 'وصل تسليم', 'تسليم إلى:');
+  updateArb('lib/src/localization/arb/app_fr.arb', 'BON', 'BON à :');
+  updateArb('lib/src/localization/arb/app_en.arb', 'BON', 'BON To:');
+  updateArb('lib/src/localization/arb/app_es.arb', 'BON', 'BON a:');
+  updateArb('lib/src/localization/arb/app_ar.arb', 'بون', 'بون إلى:');
   print('ARBs updated');
 }

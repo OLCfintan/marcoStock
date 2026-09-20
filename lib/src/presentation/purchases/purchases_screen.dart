@@ -1,6 +1,9 @@
+import '../../utils/arabic_transliterator.dart';
 import '../../domain/extensions/invoice_line_extensions.dart';
 import 'package:marko_group/src/localization/arb/app_localizations.dart';
 import 'package:flutter/material.dart';
+import '../../infrastructure/repositories/product_repository.dart';
+import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 import '../widgets/autocomplete_search_field.dart';
 import "../widgets/image_picker_field.dart";
 import '../widgets/product_image.dart';
@@ -9,6 +12,7 @@ import '../widgets/quantity_selector_dialog.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/stock/stock_helpers.dart';
 import 'package:decimal/decimal.dart';
+import '../widgets/logo_loader.dart';
 
 import '../../application/suppliers/supplier_providers.dart';
 import '../../application/products/product_providers.dart';
@@ -43,6 +47,7 @@ class _PaymentEntry {
 
 class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
   Set<String> _multiSelectedProductIds = {};
+  List<String> _localOrder = [];
   final String _selectedDocumentType = 'FACTURE';
   List<PurchaseSession> get _sessions => globalPurchaseSessions;
   int get _activeSessionIndex => globalPurchaseActiveSessionIndex;
@@ -60,9 +65,7 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
 
   @override
   void dispose() {
-    for (final s in _sessions) {
-      s.dispose();
-    }
+    // Do NOT dispose _sessions so they survive screen transitions!
     super.dispose();
   }
 
@@ -288,8 +291,27 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
         }
       }
       final products = familyBases.values.toList();
-      products.sort((a, b) => a.name.compareTo(b.name));
-        return GridView.builder(
+      
+      if (_localOrder.isNotEmpty) {
+         products.sort((a, b) {
+            final idxA = _localOrder.indexOf(a.id);
+            final idxB = _localOrder.indexOf(b.id);
+            if (idxA != -1 && idxB != -1) return idxA.compareTo(idxB);
+            if (idxA != -1) return -1;
+            if (idxB != -1) return 1;
+            return 0;
+         });
+      }
+
+      return ReorderableGridView.builder(
+        onReorder: (oldIndex, newIndex) async {
+          setState(() {
+            final p = products.removeAt(oldIndex);
+            products.insert(newIndex, p);
+            _localOrder = products.map((p) => p.id).toList();
+          });
+          await ref.read(productRepositoryProvider).updateProductReorder(products);
+        },
           padding: const EdgeInsets.all(8),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 3,
@@ -302,6 +324,7 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
             final p = products[index];
             final isSelected = _multiSelectedProductIds.contains(p.id);
             return InkWell(
+              key: ValueKey(p.id),
               onTap: () {
                 if (_multiSelectedProductIds.isNotEmpty) {
                   setState(() {
@@ -312,46 +335,57 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
                   _addToPurchase(p);
                 }
               },
-              onLongPress: () {
-                setState(() {
-                  if (isSelected) _multiSelectedProductIds.remove(p.id);
-                  else _multiSelectedProductIds.add(p.id);
-                });
-              },
               onDoubleTap: () => ItemNavigator.openProduct(context, p),
-              child: Card(
-                color: Colors.teal.shade50,
-                elevation: isSelected ? 8 : 2,
-                shape: isSelected 
-                    ? RoundedRectangleBorder(
-                        side: BorderSide(color: Colors.teal, width: 3),
-                        borderRadius: BorderRadius.circular(12))
-                    : null,
-                child: Padding(
-                  padding: const EdgeInsets.all(4.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Expanded(child: ProductImage(product: p, size: double.infinity)),
-                      Expanded(
-                        child: Center(
-                          child: Text('${p.localizedName(l10n!.localeName)}\n(${p.unitSize}${p.unit})', textAlign: TextAlign.center, maxLines: 3, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                        ),
+              child: Stack(
+                children: [
+                  Card(
+                    
+                    elevation: isSelected ? 8 : 2,
+                    shape: isSelected 
+                        ? RoundedRectangleBorder(
+                            side: BorderSide(color: Colors.teal, width: 3),
+                            borderRadius: BorderRadius.circular(12))
+                        : null,
+                    child: Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Expanded(child: ProductImage(product: p, size: double.infinity)),
+                          Expanded(
+                            child: Center(
+                              child: Text('${p.localizedName(l10n!.localeName)}\n(${p.unitSize}${p.unit})', textAlign: TextAlign.center, maxLines: 3, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                            ),
+                          ),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text('Cost: ${p.purchasePrice.toStringAsFixed(2)} Dhs', style: const TextStyle(fontSize: 14)),
+                          ),
+                        ],
                       ),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text('Cost: ${p.purchasePrice.toStringAsFixed(2)} Dhs', style: const TextStyle(fontSize: 14)),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    child: Checkbox(
+                      value: isSelected,
+                      onChanged: (bool? val) {
+                        setState(() {
+                          if (val == true) _multiSelectedProductIds.add(p.id);
+                          else _multiSelectedProductIds.remove(p.id);
+                        });
+                      },
+                    ),
+                  ),
+                ],
               ),
             );
           },
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(child: const LogoLoader()),
       error: (err, stack) => Center(child: Text('${l10n?.errorStr ?? "Error:"} $err')),
     );
 
@@ -428,12 +462,14 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
                 displayStringForOption: (s) => '${s.name} (${s.type})',
                 getSuggestions: (pattern) async {
                   if (pattern.isEmpty) return suppliers;
-                  return suppliers.where((s) => s.name.toLowerCase().contains(pattern.toLowerCase())).toList();
+                  final q = pattern.toLowerCase();
+                  final aq = ArabicTransliterator.transliterate(pattern);
+                  return suppliers.where((s) => s.name.toLowerCase().contains(q) || s.name.contains(aq)).toList();
                 },
                 onSelected: (s) => setState(() => _activeSession.selectedSupplierId = s.id),
                 labelText: l10n?.suppliers ?? 'Search Supplier...',
               ),
-              loading: () => const CircularProgressIndicator(),
+              loading: () => const LogoLoader(),
               error: (err, stack) => Text("${AppLocalizations.of(context)!.errorStr}$err"),
             ),
           ),
@@ -463,12 +499,12 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
                 },
               );
             },
-            loading: () => const CircularProgressIndicator(),
+            loading: () => const LogoLoader(),
             error: (e,s) => const SizedBox(),
           ),
         
         Container(
-          color: Colors.teal.shade50,
+          
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
@@ -505,7 +541,7 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
                   margin: const EdgeInsets.only(bottom: 12),
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(

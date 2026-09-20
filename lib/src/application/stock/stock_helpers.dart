@@ -126,12 +126,7 @@ Future<StockTrackingInfo> getStockTrackingInfo(
   Decimal physicalQuantity,
   String locationId,
 ) async {
-  // Magazin tracks independent physical counts
-  if (locationId == 'MAGAZIN_01') {
-    return StockTrackingInfo(product.id, physicalQuantity);
-  }
-  
-  // Base warehouse tracks mathematically aggregated SI units at the family head
+  // ALL locations (Base and Magazin) track mathematically aggregated SI units at the family head
   final baseProduct = await getDeterministicBaseProduct(db, product);
   final siUnits = convertQuantityToBase(physicalQuantity, product, baseProduct);
   return StockTrackingInfo(baseProduct.id, siUnits);

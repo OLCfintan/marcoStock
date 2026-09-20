@@ -220,7 +220,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get invoice => 'Factura';
 
   @override
-  String get bon => 'Albarán de entrega';
+  String get bon => 'BON';
 
   @override
   String get ticket => 'Ticket';
@@ -485,7 +485,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get searchSupplier => 'Buscar Proveedor...';
 
   @override
-  String get pdfBonTo => 'Albarán a:';
+  String get pdfBonTo => 'BON a:';
 
   @override
   String get pdfTotalDebt => 'Deuda total';

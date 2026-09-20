@@ -1,9 +1,11 @@
 import '../../application/products/product_providers.dart';
-import '../../domain/extensions/invoice_line_extensions.dart';
+import '../../infrastructure/repositories/product_repository.dart';
 import 'package:marko_group/src/localization/arb/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:decimal/decimal.dart';
+import '../widgets/logo_loader.dart';
 import '../widgets/product_image.dart';
 import '../widgets/item_navigator.dart';
 
@@ -36,6 +38,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   final TextEditingController _barcodeController = TextEditingController();
   final FocusNode _barcodeFocusNode = FocusNode();
   Set<String> _multiSelectedProductIds = {};
+  List<String> _localOrder = [];
 
   @override
   void initState() {
@@ -46,7 +49,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   }
 
   Decimal get _cartTotal {
-    return _activeSession.cart.fold(Decimal.zero, (total, line) => total + line.calculatedTotal);
+    return _activeSession.cart.fold(Decimal.zero, (total, line) => total + ((line.quantity * line.unitPrice) - line.discount));
   }
 
   Decimal get _totalPaid {
@@ -288,7 +291,25 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           final productsWidget = productsAsync.when(
             data: (allProducts) {
               final products = allProducts.where((p) => p.isActive).toList();
-              return GridView.builder(
+              if (_localOrder.isNotEmpty) {
+                 products.sort((a, b) {
+                    final idxA = _localOrder.indexOf(a.id);
+                    final idxB = _localOrder.indexOf(b.id);
+                    if (idxA != -1 && idxB != -1) return idxA.compareTo(idxB);
+                    if (idxA != -1) return -1;
+                    if (idxB != -1) return 1;
+                    return 0;
+                 });
+              }
+              return ReorderableGridView.builder(
+                onReorder: (oldIndex, newIndex) async {
+                  setState(() {
+                    final p = products.removeAt(oldIndex);
+                    products.insert(newIndex, p);
+                    _localOrder = products.map((p) => p.id).toList();
+                  });
+                  await ref.read(productRepositoryProvider).updateProductReorder(products);
+                },
                 padding: const EdgeInsets.all(16),
                 gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                   maxCrossAxisExtent: 200,
@@ -301,6 +322,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   final p = products[index];
                   final isSelected = _multiSelectedProductIds.contains(p.id);
                   return Card(
+                    key: ValueKey(p.id),
                     elevation: isSelected ? 8 : 2,
                     clipBehavior: Clip.antiAlias,
                     shape: isSelected 
@@ -319,39 +341,50 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                           _addToCart(p);
                         }
                       },
-                      onLongPress: () {
-                        setState(() {
-                          if (isSelected) _multiSelectedProductIds.remove(p.id);
-                          else _multiSelectedProductIds.add(p.id);
-                        });
-                      },
                       onDoubleTap: () => ItemNavigator.openProduct(context, p),
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [theme.colorScheme.primaryContainer, theme.colorScheme.surface],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+                      child: Stack(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [theme.colorScheme.primaryContainer, theme.colorScheme.surface],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Expanded(child: ProductImage(product: p, size: double.infinity)),
+                                const SizedBox(height: 8),
+                                Text(p.localizedLabel(loc), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                const SizedBox(height: 4),
+                                Text('${p.sellingPrice.toStringAsFixed(2)} Dhs', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 16)),
+                              ],
+                            ),
                           ),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Expanded(child: ProductImage(product: p, size: double.infinity)),
-                            const SizedBox(height: 8),
-                            Text(p.localizedLabel(loc), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 4),
-                            Text('${p.sellingPrice.toStringAsFixed(2)} Dhs', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 16)),
-                          ],
-                        ),
+                          Positioned(
+                            top: 0,
+                            right: 0,
+                            child: Checkbox(
+                              value: isSelected,
+                              onChanged: (bool? val) {
+                                setState(() {
+                                  if (val == true) _multiSelectedProductIds.add(p.id);
+                                  else _multiSelectedProductIds.remove(p.id);
+                                });
+                              },
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   );
                 },
               );
             },
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => const Center(child: const LogoLoader()),
             error: (err, stack) => Center(child: Text('${(AppLocalizations.of(context)?.errorStr ?? 'Error: ')}$err')),
           );
 
@@ -359,7 +392,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
               ? {for (final p in productsAsync.valueOrNull!) p.id: p} 
               : <String, Product>{};
 
-          final cartWidget = Container(
+          final cartWidget = Material(
             color: theme.colorScheme.surface,
             child: Column(
               children: [
@@ -507,7 +540,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                               final line = _activeSession.cart[index];
                               final product = productMap[line.productId] ?? productsAsync.valueOrNull!.first;
                               final variantLabel = product.localizedLabel(loc);
-                              final lineTotal = line.calculatedTotal;
+                              final lineTotal = ((line.quantity * line.unitPrice) - line.discount);
                               
                               return ListTile(
                                 leading: CircleAvatar(child: Text('${line.quantity}')),

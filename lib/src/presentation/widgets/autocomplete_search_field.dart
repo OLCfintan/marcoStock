@@ -66,7 +66,7 @@ class AutocompleteSearchField<T extends Object> extends StatelessWidget {
           return Align(
             alignment: AlignmentDirectional.topStart,
             child: Material(
-              elevation: 4.0,
+              
               borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
               clipBehavior: Clip.hardEdge,
               child: ConstrainedBox(

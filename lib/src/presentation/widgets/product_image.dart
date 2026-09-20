@@ -15,7 +15,7 @@ class ProductImage extends StatelessWidget {
     super.key,
     required this.product,
     this.size = 48,
-    this.fit = BoxFit.cover,
+    this.fit = BoxFit.contain,
     this.borderRadius,
   });
 
@@ -30,12 +30,16 @@ class ProductImage extends StatelessWidget {
     if (_hasImage) {
       return ClipRRect(
         borderRadius: borderRadius ?? BorderRadius.circular(8),
-        child: Image.file(
-          File(product.imagePath!),
-          width: size == double.infinity ? null : size,
-          height: size == double.infinity ? null : size,
-          fit: fit,
-          errorBuilder: (_, __, ___) => _fallbackIcon(context),
+        clipBehavior: Clip.antiAliasWithSaveLayer,
+        child: Container(
+          width: size == double.infinity ? double.infinity : size,
+          height: size == double.infinity ? double.infinity : size,
+          color: Theme.of(context).colorScheme.surface,
+          child: Image.file(
+            File(product.imagePath!),
+            fit: fit,
+            filterQuality: FilterQuality.high,
+          ),
         ),
       );
     }
@@ -82,10 +86,30 @@ class ProductAvatarImage extends StatelessWidget {
     final path = product.imagePath;
     final hasImage = path != null && path.isNotEmpty && File(path).existsSync();
     
-    return CircleAvatar(
-      radius: radius,
-      backgroundImage: hasImage ? FileImage(File(path)) : null,
-      child: hasImage ? null : Icon(Icons.inventory_2_outlined, size: radius),
+    if (hasImage) {
+      return ClipOval(
+        clipBehavior: Clip.antiAliasWithSaveLayer,
+        child: Container(
+          width: radius * 2,
+          height: radius * 2,
+          color: Colors.white,
+          child: Image.file(
+            File(path!),
+            fit: BoxFit.contain,
+            filterQuality: FilterQuality.high,
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      width: radius * 2,
+      height: radius * 2,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Theme.of(context).colorScheme.primaryContainer,
+      ),
+      child: hasImage ? null : Center(child: Icon(Icons.inventory_2_outlined, size: radius, color: Theme.of(context).colorScheme.primary)),
     );
   }
 }

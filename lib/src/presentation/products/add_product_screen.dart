@@ -1,9 +1,11 @@
+import '../../utils/arabic_transliterator.dart';
 import 'package:marko_group/src/localization/arb/app_localizations.dart';
 import 'package:flutter/material.dart';
 import '../../infrastructure/database/providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:decimal/decimal.dart';
 import 'package:uuid/uuid.dart';
+import '../widgets/logo_loader.dart';
 
 import '../widgets/image_picker_field.dart';
 import '../../application/products/product_providers.dart';
@@ -258,7 +260,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.productToEdit != null ? 'Edit Product' : (widget.templateProduct != null ? 'Add Family Member' : AppLocalizations.of(context)!.addNewProduct)),
-        elevation: 0,
+        
         actions: [
           TextButton.icon(
             onPressed: _submit,
@@ -275,7 +277,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
           children: [
             _buildSectionHeader('Basic Information', Icons.info_outline),
             Card(
-              elevation: 2,
+              
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -295,8 +297,10 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                               }
                               final repo = ref.read(productRepositoryProvider);
                               final products = await repo.getAllProducts();
+                              final q = textEditingValue.text.toLowerCase();
+                              final aq = ArabicTransliterator.transliterate(textEditingValue.text);
                               return products
-                                  .where((p) => p.packagingType == 'Unit' && p.name.toLowerCase().contains(textEditingValue.text.toLowerCase()))
+                                  .where((p) => p.packagingType == 'Unit' && (p.name.toLowerCase().contains(q) || p.name.contains(aq)))
                                   .map((p) => p.name)
                                   .toSet();
                             },
@@ -311,7 +315,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                               return Align(
                                 alignment: Alignment.topLeft,
                                 child: Material(
-                                  elevation: 4.0,
+                                  
                                   child: SizedBox(
                                     width: 300,
                                     child: ListView.builder(
@@ -433,7 +437,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
             const SizedBox(height: 24),
             _buildSectionHeader('Pricing & Inventory', Icons.attach_money),
             Card(
-              elevation: 2,
+              
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -495,7 +499,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
             const SizedBox(height: 24),
             _buildSectionHeader('Linked / Composite Products (BOM)', Icons.link),
             Card(
-              elevation: 2,
+              
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -528,9 +532,11 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                                       if (textEditingValue.text.isEmpty) {
                                         return const Iterable<Product>.empty();
                                       }
+                                      final q = textEditingValue.text.toLowerCase();
+                                      final aq = ArabicTransliterator.transliterate(textEditingValue.text);
                                       return products.where((p) =>
-                                          p.name.toLowerCase().contains(textEditingValue.text.toLowerCase()) ||
-                                          p.reference.toLowerCase().contains(textEditingValue.text.toLowerCase()));
+                                          p.name.toLowerCase().contains(q) || (p.name.contains(aq)) ||
+                                          p.reference.toLowerCase().contains(q));
                                     },
                                     onSelected: (Product selection) {
                                       setState(() {
@@ -552,7 +558,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                                     },
                                   );
                                 },
-                                loading: () => const Center(child: CircularProgressIndicator()),
+                                loading: () => const Center(child: const LogoLoader()),
                                 error: (e, s) => Text('${AppLocalizations.of(context)!.errorLoadingProducts}$e'),
                               ),
                             ),

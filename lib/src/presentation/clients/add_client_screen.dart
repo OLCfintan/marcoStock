@@ -126,7 +126,7 @@ class _AddClientScreenState extends ConsumerState<AddClientScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.clientToEdit != null ? 'Edit Client' : AppLocalizations.of(context)!.addNewClient),
-        elevation: 0,
+        
         actions: [
           TextButton.icon(
             onPressed: _submit,
@@ -143,7 +143,7 @@ class _AddClientScreenState extends ConsumerState<AddClientScreen> {
           children: [
             _buildSectionHeader('Basic Information', Icons.info_outline),
             Card(
-              elevation: 2,
+              
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -185,7 +185,7 @@ class _AddClientScreenState extends ConsumerState<AddClientScreen> {
             const SizedBox(height: 24),
             _buildSectionHeader('Contact Details', Icons.contact_phone),
             Card(
-              elevation: 2,
+              
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
