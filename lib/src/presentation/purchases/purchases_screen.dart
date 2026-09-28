@@ -239,7 +239,11 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
     );
 
     try {
-      await ref.read(purchaseServiceProvider).executePurchase(req);
+      if (_activeSession.editingId != null) {
+        await ref.read(purchaseServiceProvider).updatePurchase(req, _activeSession.editingId!);
+      } else {
+        await ref.read(purchaseServiceProvider).executePurchase(req);
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(AppLocalizations.of(context)?.savedSuccessfully ?? 'Purchase recorded successfully!')),
@@ -702,6 +706,7 @@ class PurchaseSession {
   String? selectedSupplierName;
   List<PurchaseLineRequest> cart = [];
   List<_PaymentEntry> payments = [];
+  String? editingId;
 
   PurchaseSession({required this.id, required this.title}) {
     payments.add(_PaymentEntry(method: 'CASH'));

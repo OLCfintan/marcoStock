@@ -17,6 +17,7 @@ import '../widgets/image_picker_field.dart';
 import "../widgets/quantity_selector_dialog.dart";
 import '../widgets/autocomplete_search_field.dart';
 
+import 'dart:math';
 
 
 
@@ -281,7 +282,11 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     );
 
     try {
-      await ref.read(salesServiceProvider).executeSale(req);
+      if (_activeSession.editingId != null) {
+        await ref.read(salesServiceProvider).updateSale(req, _activeSession.editingId!);
+      } else {
+        await ref.read(salesServiceProvider).executeSale(req);
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.saleCompletedSuccessfully)));
         setState(() { 
@@ -300,6 +305,141 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     }
   }
 
+  Future<void> _showAutoInvoiceDialog() async {
+    final targetCtrl = TextEditingController();
+    final familiesCtrl = TextEditingController(text: '3');
+    final allProducts = ref.read(productsStreamProvider).valueOrNull ?? [];
+    if (allProducts.isEmpty) return;
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Auto Invoice Generator'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: targetCtrl,
+              decoration: const InputDecoration(labelText: 'Target Amount'),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            ),
+            TextField(
+              controller: familiesCtrl,
+              decoration: const InputDecoration(labelText: 'Number of Families (Categories)'),
+              keyboardType: TextInputType.number,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocalizations.of(context)!.cancel)),
+          TextButton(
+            onPressed: () {
+              final target = double.tryParse(targetCtrl.text) ?? 0.0;
+              final numFam = int.tryParse(familiesCtrl.text) ?? 1;
+              if (target > 0 && numFam > 0) {
+                Navigator.pop(ctx);
+                _generateAutoInvoice(target, numFam, allProducts);
+              }
+            },
+            child: const Text('Generate'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _generateAutoInvoice(double targetAmount, int numFamilies, List<Product> allProducts) {
+    final Map<String, List<Product>> byCategory = {};
+    for (var p in allProducts) {
+      if (!p.isActive) continue;
+      final cat = p.category ?? 'Uncategorized';
+      byCategory.putIfAbsent(cat, () => []).add(p);
+    }
+    
+    final categories = byCategory.keys.toList();
+    categories.shuffle();
+    final selectedCategories = categories.take(numFamilies).toList();
+    
+    final pool = <Product>[];
+    for (var c in selectedCategories) {
+      pool.addAll(byCategory[c]!);
+    }
+    if (pool.isEmpty) return;
+    pool.shuffle();
+
+    Map<Product, int> selectedItems = {};
+    double currentTotal = 0.0;
+    
+    final rand = Random();
+    int attempts = 0;
+    while (attempts < 5000) {
+      if (pool.isEmpty) break;
+      final p = pool[rand.nextInt(pool.length)];
+      final price = p.sellingPrice.toDouble();
+      
+      if (currentTotal + price <= targetAmount * 1.05) {
+        selectedItems[p] = (selectedItems[p] ?? 0) + 1;
+        currentTotal += price;
+      }
+      
+      if (currentTotal >= targetAmount * 0.95 && currentTotal <= targetAmount * 1.05) {
+        break;
+      }
+      attempts++;
+    }
+    
+    double difference = targetAmount - currentTotal;
+    List<SaleLineRequest> generatedCart = [];
+    
+    for (var entry in selectedItems.entries) {
+      final p = entry.key;
+      final qty = entry.value;
+      double basePrice = p.sellingPrice.toDouble();
+      
+      double maxAdjust = basePrice * 0.05 * qty;
+      double adjust = 0.0;
+      
+      if (difference > 0 && maxAdjust > 0) {
+        adjust = (difference > maxAdjust) ? maxAdjust : difference;
+      } else if (difference < 0 && maxAdjust > 0) {
+        adjust = (difference < -maxAdjust) ? -maxAdjust : difference;
+      }
+      
+      difference -= adjust;
+      
+      double finalUnitPrice = basePrice + (adjust / qty);
+      generatedCart.add(SaleLineRequest(
+        productId: p.id,
+        quantity: Decimal.fromInt(qty),
+        unitPrice: Decimal.parse(finalUnitPrice.toStringAsFixed(2)),
+        discount: Decimal.zero,
+      ));
+    }
+    
+    if (generatedCart.isNotEmpty) {
+      double actualTotal = 0.0;
+      for (var line in generatedCart) {
+        actualTotal += line.unitPrice.toDouble() * line.quantity.toDouble();
+      }
+      
+      double finalDiff = targetAmount - actualTotal;
+      if (finalDiff.abs() > 0.001) {
+         final first = generatedCart.first;
+         double adjustedFirstPrice = first.unitPrice.toDouble() + (finalDiff / first.quantity.toDouble());
+         generatedCart[0] = SaleLineRequest(
+           productId: first.productId,
+           quantity: first.quantity,
+           unitPrice: Decimal.parse(adjustedFirstPrice.toStringAsFixed(2)),
+           discount: Decimal.zero,
+         );
+      }
+    }
+    
+    setState(() {
+      _activeSession.cart = generatedCart;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
 
@@ -308,7 +448,16 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     final loc = AppLocalizations.of(context)!.localeName;
 
     return Scaffold(
-      appBar: AppBar(title: Text(AppLocalizations.of(context)!.newSalePos)),
+      appBar: AppBar(
+        title: Text(AppLocalizations.of(context)!.newSalePos),
+        actions: [
+          IconButton(
+            tooltip: 'Auto Invoice',
+            icon: const Icon(Icons.auto_awesome),
+            onPressed: _showAutoInvoiceDialog,
+          ),
+        ],
+      ),
       floatingActionButton: _multiSelectedProductIds.isNotEmpty
           ? FloatingActionButton.extended(
               onPressed: () {
@@ -934,6 +1083,7 @@ class PosSession {
   String selectedDocumentType = 'BON';
   List<SaleLineRequest> cart = [];
   List<_PaymentEntry> payments = [];
+  String? editingId;
 
   final TextEditingController invoiceCounterController = TextEditingController();
   final TextEditingController invoiceDateController = TextEditingController();

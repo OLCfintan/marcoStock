@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../infrastructure/database/providers.dart';
 import '../../infrastructure/database/app_database.dart';
+import '../documents/document_edit_helpers.dart';
 import 'package:drift/drift.dart' as drift;
 import 'package:marko_group/src/localization/arb/app_localizations.dart';
 import '../widgets/status_badge.dart';
@@ -43,17 +44,23 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
                 final paySvc = ref.read(paymentServiceProvider);
 
                 for (final id in _selectedIds.toList()) {
-                  final isInvoice = await (db.select(db.invoices)..where((t) => t.id.equals(id))).getSingleOrNull();
+                  final isInvoice =
+                      await (db.select(db.invoices)
+                        ..where((t) => t.id.equals(id))).getSingleOrNull();
                   if (isInvoice != null) {
                     await salesSvc.restoreInvoice(id, userId);
                     continue;
                   }
-                  final isPurchase = await (db.select(db.purchases)..where((t) => t.id.equals(id))).getSingleOrNull();
+                  final isPurchase =
+                      await (db.select(db.purchases)
+                        ..where((t) => t.id.equals(id))).getSingleOrNull();
                   if (isPurchase != null) {
                     await purchSvc.restorePurchase(id, userId);
                     continue;
                   }
-                  final isPayment = await (db.select(db.payments)..where((t) => t.id.equals(id))).getSingleOrNull();
+                  final isPayment =
+                      await (db.select(db.payments)
+                        ..where((t) => t.id.equals(id))).getSingleOrNull();
                   if (isPayment != null) {
                     await paySvc.restorePayment(id);
                     continue;
@@ -61,7 +68,13 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
                 }
                 setState(() => _selectedIds.clear());
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.selectedItemsRestored)));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        AppLocalizations.of(context)!.selectedItemsRestored,
+                      ),
+                    ),
+                  );
                 }
               },
             ),
@@ -72,36 +85,61 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
                 final db = ref.read(databaseProvider);
                 await db.transaction(() async {
                   for (final id in _selectedIds.toList()) {
-                    final isInvoice = await (db.select(db.invoices)..where((t) => t.id.equals(id))).getSingleOrNull();
+                    final isInvoice =
+                        await (db.select(db.invoices)
+                          ..where((t) => t.id.equals(id))).getSingleOrNull();
                     if (isInvoice != null) {
-                      await (db.delete(db.invoiceLines)..where((t) => t.invoiceId.equals(id))).go();
-                      await (db.delete(db.payments)..where((t) => t.invoiceId.equals(id))).go();
-                      await (db.delete(db.stockMovements)..where((t) => t.referenceOperationId.equals(id))).go();
-                      await (db.delete(db.auditLogs)..where((t) => t.entityId.equals(id))).go();
-                      await (db.delete(db.syncOutbox)..where((t) => t.entityId.equals(id))).go();
-                      await (db.delete(db.invoices)..where((t) => t.id.equals(id))).go();
+                      await (db.delete(db.invoiceLines)
+                        ..where((t) => t.invoiceId.equals(id))).go();
+                      await (db.delete(db.payments)
+                        ..where((t) => t.invoiceId.equals(id))).go();
+                      await (db.delete(db.stockMovements)
+                        ..where((t) => t.referenceOperationId.equals(id))).go();
+                      await (db.delete(db.auditLogs)
+                        ..where((t) => t.entityId.equals(id))).go();
+                      await (db.delete(db.syncOutbox)
+                        ..where((t) => t.entityId.equals(id))).go();
+                      await (db.delete(db.invoices)
+                        ..where((t) => t.id.equals(id))).go();
                       continue;
                     }
-                    final isPurchase = await (db.select(db.purchases)..where((t) => t.id.equals(id))).getSingleOrNull();
+                    final isPurchase =
+                        await (db.select(db.purchases)
+                          ..where((t) => t.id.equals(id))).getSingleOrNull();
                     if (isPurchase != null) {
-                      await (db.delete(db.purchaseLines)..where((t) => t.purchaseId.equals(id))).go();
-                      await (db.delete(db.payments)..where((t) => t.purchaseId.equals(id))).go();
-                      await (db.delete(db.stockMovements)..where((t) => t.referenceOperationId.equals(id))).go();
-                      await (db.delete(db.auditLogs)..where((t) => t.entityId.equals(id))).go();
-                      await (db.delete(db.syncOutbox)..where((t) => t.entityId.equals(id))).go();
-                      await (db.delete(db.purchases)..where((t) => t.id.equals(id))).go();
+                      await (db.delete(db.purchaseLines)
+                        ..where((t) => t.purchaseId.equals(id))).go();
+                      await (db.delete(db.payments)
+                        ..where((t) => t.purchaseId.equals(id))).go();
+                      await (db.delete(db.stockMovements)
+                        ..where((t) => t.referenceOperationId.equals(id))).go();
+                      await (db.delete(db.auditLogs)
+                        ..where((t) => t.entityId.equals(id))).go();
+                      await (db.delete(db.syncOutbox)
+                        ..where((t) => t.entityId.equals(id))).go();
+                      await (db.delete(db.purchases)
+                        ..where((t) => t.id.equals(id))).go();
                       continue;
                     }
-                    final isPayment = await (db.select(db.payments)..where((t) => t.id.equals(id))).getSingleOrNull();
+                    final isPayment =
+                        await (db.select(db.payments)
+                          ..where((t) => t.id.equals(id))).getSingleOrNull();
                     if (isPayment != null) {
-                      await (db.delete(db.payments)..where((t) => t.id.equals(id))).go();
+                      await (db.delete(db.payments)
+                        ..where((t) => t.id.equals(id))).go();
                       continue;
                     }
                   }
                 });
                 setState(() => _selectedIds.clear());
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.selectedItemsDeleted)));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        AppLocalizations.of(context)!.selectedItemsDeleted,
+                      ),
+                    ),
+                  );
                 }
               },
             ),
@@ -131,29 +169,61 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
                 _buildSection<InvoiceEntity>(
                   context,
                   AppLocalizations.of(context)!.deletedInvoicesBons,
-                  (db.select(db.invoices)..where((t) => t.isActive.equals(false))..limit(50)).watch(),
+                  (db.select(db.invoices)
+                        ..where((t) => t.isActive.equals(false))
+                        ..limit(50))
+                      .watch(),
                   (invoice) => invoice.id,
-                  (invoice) => '${invoice.documentType} - ${invoice.invoiceNumber}',
+                  (invoice) =>
+                      '${invoice.documentType} - ${invoice.invoiceNumber}',
                   (invoice) async {
                     final userId = ref.read(currentUserProvider)?.id ?? '';
-                    await ref.read(salesServiceProvider).restoreInvoice(invoice.id, userId);
+                    await ref
+                        .read(salesServiceProvider)
+                        .restoreInvoice(invoice.id, userId);
                   },
                   (invoice) async {
                     await db.transaction(() async {
-                      await (db.delete(db.invoiceLines)..where((t) => t.invoiceId.equals(invoice.id))).go();
-                      await (db.delete(db.payments)..where((t) => t.invoiceId.equals(invoice.id))).go();
-                      await (db.delete(db.stockMovements)..where((t) => t.referenceOperationId.equals(invoice.id))).go();
-                      await (db.delete(db.auditLogs)..where((t) => t.entityId.equals(invoice.id))).go();
-                      await (db.delete(db.syncOutbox)..where((t) => t.entityId.equals(invoice.id))).go();
-                      await (db.delete(db.invoices)..where((t) => t.id.equals(invoice.id))).go();
+                      await (db.delete(db.invoiceLines)
+                        ..where((t) => t.invoiceId.equals(invoice.id))).go();
+                      await (db.delete(db.payments)
+                        ..where((t) => t.invoiceId.equals(invoice.id))).go();
+                      await (db.delete(db.stockMovements)..where(
+                        (t) => t.referenceOperationId.equals(invoice.id),
+                      )).go();
+                      await (db.delete(db.auditLogs)
+                        ..where((t) => t.entityId.equals(invoice.id))).go();
+                      await (db.delete(db.syncOutbox)
+                        ..where((t) => t.entityId.equals(invoice.id))).go();
+                      await (db.delete(db.invoices)
+                        ..where((t) => t.id.equals(invoice.id))).go();
                     });
+                  },
+                  onEdit: (e) async {
+                    final db = ref.read(databaseProvider);
+                    final client =
+                        e.clientId != null
+                            ? await (db.select(db.clients)..where(
+                              (t) => t.id.equals(e.clientId!),
+                            )).getSingleOrNull()
+                            : null;
+                    await onEditInvoice(e, client, db);
                   },
                   buildSubtitle: (invoice) {
                     return FutureBuilder<ClientEntity?>(
-                      future: invoice.clientId != null ? (db.select(db.clients)..where((t) => t.id.equals(invoice.clientId!))).getSingleOrNull() : Future.value(null),
+                      future:
+                          invoice.clientId != null
+                              ? (db.select(db.clients)..where(
+                                (t) => t.id.equals(invoice.clientId!),
+                              )).getSingleOrNull()
+                              : Future.value(null),
                       builder: (ctx, snap) {
-                        final clientName = snap.data?.name ?? AppLocalizations.of(context)!.walkInClient;
-                        return Text('${DateFormat('MMM dd, yyyy (EEEE)').format(invoice.date)} | ${AppLocalizations.of(context)!.clientStr}: $clientName | ${AppLocalizations.of(context)!.totalStr}: ${invoice.total} ${AppLocalizations.of(context)!.dhsStr}');
+                        final clientName =
+                            snap.data?.name ??
+                            AppLocalizations.of(context)!.walkInClient;
+                        return Text(
+                          '${DateFormat('MMM dd, yyyy (EEEE)').format(invoice.date)} | ${AppLocalizations.of(context)!.clientStr}: $clientName | ${AppLocalizations.of(context)!.totalStr}: ${invoice.total} ${AppLocalizations.of(context)!.dhsStr}',
+                        );
                       },
                     );
                   },
@@ -161,29 +231,59 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
                 _buildSection<PurchaseEntity>(
                   context,
                   AppLocalizations.of(context)!.deletedPurchases,
-                  (db.select(db.purchases)..where((t) => t.isActive.equals(false))..limit(50)).watch(),
+                  (db.select(db.purchases)
+                        ..where((t) => t.isActive.equals(false))
+                        ..limit(50))
+                      .watch(),
                   (purchase) => purchase.id,
-                  (purchase) => '${AppLocalizations.of(context)!.pdfPurchase} - ${purchase.purchaseNumber}',
+                  (purchase) =>
+                      '${AppLocalizations.of(context)!.pdfPurchase} - ${purchase.purchaseNumber}',
                   (purchase) async {
                     final userId = ref.read(currentUserProvider)?.id ?? '';
-                    await ref.read(purchaseServiceProvider).restorePurchase(purchase.id, userId);
+                    await ref
+                        .read(purchaseServiceProvider)
+                        .restorePurchase(purchase.id, userId);
                   },
                   (purchase) async {
                     await db.transaction(() async {
-                      await (db.delete(db.purchaseLines)..where((t) => t.purchaseId.equals(purchase.id))).go();
-                      await (db.delete(db.payments)..where((t) => t.purchaseId.equals(purchase.id))).go();
-                      await (db.delete(db.stockMovements)..where((t) => t.referenceOperationId.equals(purchase.id))).go();
-                      await (db.delete(db.auditLogs)..where((t) => t.entityId.equals(purchase.id))).go();
-                      await (db.delete(db.syncOutbox)..where((t) => t.entityId.equals(purchase.id))).go();
-                      await (db.delete(db.purchases)..where((t) => t.id.equals(purchase.id))).go();
+                      await (db.delete(db.purchaseLines)
+                        ..where((t) => t.purchaseId.equals(purchase.id))).go();
+                      await (db.delete(db.payments)
+                        ..where((t) => t.purchaseId.equals(purchase.id))).go();
+                      await (db.delete(db.stockMovements)..where(
+                        (t) => t.referenceOperationId.equals(purchase.id),
+                      )).go();
+                      await (db.delete(db.auditLogs)
+                        ..where((t) => t.entityId.equals(purchase.id))).go();
+                      await (db.delete(db.syncOutbox)
+                        ..where((t) => t.entityId.equals(purchase.id))).go();
+                      await (db.delete(db.purchases)
+                        ..where((t) => t.id.equals(purchase.id))).go();
                     });
+                  },
+                  onEdit: (e) async {
+                    final db = ref.read(databaseProvider);
+                    final supplier =
+                        await (db.select(db.suppliers)..where(
+                          (t) => t.id.equals(e.supplierId),
+                        )).getSingleOrNull();
+                    await onEditPurchase(e, supplier, db);
                   },
                   buildSubtitle: (purchase) {
                     return FutureBuilder<SupplierEntity?>(
-                      future: purchase.supplierId != null ? (db.select(db.suppliers)..where((t) => t.id.equals(purchase.supplierId!))).getSingleOrNull() : Future.value(null),
+                      future:
+                          purchase.supplierId != null
+                              ? (db.select(db.suppliers)..where(
+                                (t) => t.id.equals(purchase.supplierId!),
+                              )).getSingleOrNull()
+                              : Future.value(null),
                       builder: (ctx, snap) {
-                        final supplierName = snap.data?.name ?? AppLocalizations.of(context)!.unknownSupplier;
-                        return Text('${DateFormat('MMM dd, yyyy (EEEE)').format(purchase.date)} | ${AppLocalizations.of(context)!.supplierStr}: $supplierName | ${AppLocalizations.of(context)!.totalStr}: ${purchase.total} ${AppLocalizations.of(context)!.dhsStr}');
+                        final supplierName =
+                            snap.data?.name ??
+                            AppLocalizations.of(context)!.unknownSupplier;
+                        return Text(
+                          '${DateFormat('MMM dd, yyyy (EEEE)').format(purchase.date)} | ${AppLocalizations.of(context)!.supplierStr}: $supplierName | ${AppLocalizations.of(context)!.totalStr}: ${purchase.total} ${AppLocalizations.of(context)!.dhsStr}',
+                        );
                       },
                     );
                   },
@@ -191,15 +291,25 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
                 _buildSection<PaymentEntity>(
                   context,
                   AppLocalizations.of(context)!.deletedPaymentsChecks,
-                  (db.select(db.payments)..where((t) => t.isActive.equals(false))..limit(50)).watch(),
+                  (db.select(db.payments)
+                        ..where((t) => t.isActive.equals(false))
+                        ..limit(50))
+                      .watch(),
                   (payment) => payment.id,
-                  (payment) => '${payment.method} - ${payment.amount} ${AppLocalizations.of(context)!.dhsStr}',
-                  (payment) async => await ref.read(paymentServiceProvider).restorePayment(payment.id),
-                  (payment) async => await (db.delete(db.payments)..where((t) => t.id.equals(payment.id))).go(),
+                  (payment) =>
+                      '${payment.method} - ${payment.amount} ${AppLocalizations.of(context)!.dhsStr}',
+                  (payment) async => await ref
+                      .read(paymentServiceProvider)
+                      .restorePayment(payment.id),
+                  (payment) async =>
+                      await (db.delete(db.payments)
+                        ..where((t) => t.id.equals(payment.id))).go(),
                   buildSubtitle: (payment) {
                     return Row(
                       children: [
-                        Text('${DateFormat('MMM dd, yyyy (EEEE)').format(payment.date)} '),
+                        Text(
+                          '${DateFormat('MMM dd, yyyy (EEEE)').format(payment.date)} ',
+                        ),
                         const SizedBox(width: 8),
                         StatusBadge(status: payment.status),
                       ],
@@ -221,24 +331,30 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
     String Function(T) getId,
     String Function(T) getName,
     Future<void> Function(T) onRestore,
-    Future<void> Function(T) onPermanentDelete,
-    {Widget Function(T)? buildSubtitle}
-  ) {
+    Future<void> Function(T) onPermanentDelete, {
+    Future<void> Function(T)? onEdit,
+    Widget Function(T)? buildSubtitle,
+  }) {
     return StreamBuilder<List<T>>(
       stream: stream,
       builder: (context, snapshot) {
-        if (!snapshot.hasData || snapshot.data!.isEmpty) return const SizedBox.shrink();
-        
-        final items = snapshot.data!.where((item) {
-          if (_searchQuery.isEmpty) return true;
-          final q = _searchQuery.toLowerCase();
-          final aq = ArabicTransliterator.transliterate(_searchQuery);
-          return getName(item).toLowerCase().contains(q) || getName(item).contains(aq);
-        }).toList();
+        if (!snapshot.hasData || snapshot.data!.isEmpty)
+          return const SizedBox.shrink();
+
+        final items =
+            snapshot.data!.where((item) {
+              if (_searchQuery.isEmpty) return true;
+              final q = _searchQuery.toLowerCase();
+              final aq = ArabicTransliterator.transliterate(_searchQuery);
+              return getName(item).toLowerCase().contains(q) ||
+                  getName(item).contains(aq);
+            }).toList();
 
         if (items.isEmpty) return const SizedBox.shrink();
 
-        final allSelected = items.every((item) => _selectedIds.contains(getId(item)));
+        final allSelected = items.every(
+          (item) => _selectedIds.contains(getId(item)),
+        );
 
         return ExpansionTile(
           title: Row(
@@ -255,39 +371,65 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
                   });
                 },
               ),
-              Text('$title (${items.length})', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+              Text(
+                '$title (${items.length})',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red,
+                ),
+              ),
             ],
           ),
-          children: items.map((item) {
-            final id = getId(item);
-            return ListTile(
-              leading: Checkbox(
-                value: _selectedIds.contains(id),
-                onChanged: (val) {
-                  setState(() {
-                    if (val == true) {
-                      _selectedIds.add(id);
-                    } else {
-                      _selectedIds.remove(id);
-                    }
-                  });
-                },
-              ),
-              title: Text(getName(item)),
-              subtitle: buildSubtitle != null ? buildSubtitle(item) : null,
-              trailing: PopupMenuButton<String>(
-                icon: const Icon(Icons.more_vert),
-                onSelected: (value) {
-                  if (value == 'restore') onRestore(item);
-                  if (value == 'delete_forever') onPermanentDelete(item);
-                },
-                itemBuilder: (context) => [
-                  PopupMenuItem(value: 'restore', child: Text(AppLocalizations.of(context)!.restoreStr, style: const TextStyle(color: Colors.green))),
-                  PopupMenuItem(value: 'delete_forever', child: Text(AppLocalizations.of(context)!.deletePermanentlyStr, style: const TextStyle(color: Colors.red))),
-                ],
-              ),
-            );
-          }).toList(),
+          children:
+              items.map((item) {
+                final id = getId(item);
+                return ListTile(
+                  leading: Checkbox(
+                    value: _selectedIds.contains(id),
+                    onChanged: (val) {
+                      setState(() {
+                        if (val == true) {
+                          _selectedIds.add(id);
+                        } else {
+                          _selectedIds.remove(id);
+                        }
+                      });
+                    },
+                  ),
+                  title: Text(getName(item)),
+                  subtitle: buildSubtitle != null ? buildSubtitle(item) : null,
+                  trailing: PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert),
+                    onSelected: (value) {
+                      if (value == 'restore') onRestore(item);
+                      if (value == 'delete_forever') onPermanentDelete(item);
+                      if (value == 'edit' && onEdit != null) onEdit(item);
+                    },
+                    itemBuilder:
+                        (context) => [
+                          if (onEdit != null)
+                            PopupMenuItem(value: 'edit', child: Text('Edit')),
+                          PopupMenuItem(
+                            value: 'restore',
+                            child: Text(
+                              AppLocalizations.of(context)!.restoreStr,
+                              style: const TextStyle(color: Colors.green),
+                            ),
+                          ),
+
+                          PopupMenuItem(
+                            value: 'delete_forever',
+                            child: Text(
+                              AppLocalizations.of(
+                                context,
+                              )!.deletePermanentlyStr,
+                              style: const TextStyle(color: Colors.red),
+                            ),
+                          ),
+                        ],
+                  ),
+                );
+              }).toList(),
         );
       },
     );

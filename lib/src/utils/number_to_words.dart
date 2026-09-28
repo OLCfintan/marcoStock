@@ -48,7 +48,31 @@ String numberToWordsFrench(int number) {
     return res;
   }
   
-  return convertUnder1000000(number);
+  String convertUnder1000000000(int n) {
+    if (n < 1000000) return convertUnder1000000(n);
+    int m = n ~/ 1000000;
+    int rem = n % 1000000;
+    String res = '';
+    if (m == 1) res = 'un million';
+    else res = convertUnder1000(m) + ' millions';
+    
+    if (rem > 0) res += ' ' + convertUnder1000000(rem);
+    return res;
+  }
+
+  String convertUnder1000000000000(int n) {
+    if (n < 1000000000) return convertUnder1000000000(n);
+    int b = n ~/ 1000000000;
+    int rem = n % 1000000000;
+    String res = '';
+    if (b == 1) res = 'un milliard';
+    else res = convertUnder1000(b) + ' milliards';
+    
+    if (rem > 0) res += ' ' + convertUnder1000000000(rem);
+    return res;
+  }
+  
+  return convertUnder1000000000000(number);
 }
 
 String numberToWordsEnglish(int number) {
@@ -83,8 +107,26 @@ String numberToWordsEnglish(int number) {
     if (rem > 0) res += ' ' + convertUnder1000(rem);
     return res;
   }
+
+  String convertUnder1000000000(int n) {
+    if (n < 1000000) return convertUnder1000000(n);
+    int m = n ~/ 1000000;
+    int rem = n % 1000000;
+    String res = convertUnder1000(m) + ' million';
+    if (rem > 0) res += ' ' + convertUnder1000000(rem);
+    return res;
+  }
+
+  String convertUnder1000000000000(int n) {
+    if (n < 1000000000) return convertUnder1000000000(n);
+    int b = n ~/ 1000000000;
+    int rem = n % 1000000000;
+    String res = convertUnder1000(b) + ' billion';
+    if (rem > 0) res += ' ' + convertUnder1000000000(rem);
+    return res;
+  }
   
-  return convertUnder1000000(number);
+  return convertUnder1000000000000(number);
 }
 
 String numberToWordsSpanish(int number) {
@@ -126,8 +168,32 @@ String numberToWordsSpanish(int number) {
     if (rem > 0) res += ' ' + convertUnder1000(rem);
     return res;
   }
+
+  String convertUnder1000000000(int n) {
+    if (n < 1000000) return convertUnder1000000(n);
+    int m = n ~/ 1000000;
+    int rem = n % 1000000;
+    String res = '';
+    if (m == 1) res = 'un millón';
+    else res = convertUnder1000(m) + ' millones';
+    
+    if (rem > 0) res += ' ' + convertUnder1000000(rem);
+    return res;
+  }
+
+  String convertUnder1000000000000(int n) {
+    if (n < 1000000000) return convertUnder1000000000(n);
+    int b = n ~/ 1000000000;
+    int rem = n % 1000000000;
+    String res = '';
+    if (b == 1) res = 'mil millones';
+    else res = convertUnder1000(b) + ' mil millones';
+    
+    if (rem > 0) res += ' ' + convertUnder1000000000(rem);
+    return res;
+  }
   
-  return convertUnder1000000(number);
+  return convertUnder1000000000000(number);
 }
 
 String numberToWordsArabic(int number) {
@@ -168,8 +234,36 @@ String numberToWordsArabic(int number) {
     if (rem > 0) res += ' و ' + convertUnder1000(rem);
     return res;
   }
+
+  String convertUnder1000000000(int n) {
+    if (n < 1000000) return convertUnder1000000(n);
+    int m = n ~/ 1000000;
+    int rem = n % 1000000;
+    String res = '';
+    if (m == 1) res = 'مليون';
+    else if (m == 2) res = 'مليونان';
+    else if (m < 11) res = convertUnder100(m) + ' ملايين';
+    else res = convertUnder1000(m) + ' مليون';
+    
+    if (rem > 0) res += ' و ' + convertUnder1000000(rem);
+    return res;
+  }
+
+  String convertUnder1000000000000(int n) {
+    if (n < 1000000000) return convertUnder1000000000(n);
+    int b = n ~/ 1000000000;
+    int rem = n % 1000000000;
+    String res = '';
+    if (b == 1) res = 'مليار';
+    else if (b == 2) res = 'ملياران';
+    else if (b < 11) res = convertUnder100(b) + ' مليارات';
+    else res = convertUnder1000(b) + ' مليار';
+    
+    if (rem > 0) res += ' و ' + convertUnder1000000000(rem);
+    return res;
+  }
   
-  return convertUnder1000000(number);
+  return convertUnder1000000000000(number);
 }
 
 String decimalToWordsTranslated(double amount, String langCode) {
