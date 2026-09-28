@@ -129,6 +129,7 @@ class MainLayout extends ConsumerWidget {
       child: Material(
         type: MaterialType.transparency,
         child: ListTile(
+          hoverColor: Color.lerp(Colors.purple, Colors.green, 0.5)!.withValues(alpha: 0.3),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         selected: isSelected,
         selectedTileColor: colorScheme.primaryContainer,

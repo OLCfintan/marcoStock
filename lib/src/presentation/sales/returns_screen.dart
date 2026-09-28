@@ -286,7 +286,7 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen> {
                           final lineTotal = line.calculatedTotal;
                           
                           return ListTile(
-                            leading: CircleAvatar(child: Text('${line.quantity}')),
+                            leading: CircleAvatar(backgroundColor: const Color(0xFF93C572), child: Text('${line.quantity}', style: const TextStyle(color: Colors.black))),
                             title: Text(productName, style: const TextStyle(fontWeight: FontWeight.bold)),
                             subtitle: Text('${line.unitPrice} each'),
                             trailing: Row(

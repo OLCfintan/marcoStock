@@ -377,9 +377,21 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       final p = pool[rand.nextInt(pool.length)];
       final price = p.sellingPrice.toDouble();
       
-      if (currentTotal + price <= targetAmount * 1.05) {
-        selectedItems[p] = (selectedItems[p] ?? 0) + 1;
-        currentTotal += price;
+      // Box Logic: if remaining >= 500, buy by unitSize (box). Else by unit (1).
+      double remaining = targetAmount - currentTotal;
+      int addQty = 1;
+      if (remaining >= 500.0) {
+          addQty = p.unitSize?.toInt() ?? 1;
+          if (addQty < 1) addQty = 1;
+          // If a box is extremely expensive (e.g. box of 1000 items), revert to 1 if it would overshoot drastically.
+          if (price * addQty > remaining * 1.5) addQty = 1;
+      }
+      
+      double cost = price * addQty;
+      
+      if (currentTotal + cost <= targetAmount * 1.05) {
+        selectedItems[p] = (selectedItems[p] ?? 0) + addQty;
+        currentTotal += cost;
       }
       
       if (currentTotal >= targetAmount * 0.95 && currentTotal <= targetAmount * 1.05) {
@@ -459,13 +471,31 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         ],
       ),
       floatingActionButton: _multiSelectedProductIds.isNotEmpty
-          ? FloatingActionButton.extended(
-              onPressed: () {
+          ? InkWell(
+              onTap: () {
                 final allProducts = productsAsync.valueOrNull ?? [];
                 _addMultiSelectedToCart(allProducts);
               },
-              icon: const Icon(Icons.add_shopping_cart),
-              label: Text('${AppLocalizations.of(context)!.addBtn} ${_multiSelectedProductIds.length}'),
+              borderRadius: BorderRadius.circular(30),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(30),
+                  gradient: const LinearGradient(colors: [Colors.orange, Colors.green]),
+                  boxShadow: [
+                    BoxShadow(color: Colors.orange.withOpacity(0.4), blurRadius: 8, spreadRadius: 2),
+                    BoxShadow(color: Colors.green.withOpacity(0.4), blurRadius: 8, spreadRadius: 2),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.add_shopping_cart, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Text('${AppLocalizations.of(context)!.addBtn} ${_multiSelectedProductIds.length}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ),
             )
           : null,
       body: LayoutBuilder(
@@ -509,7 +539,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                     clipBehavior: Clip.antiAlias,
                     shape: isSelected 
                         ? RoundedRectangleBorder(
-                            side: BorderSide(color: theme.colorScheme.primary, width: 3),
+                            side: const BorderSide(color: Colors.orange, width: 3),
                             borderRadius: BorderRadius.circular(12))
                         : null,
                     child: InkWell(
@@ -550,6 +580,14 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                             top: 0,
                             right: 0,
                             child: Checkbox(
+                              activeColor: Colors.orange,
+                              checkColor: Colors.green,
+                              fillColor: MaterialStateProperty.resolveWith((states) {
+                                if (states.contains(MaterialState.selected)) {
+                                  return Colors.orange;
+                                }
+                                return null;
+                              }),
                               value: isSelected,
                               onChanged: (bool? val) {
                                 setState(() {
@@ -783,7 +821,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                               final lineTotal = ((line.quantity * line.unitPrice) - line.discount);
                               
                               return ListTile(
-                                leading: CircleAvatar(child: Text('${line.quantity}')),
+                                leading: CircleAvatar(backgroundColor: const Color(0xFF93C572), child: Text('${line.quantity}', style: const TextStyle(color: Colors.black))),
                                 title: Text(variantLabel, style: const TextStyle(fontWeight: FontWeight.bold)),
                                 subtitle: Text('${line.unitPrice} ${AppLocalizations.of(context)!.each}'),
                                 trailing: Row(
