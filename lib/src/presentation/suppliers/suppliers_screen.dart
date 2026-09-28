@@ -68,7 +68,7 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: TextField(
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: AppLocalizations.of(context)!.searchSuppliers,
                     prefixIcon: Icon(Icons.search),
                     border: OutlineInputBorder(),

@@ -90,12 +90,12 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> with SingleTi
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Archive & Docs'),
+        title: Text(AppLocalizations.of(context)!.archiveDocs),
         actions: [
           if (_selectedIds.isNotEmpty)
             IconButton(
               icon: const Icon(Icons.delete),
-              tooltip: 'Delete Selected Documents',
+              tooltip: AppLocalizations.of(context)!.deleteSelectedDocs,
               onPressed: () async {
                 final db = ref.read(databaseProvider);
                 final userId = ref.read(currentUserProvider)?.id ?? '';
@@ -116,16 +116,16 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> with SingleTi
                 }
                 setState(() => _selectedIds.clear());
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Selected documents deleted.')));
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.selectedDocsDeleted)));
                 }
               },
             ),
         ],
         bottom: TabBar(
           controller: _tabController,
-          tabs: const [
-            Tab(text: 'Sales & Returns'),
-            Tab(text: 'Purchases'),
+          tabs: [
+            Tab(text: AppLocalizations.of(context)!.salesAndReturns),
+            Tab(text: AppLocalizations.of(context)!.purchases),
           ],
         ),
       ),
@@ -134,10 +134,10 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> with SingleTi
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
-              decoration: const InputDecoration(
-                labelText: 'Search Documents',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)!.searchDocuments,
+                prefixIcon: const Icon(Icons.search),
+                border: const OutlineInputBorder(),
               ),
               onChanged: (val) {
                 setState(() {
@@ -162,7 +162,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> with SingleTi
                              (i.client?.name.contains(aq) ?? false);
                     }).toList();
 
-                    if (invoices.isEmpty) return const Center(child: Text('No invoices found.', style: TextStyle(color: Colors.grey)));
+                    if (invoices.isEmpty) return Center(child: Text(AppLocalizations.of(context)!.noInvoicesFound, style: const TextStyle(color: Colors.grey)));
                     return Column(
                       children: [
                         Padding(
@@ -181,7 +181,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> with SingleTi
                                   });
                                 },
                               ),
-                              const Text('Select All'),
+                              Text(AppLocalizations.of(context)!.selectAll),
                             ],
                           ),
                         ),
@@ -235,12 +235,12 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> with SingleTi
                                         ),
                                       ],
                                     ),
-                                    title: Text('${invoice.documentType} #${invoice.invoiceNumber} - ${client?.name ?? "Walk-in Client"}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                    title: Text('${invoice.documentType} #${invoice.invoiceNumber} - ${client?.name ?? AppLocalizations.of(context)!.walkInClient}', style: const TextStyle(fontWeight: FontWeight.bold)),
                                     subtitle: Padding(
                                       padding: const EdgeInsets.only(top: 8.0),
                                       child: Row(
                                         children: [
-                                          Text('${DateFormat('MMM dd, yyyy').format(invoice.date)} | Total: ${invoice.total.toStringAsFixed(2)} Dhs'),
+                                          Text('${DateFormat('MMM dd, yyyy').format(invoice.date)} | ${AppLocalizations.of(context)!.totalStr}: ${invoice.total.toStringAsFixed(2)} ${AppLocalizations.of(context)!.dhsStr}'),
                                           const SizedBox(width: 8),
                                           StatusBadge(status: invoice.status),
                                         ],
@@ -335,7 +335,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> with SingleTi
                              (p.supplier?.name.contains(aq) ?? false);
                     }).toList();
 
-                    if (purchases.isEmpty) return const Center(child: Text('No purchases found.', style: TextStyle(color: Colors.grey)));
+                    if (purchases.isEmpty) return Center(child: Text(AppLocalizations.of(context)!.noPurchasesFound, style: const TextStyle(color: Colors.grey)));
                     return Column(
                       children: [
                         Padding(
@@ -354,7 +354,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> with SingleTi
                                   });
                                 },
                               ),
-                              const Text('Select All'),
+                              Text(AppLocalizations.of(context)!.selectAll),
                             ],
                           ),
                         ),
@@ -391,12 +391,12 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> with SingleTi
                                       ),
                                     ],
                                   ),
-                                  title: Text('Purchase #${purchase.purchaseNumber} - ${supplier?.name ?? "Unknown"}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                  title: Text('${AppLocalizations.of(context)!.pdfPurchase} #${purchase.purchaseNumber} - ${supplier?.name ?? AppLocalizations.of(context)!.unknownSupplier}', style: const TextStyle(fontWeight: FontWeight.bold)),
                                   subtitle: Padding(
                                     padding: const EdgeInsets.only(top: 8.0),
                                     child: Row(
                                       children: [
-                                        Text('${DateFormat('MMM dd, yyyy').format(purchase.date)} | Total: ${purchase.total.toStringAsFixed(2)} Dhs'),
+                                        Text('${DateFormat('MMM dd, yyyy').format(purchase.date)} | ${AppLocalizations.of(context)!.totalStr}: ${purchase.total.toStringAsFixed(2)} ${AppLocalizations.of(context)!.dhsStr}'),
                                         const SizedBox(width: 8),
                                         StatusBadge(status: purchase.status),
                                       ],
@@ -410,7 +410,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> with SingleTi
                                         if (options != null && context.mounted) {
                                           Navigator.push(context, MaterialPageRoute(
                                             builder: (_) => PdfPreviewScreen(
-                                              title: "Purchase ${purchase.purchaseNumber}",
+                                              title: "${AppLocalizations.of(context)!.pdfPurchase} ${purchase.purchaseNumber}",
                                               buildPdf: () => ref.read(pdfGeneratorProvider).generatePurchasePdf(purchase.id, options),
                                             )
                                           ));
@@ -440,7 +440,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> with SingleTi
                                       if (options != null && context.mounted) {
                                         Navigator.push(context, MaterialPageRoute(
                                           builder: (_) => PdfPreviewScreen(
-                                            title: "Purchase ${purchase.purchaseNumber}",
+                                            title: "${AppLocalizations.of(context)!.pdfPurchase} ${purchase.purchaseNumber}",
                                             buildPdf: () => ref.read(pdfGeneratorProvider).generatePurchasePdf(purchase.id, options),
                                           ),
                                         ));
@@ -533,7 +533,7 @@ class _ConvertInvoiceDialogState extends ConsumerState<_ConvertInvoiceDialog> {
             const SizedBox(height: 8),
             TextField(
               controller: _nameCtrl,
-              decoration: const InputDecoration(labelText: 'Name (Overrides Client Name in PDF)', border: OutlineInputBorder()),
+              decoration: InputDecoration(labelText: AppLocalizations.of(context)!.nameOverridesClientName, border: const OutlineInputBorder()),
             ),
           ],
         ),

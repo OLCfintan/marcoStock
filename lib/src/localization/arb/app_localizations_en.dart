@@ -878,6 +878,93 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dhsStr => 'Dhs';
 
   @override
+  String get deleteSelectedDocs => 'Delete Selected Documents';
+
+  @override
+  String get selectedDocsDeleted => 'Selected documents deleted.';
+
+  @override
+  String get salesAndReturns => 'Sales & Returns';
+
+  @override
+  String get searchDocuments => 'Search Documents';
+
+  @override
+  String get noInvoicesFound => 'No invoices found.';
+
+  @override
+  String get noPurchasesFound => 'No purchases found.';
+
+  @override
+  String get nameOverridesClientName => 'Name (Overrides Client Name in PDF)';
+
+  @override
+  String get createConsumablesFor => 'Create Consumables for';
+
+  @override
+  String get bottle => 'Bottle';
+
+  @override
+  String get create => 'Create';
+
+  @override
+  String get consumablesCreatedLinked => 'Consumables created and linked!';
+
+  @override
+  String get productsCatalog => 'Products Catalog';
+
+  @override
+  String get openingScanner => 'Opening Scanner';
+
+  @override
+  String get noProductsAvailable => 'No products available.';
+
+  @override
+  String get searchProducts => 'Search Products';
+
+  @override
+  String get tableReference => 'Reference';
+
+  @override
+  String get tablePackaging => 'Packaging';
+
+  @override
+  String get tableBaseMin => 'Base Min';
+
+  @override
+  String get tableMagazinMin => 'Magazin Min';
+
+  @override
+  String get warehouseStock => 'Warehouse Stock';
+
+  @override
+  String get baseStock => 'Base Stock';
+
+  @override
+  String get magazinStock => 'Magazin Stock (Special Client)';
+
+  @override
+  String get scannedStr => 'Scanned:';
+
+  @override
+  String get clearSelectedStockAdmin => 'Clear Selected Stock (Admin)';
+
+  @override
+  String get noStockInSection => 'No stock in this section.';
+
+  @override
+  String get baseFamily => '(Base Family)';
+
+  @override
+  String get refStr => 'Ref';
+
+  @override
+  String get locStr => 'Loc';
+
+  @override
+  String get searchStock => 'Search Stock';
+
+  @override
   String get clientsManagement => 'Clients Management';
 
   @override

@@ -893,6 +893,94 @@ class AppLocalizationsFr extends AppLocalizations {
   String get dhsStr => 'Dhs';
 
   @override
+  String get deleteSelectedDocs => 'Supprimer les documents sélectionnés';
+
+  @override
+  String get selectedDocsDeleted => 'Documents sélectionnés supprimés.';
+
+  @override
+  String get salesAndReturns => 'Ventes et Retours';
+
+  @override
+  String get searchDocuments => 'Rechercher des documents';
+
+  @override
+  String get noInvoicesFound => 'Aucune facture trouvée.';
+
+  @override
+  String get noPurchasesFound => 'Aucun achat trouvé.';
+
+  @override
+  String get nameOverridesClientName =>
+      'Nom (Remplace le nom du client dans le PDF)';
+
+  @override
+  String get createConsumablesFor => 'Créer des consommables pour';
+
+  @override
+  String get bottle => 'Bouteille';
+
+  @override
+  String get create => 'Créer';
+
+  @override
+  String get consumablesCreatedLinked => 'Consommables créés et liés !';
+
+  @override
+  String get productsCatalog => 'Catalogue des produits';
+
+  @override
+  String get openingScanner => 'Ouverture du scanner';
+
+  @override
+  String get noProductsAvailable => 'Aucun produit disponible.';
+
+  @override
+  String get searchProducts => 'Rechercher des produits';
+
+  @override
+  String get tableReference => 'Référence';
+
+  @override
+  String get tablePackaging => 'Emballage';
+
+  @override
+  String get tableBaseMin => 'Min Base';
+
+  @override
+  String get tableMagazinMin => 'Min Magasin';
+
+  @override
+  String get warehouseStock => 'Stock de l\'Entrepôt';
+
+  @override
+  String get baseStock => 'Stock de Base';
+
+  @override
+  String get magazinStock => 'Stock Magasin (Client Spécial)';
+
+  @override
+  String get scannedStr => 'Scanné :';
+
+  @override
+  String get clearSelectedStockAdmin => 'Effacer le stock sélectionné (Admin)';
+
+  @override
+  String get noStockInSection => 'Aucun stock dans cette section.';
+
+  @override
+  String get baseFamily => '(Famille de Base)';
+
+  @override
+  String get refStr => 'Réf';
+
+  @override
+  String get locStr => 'Empl';
+
+  @override
+  String get searchStock => 'Rechercher dans le stock';
+
+  @override
   String get clientsManagement => 'Gestion des clients';
 
   @override

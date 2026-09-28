@@ -39,29 +39,29 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: Text('Create Consumables for ${product.name}'),
+          title: Text('${AppLocalizations.of(context)!.createConsumablesFor} ${product.name}'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               CheckboxListTile(
-                title: const Text('Box'),
+                title: Text(AppLocalizations.of(context)!.box),
                 value: createBox,
                 onChanged: (v) => setDialogState(() => createBox = v ?? false),
               ),
               CheckboxListTile(
-                title: const Text('Bottle'),
+                title: Text(AppLocalizations.of(context)!.bottle),
                 value: createBottle,
                 onChanged: (v) => setDialogState(() => createBottle = v ?? false),
               ),
               CheckboxListTile(
-                title: const Text('Ticket'),
+                title: Text(AppLocalizations.of(context)!.ticket),
                 value: createTicket,
                 onChanged: (v) => setDialogState(() => createTicket = v ?? false),
               ),
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+            TextButton(onPressed: () => Navigator.pop(context), child: Text(AppLocalizations.of(context)!.cancelStr)),
             ElevatedButton(
               onPressed: () async {
                 Navigator.pop(context);
@@ -110,10 +110,10 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                 if (createTicket) await createAndLink('Ticket');
                 
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Consumables created and linked!')));
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.consumablesCreatedLinked)));
                 }
               },
-              child: const Text('Create'),
+              child: Text(AppLocalizations.of(context)!.create),
             ),
           ],
         ),
@@ -127,21 +127,21 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Products Catalog'),
+        title: Text(AppLocalizations.of(context)!.productsCatalog),
         actions: [
           IconButton(
             icon: const Icon(Icons.qr_code_scanner),
-            tooltip: 'Scan Barcode',
+            tooltip: AppLocalizations.of(context)!.scanBarcode,
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Opening Scanner')),
+                SnackBar(content: Text(AppLocalizations.of(context)!.openingScanner)),
               );
             },
           ),
           if (_selectedProductIds.isNotEmpty && ref.watch(currentUserProvider)?.role == 'ADMIN')
             IconButton(
               icon: const Icon(Icons.delete),
-              tooltip: 'Delete',
+              tooltip: AppLocalizations.of(context)!.deleteStr,
               onPressed: () async {
                 final repo = ref.read(productRepositoryProvider);
                 for (final id in _selectedProductIds) {
@@ -164,16 +164,16 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
           }).toList();
           
           if (products.isEmpty && _searchQuery.isEmpty) {
-            return const Center(child: Text('No products available.'));
+            return Center(child: Text(AppLocalizations.of(context)!.noProductsAvailable));
           }
           return SingleChildScrollView(
             child: SizedBox(
               width: double.infinity,
               child: PaginatedDataTable(
                 header: TextField(
-                  decoration: const InputDecoration(
-                    labelText: 'Search Products',
-                    prefixIcon: Icon(Icons.search),
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.searchProducts,
+                    prefixIcon: const Icon(Icons.search),
                     border: InputBorder.none,
                   ),
                   onChanged: (val) {
@@ -193,17 +193,17 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                 },
                 rowsPerPage: (products.length > 20) ? 20 : (products.length < 5 ? 5 : products.length),
                 showCheckboxColumn: true,
-                columns: const [
-                  DataColumn(label: Text('Actions')),
-                  DataColumn(label: Text('Name')),
-                  DataColumn(label: Text('Reference')),
-                  DataColumn(label: Text('Packaging')),
-                  DataColumn(label: Text('Purchase Price')),
-                  DataColumn(label: Text('Selling Price')),
-                  DataColumn(label: Text('Tier 2 Price')),
-                  DataColumn(label: Text('Tier 3 Price')),
-                  DataColumn(label: Text('Base Min')),
-                  DataColumn(label: Text('Magazin Min')),
+                columns: [
+                  DataColumn(label: Text(AppLocalizations.of(context)!.tableActions)),
+                  DataColumn(label: Text(AppLocalizations.of(context)!.tableName)),
+                  DataColumn(label: Text(AppLocalizations.of(context)!.tableReference)),
+                  DataColumn(label: Text(AppLocalizations.of(context)!.tablePackaging)),
+                  DataColumn(label: Text(AppLocalizations.of(context)!.tablePurchasePrice)),
+                  DataColumn(label: Text(AppLocalizations.of(context)!.tableSellingPrice)),
+                  DataColumn(label: Text(AppLocalizations.of(context)!.tableTier2)),
+                  DataColumn(label: Text(AppLocalizations.of(context)!.tableTier3)),
+                  DataColumn(label: Text(AppLocalizations.of(context)!.tableBaseMin)),
+                  DataColumn(label: Text(AppLocalizations.of(context)!.tableMagazinMin)),
                 ],
                 source: _ProductDataSource(
                   products: products,
@@ -226,6 +226,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                   },
                   onDoubleTap: (p) => ItemNavigator.openProduct(context, p),
                   isAdmin: ref.watch(currentUserProvider)?.role == 'ADMIN',
+                  context: context,
                 ),
               ),
             ),
@@ -243,7 +244,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
             ),
           );
         },
-        tooltip: 'Add Product',
+        tooltip: AppLocalizations.of(context)!.addNewProduct,
         child: const Icon(Icons.add),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
@@ -261,6 +262,7 @@ class _ProductDataSource extends DataTableSource {
   final Function(Product) onDelete;
   final Function(Product) onDoubleTap;
   final bool isAdmin;
+  final BuildContext context;
 
   _ProductDataSource({
     required this.products,
@@ -272,6 +274,7 @@ class _ProductDataSource extends DataTableSource {
     required this.onDelete,
     required this.onDoubleTap,
     required this.isAdmin,
+    required this.context,
   });
 
   @override
@@ -308,10 +311,10 @@ class _ProductDataSource extends DataTableSource {
         buildCell(Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold))),
         buildCell(Text(p.reference)),
         buildCell(Text('${p.packagingType} (${p.unitSize} ${p.unit})')),
-        buildCell(Text('${p.purchasePrice.toStringAsFixed(2)} Dhs')),
-        buildCell(Text('${p.sellingPrice.toStringAsFixed(2)} Dhs')),
-        buildCell(Text('${p.tier2Price?.toStringAsFixed(2) ?? '-'} Dhs')),
-        buildCell(Text('${p.tier3Price?.toStringAsFixed(2) ?? '-'} Dhs')),
+        buildCell(Text('${p.purchasePrice.toStringAsFixed(2)} ${AppLocalizations.of(context)!.dhsStr}')),
+        buildCell(Text('${p.sellingPrice.toStringAsFixed(2)} ${AppLocalizations.of(context)!.dhsStr}')),
+        buildCell(Text('${p.tier2Price?.toStringAsFixed(2) ?? '-'} ${AppLocalizations.of(context)!.dhsStr}')),
+        buildCell(Text('${p.tier3Price?.toStringAsFixed(2) ?? '-'} ${AppLocalizations.of(context)!.dhsStr}')),
         buildCell(Text(p.baseMinimumStock.toString())),
         buildCell(Text(p.magazinMinimumStock.toString())),
       ],

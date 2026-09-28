@@ -1806,6 +1806,180 @@ abstract class AppLocalizations {
   /// **'Dhs'**
   String get dhsStr;
 
+  /// No description provided for @deleteSelectedDocs.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Selected Documents'**
+  String get deleteSelectedDocs;
+
+  /// No description provided for @selectedDocsDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected documents deleted.'**
+  String get selectedDocsDeleted;
+
+  /// No description provided for @salesAndReturns.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales & Returns'**
+  String get salesAndReturns;
+
+  /// No description provided for @searchDocuments.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Documents'**
+  String get searchDocuments;
+
+  /// No description provided for @noInvoicesFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No invoices found.'**
+  String get noInvoicesFound;
+
+  /// No description provided for @noPurchasesFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No purchases found.'**
+  String get noPurchasesFound;
+
+  /// No description provided for @nameOverridesClientName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name (Overrides Client Name in PDF)'**
+  String get nameOverridesClientName;
+
+  /// No description provided for @createConsumablesFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Consumables for'**
+  String get createConsumablesFor;
+
+  /// No description provided for @bottle.
+  ///
+  /// In en, this message translates to:
+  /// **'Bottle'**
+  String get bottle;
+
+  /// No description provided for @create.
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get create;
+
+  /// No description provided for @consumablesCreatedLinked.
+  ///
+  /// In en, this message translates to:
+  /// **'Consumables created and linked!'**
+  String get consumablesCreatedLinked;
+
+  /// No description provided for @productsCatalog.
+  ///
+  /// In en, this message translates to:
+  /// **'Products Catalog'**
+  String get productsCatalog;
+
+  /// No description provided for @openingScanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening Scanner'**
+  String get openingScanner;
+
+  /// No description provided for @noProductsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No products available.'**
+  String get noProductsAvailable;
+
+  /// No description provided for @searchProducts.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Products'**
+  String get searchProducts;
+
+  /// No description provided for @tableReference.
+  ///
+  /// In en, this message translates to:
+  /// **'Reference'**
+  String get tableReference;
+
+  /// No description provided for @tablePackaging.
+  ///
+  /// In en, this message translates to:
+  /// **'Packaging'**
+  String get tablePackaging;
+
+  /// No description provided for @tableBaseMin.
+  ///
+  /// In en, this message translates to:
+  /// **'Base Min'**
+  String get tableBaseMin;
+
+  /// No description provided for @tableMagazinMin.
+  ///
+  /// In en, this message translates to:
+  /// **'Magazin Min'**
+  String get tableMagazinMin;
+
+  /// No description provided for @warehouseStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Warehouse Stock'**
+  String get warehouseStock;
+
+  /// No description provided for @baseStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Base Stock'**
+  String get baseStock;
+
+  /// No description provided for @magazinStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Magazin Stock (Special Client)'**
+  String get magazinStock;
+
+  /// No description provided for @scannedStr.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanned:'**
+  String get scannedStr;
+
+  /// No description provided for @clearSelectedStockAdmin.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Selected Stock (Admin)'**
+  String get clearSelectedStockAdmin;
+
+  /// No description provided for @noStockInSection.
+  ///
+  /// In en, this message translates to:
+  /// **'No stock in this section.'**
+  String get noStockInSection;
+
+  /// No description provided for @baseFamily.
+  ///
+  /// In en, this message translates to:
+  /// **'(Base Family)'**
+  String get baseFamily;
+
+  /// No description provided for @refStr.
+  ///
+  /// In en, this message translates to:
+  /// **'Ref'**
+  String get refStr;
+
+  /// No description provided for @locStr.
+  ///
+  /// In en, this message translates to:
+  /// **'Loc'**
+  String get locStr;
+
+  /// No description provided for @searchStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Stock'**
+  String get searchStock;
+
   /// No description provided for @clientsManagement.
   ///
   /// In en, this message translates to:

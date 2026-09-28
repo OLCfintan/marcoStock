@@ -68,7 +68,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: TextField(
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: AppLocalizations.of(context)!.searchClients,
                     prefixIcon: Icon(Icons.search),
                     border: OutlineInputBorder(),

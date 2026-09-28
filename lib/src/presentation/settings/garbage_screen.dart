@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../infrastructure/database/providers.dart';
 import '../../infrastructure/database/app_database.dart';
 import 'package:drift/drift.dart' as drift;
+import 'package:marko_group/src/localization/arb/app_localizations.dart';
 import '../widgets/status_badge.dart';
 import '../../utils/arabic_transliterator.dart';
 
@@ -28,12 +29,12 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Recycle Bin (Admin Only)'),
+        title: Text(AppLocalizations.of(context)!.recycleBinAdmin),
         actions: [
           if (_selectedIds.isNotEmpty) ...[
             IconButton(
               icon: const Icon(Icons.restore, color: Colors.green),
-              tooltip: 'Restore Selected',
+              tooltip: AppLocalizations.of(context)!.restoreSelected,
               onPressed: () async {
                 final db = ref.read(databaseProvider);
                 final userId = ref.read(currentUserProvider)?.id ?? '';
@@ -60,13 +61,13 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
                 }
                 setState(() => _selectedIds.clear());
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Selected items restored successfully.')));
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.selectedItemsRestored)));
                 }
               },
             ),
             IconButton(
               icon: const Icon(Icons.delete_forever, color: Colors.red),
-              tooltip: 'Permanently Delete Selected',
+              tooltip: AppLocalizations.of(context)!.permanentlyDeleteSelected,
               onPressed: () async {
                 final db = ref.read(databaseProvider);
                 await db.transaction(() async {
@@ -100,7 +101,7 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
                 });
                 setState(() => _selectedIds.clear());
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Selected items deleted permanently.')));
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.selectedItemsDeleted)));
                 }
               },
             ),
@@ -112,10 +113,10 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
-              decoration: const InputDecoration(
-                labelText: 'Search Recycle Bin',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)!.searchRecycleBin,
+                prefixIcon: const Icon(Icons.search),
+                border: const OutlineInputBorder(),
               ),
               onChanged: (val) {
                 setState(() {
@@ -129,7 +130,7 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
               children: [
                 _buildSection<InvoiceEntity>(
                   context,
-                  'Deleted Invoices & Bons',
+                  AppLocalizations.of(context)!.deletedInvoicesBons,
                   (db.select(db.invoices)..where((t) => t.isActive.equals(false))..limit(50)).watch(),
                   (invoice) => invoice.id,
                   (invoice) => '${invoice.documentType} - ${invoice.invoiceNumber}',
@@ -151,18 +152,18 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
                     return FutureBuilder<ClientEntity?>(
                       future: invoice.clientId != null ? (db.select(db.clients)..where((t) => t.id.equals(invoice.clientId!))).getSingleOrNull() : Future.value(null),
                       builder: (ctx, snap) {
-                        final clientName = snap.data?.name ?? 'Walk-in Client';
-                        return Text('${DateFormat('MMM dd, yyyy (EEEE)').format(invoice.date)} | Client: $clientName | Total: ${invoice.total} Dhs');
+                        final clientName = snap.data?.name ?? AppLocalizations.of(context)!.walkInClient;
+                        return Text('${DateFormat('MMM dd, yyyy (EEEE)').format(invoice.date)} | ${AppLocalizations.of(context)!.clientStr}: $clientName | ${AppLocalizations.of(context)!.totalStr}: ${invoice.total} ${AppLocalizations.of(context)!.dhsStr}');
                       },
                     );
                   },
                 ),
                 _buildSection<PurchaseEntity>(
                   context,
-                  'Deleted Purchases',
+                  AppLocalizations.of(context)!.deletedPurchases,
                   (db.select(db.purchases)..where((t) => t.isActive.equals(false))..limit(50)).watch(),
                   (purchase) => purchase.id,
-                  (purchase) => 'Purchase - ${purchase.purchaseNumber}',
+                  (purchase) => '${AppLocalizations.of(context)!.pdfPurchase} - ${purchase.purchaseNumber}',
                   (purchase) async {
                     final userId = ref.read(currentUserProvider)?.id ?? '';
                     await ref.read(purchaseServiceProvider).restorePurchase(purchase.id, userId);
@@ -181,18 +182,18 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
                     return FutureBuilder<SupplierEntity?>(
                       future: purchase.supplierId != null ? (db.select(db.suppliers)..where((t) => t.id.equals(purchase.supplierId!))).getSingleOrNull() : Future.value(null),
                       builder: (ctx, snap) {
-                        final supplierName = snap.data?.name ?? 'Unknown Supplier';
-                        return Text('${DateFormat('MMM dd, yyyy (EEEE)').format(purchase.date)} | Supplier: $supplierName | Total: ${purchase.total} Dhs');
+                        final supplierName = snap.data?.name ?? AppLocalizations.of(context)!.unknownSupplier;
+                        return Text('${DateFormat('MMM dd, yyyy (EEEE)').format(purchase.date)} | ${AppLocalizations.of(context)!.supplierStr}: $supplierName | ${AppLocalizations.of(context)!.totalStr}: ${purchase.total} ${AppLocalizations.of(context)!.dhsStr}');
                       },
                     );
                   },
                 ),
                 _buildSection<PaymentEntity>(
                   context,
-                  'Deleted Payments & Checks',
+                  AppLocalizations.of(context)!.deletedPaymentsChecks,
                   (db.select(db.payments)..where((t) => t.isActive.equals(false))..limit(50)).watch(),
                   (payment) => payment.id,
-                  (payment) => '${payment.method} - ${payment.amount} Dhs',
+                  (payment) => '${payment.method} - ${payment.amount} ${AppLocalizations.of(context)!.dhsStr}',
                   (payment) async => await ref.read(paymentServiceProvider).restorePayment(payment.id),
                   (payment) async => await (db.delete(db.payments)..where((t) => t.id.equals(payment.id))).go(),
                   buildSubtitle: (payment) {
@@ -281,8 +282,8 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
                   if (value == 'delete_forever') onPermanentDelete(item);
                 },
                 itemBuilder: (context) => [
-                  const PopupMenuItem(value: 'restore', child: Text('Restore', style: TextStyle(color: Colors.green))),
-                  const PopupMenuItem(value: 'delete_forever', child: Text('Delete Permanently', style: TextStyle(color: Colors.red))),
+                  PopupMenuItem(value: 'restore', child: Text(AppLocalizations.of(context)!.restoreStr, style: const TextStyle(color: Colors.green))),
+                  PopupMenuItem(value: 'delete_forever', child: Text(AppLocalizations.of(context)!.deletePermanentlyStr, style: const TextStyle(color: Colors.red))),
                 ],
               ),
             );

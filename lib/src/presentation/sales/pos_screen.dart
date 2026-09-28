@@ -315,7 +315,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 _addMultiSelectedToCart(allProducts);
               },
               icon: const Icon(Icons.add_shopping_cart),
-              label: Text('${'Add'} ${_multiSelectedProductIds.length}'),
+              label: Text('${AppLocalizations.of(context)!.addBtn} ${_multiSelectedProductIds.length}'),
             )
           : null,
       body: LayoutBuilder(
@@ -544,8 +544,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: TextFormField(
                       controller: _activeSession.customNameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Name (Overrides Client Name in PDF)',
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(context)!.nameOverridePdf,
                         border: OutlineInputBorder(),
                       ),
                     ),
@@ -619,7 +619,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                               return ListTile(
                                 leading: CircleAvatar(child: Text('${line.quantity}')),
                                 title: Text(variantLabel, style: const TextStyle(fontWeight: FontWeight.bold)),
-                                subtitle: Text('${line.unitPrice} each'),
+                                subtitle: Text('${line.unitPrice} ${AppLocalizations.of(context)!.each}'),
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
@@ -638,12 +638,12 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                         children: [
                                           TextFormField(
                                             controller: qtyCtrl,
-                                            decoration: const InputDecoration(labelText: 'Quantity'),
+                                            decoration: InputDecoration(labelText: AppLocalizations.of(context)!.quantity),
                                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                           ),
                                           TextFormField(
                                             controller: priceCtrl,
-                                            decoration: const InputDecoration(labelText: 'Unit Price'),
+                                            decoration: InputDecoration(labelText: AppLocalizations.of(context)!.unitPrice),
                                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                           ),
                                         ],
@@ -758,8 +758,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                       child: DropdownButtonFormField<String>(
                                         value: p.method,
                                         isExpanded: true,
-                                        decoration: const InputDecoration(
-                                          labelText: 'Method',
+                                        decoration: InputDecoration(
+                                          labelText: AppLocalizations.of(context)!.method,
                                           border: InputBorder.none,
                                         ),
                                         items: [
@@ -783,8 +783,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                       flex: 3,
                                       child: TextField(
                                         controller: p.amountController,
-                                        decoration: const InputDecoration(
-                                          labelText: 'Amount',
+                                        decoration: InputDecoration(
+                                          labelText: AppLocalizations.of(context)!.amount,
                                           prefixIcon: Icon(Icons.attach_money, size: 16),
                                           border: InputBorder.none,
                                         ),

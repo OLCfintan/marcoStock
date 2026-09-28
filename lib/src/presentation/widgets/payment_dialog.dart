@@ -4,6 +4,7 @@ import 'package:drift/drift.dart' as drift;
 import 'package:decimal/decimal.dart';
 import "image_picker_field.dart";
 import 'package:uuid/uuid.dart';
+import 'package:marko_group/src/localization/arb/app_localizations.dart';
 import '../widgets/logo_loader.dart';
 
 import '../../infrastructure/database/app_database.dart';
@@ -141,7 +142,7 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
       
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment recorded successfully!')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.paymentRecordedSuccessfully)));
       }
     } catch (e) {
       if (mounted) {
@@ -149,7 +150,7 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
         if (errMsg.contains('no such column: purchase_id')) {
           errMsg = 'Migration pending! You MUST fully restart the app (close and reopen) to apply the new database schema.';
         }
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $errMsg')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${AppLocalizations.of(context)!.errorStr}$errMsg')));
         setState(() => _isSubmitting = false);
       }
     }
@@ -160,22 +161,22 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
     final remaining = widget.currentTotal - widget.currentlyPaid;
     
     return AlertDialog(
-      title: Text('Record Payment (${widget.entityType})'),
+      title: Text('${AppLocalizations.of(context)!.recordPayment} (${widget.entityType})'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('Total: ${widget.currentTotal.toStringAsFixed(2)} Dhs'),
-          Text('Paid: ${widget.currentlyPaid.toStringAsFixed(2)} Dhs'),
-          Text('Remaining: ${remaining.toStringAsFixed(2)} Dhs', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+          Text('${AppLocalizations.of(context)!.totalLabel}${widget.currentTotal.toStringAsFixed(2)} Dhs'),
+          Text('${AppLocalizations.of(context)!.paidLabel}${widget.currentlyPaid.toStringAsFixed(2)} Dhs'),
+          Text('${AppLocalizations.of(context)!.remainingLabel}${remaining.toStringAsFixed(2)} Dhs', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
           const SizedBox(height: 16),
           TextFormField(
             controller: _amountController,
             decoration: InputDecoration(
-              labelText: 'Payment Amount',
+              labelText: AppLocalizations.of(context)!.paymentAmount,
               suffixText: 'Dhs',
               suffixIcon: IconButton(
                 icon: const Icon(Icons.arrow_downward),
-                tooltip: 'Set to full remaining',
+                tooltip: AppLocalizations.of(context)!.setToFullRemaining,
                 onPressed: () {
                   _amountController.text = remaining.toStringAsFixed(2);
                 },
@@ -190,12 +191,12 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
             onChanged: (v) {
               if (v != null) setState(() => _methodController.text = v);
             },
-            decoration: const InputDecoration(labelText: 'Payment Method'),
+            decoration: InputDecoration(labelText: AppLocalizations.of(context)!.paymentMethod),
           ),
           if (_methodController.text == 'CHECK') ...[
             const SizedBox(height: 16),
             ImagePickerField(
-              label: 'Check Image (Optional)',
+              label: AppLocalizations.of(context)!.checkImage,
               initialValue: _checkImagePath,
               onChanged: (path) => setState(() => _checkImagePath = path),
             ),
@@ -203,10 +204,10 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
         ],
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(AppLocalizations.of(context)!.cancelStr)),
         ElevatedButton(
           onPressed: _isSubmitting ? null : _submit,
-          child: _isSubmitting ? const SizedBox(width: 16, height: 16, child: const LogoLoader(size: 32.0)) : const Text('Record'),
+          child: _isSubmitting ? const SizedBox(width: 16, height: 16, child: const LogoLoader(size: 32.0)) : Text(AppLocalizations.of(context)!.recordBtn),
         ),
       ],
     );

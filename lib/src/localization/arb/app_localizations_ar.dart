@@ -878,6 +878,93 @@ class AppLocalizationsAr extends AppLocalizations {
   String get dhsStr => 'درهم';
 
   @override
+  String get deleteSelectedDocs => 'حذف المستندات المحددة';
+
+  @override
+  String get selectedDocsDeleted => 'تم حذف المستندات المحددة.';
+
+  @override
+  String get salesAndReturns => 'المبيعات والمرتجعات';
+
+  @override
+  String get searchDocuments => 'البحث في المستندات';
+
+  @override
+  String get noInvoicesFound => 'لم يتم العثور على فواتير.';
+
+  @override
+  String get noPurchasesFound => 'لم يتم العثور على مشتريات.';
+
+  @override
+  String get nameOverridesClientName => 'الاسم (يحل محل اسم العميل في ملف PDF)';
+
+  @override
+  String get createConsumablesFor => 'إنشاء مستهلكات لـ';
+
+  @override
+  String get bottle => 'زجاجة';
+
+  @override
+  String get create => 'إنشاء';
+
+  @override
+  String get consumablesCreatedLinked => 'تم إنشاء المستهلكات وربطها!';
+
+  @override
+  String get productsCatalog => 'كتالوج المنتجات';
+
+  @override
+  String get openingScanner => 'جاري فتح الماسح الضوئي';
+
+  @override
+  String get noProductsAvailable => 'لا توجد منتجات متاحة.';
+
+  @override
+  String get searchProducts => 'البحث عن منتجات';
+
+  @override
+  String get tableReference => 'المرجع';
+
+  @override
+  String get tablePackaging => 'التعبئة والتغليف';
+
+  @override
+  String get tableBaseMin => 'الحد الأدنى للمستودع';
+
+  @override
+  String get tableMagazinMin => 'الحد الأدنى للمخزن';
+
+  @override
+  String get warehouseStock => 'مخزون المستودع';
+
+  @override
+  String get baseStock => 'المخزون الأساسي';
+
+  @override
+  String get magazinStock => 'مخزون المخزن (عميل خاص)';
+
+  @override
+  String get scannedStr => 'تم المسح:';
+
+  @override
+  String get clearSelectedStockAdmin => 'مسح المخزون المحدد (للمسؤولين)';
+
+  @override
+  String get noStockInSection => 'لا يوجد مخزون في هذا القسم.';
+
+  @override
+  String get baseFamily => '(العائلة الأساسية)';
+
+  @override
+  String get refStr => 'المرجع';
+
+  @override
+  String get locStr => 'الموقع';
+
+  @override
+  String get searchStock => 'البحث في المخزون';
+
+  @override
   String get clientsManagement => 'إدارة العملاء';
 
   @override

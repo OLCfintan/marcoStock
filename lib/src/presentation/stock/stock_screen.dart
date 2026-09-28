@@ -5,6 +5,7 @@ import '../widgets/universal_scanner.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/logo_loader.dart';
 import '../../application/auth/auth_service.dart';
+import 'package:marko_group/src/localization/arb/app_localizations.dart';
 import '../../application/stock/stock_providers.dart';
 
 import '../../infrastructure/repositories/stock_repository.dart';
@@ -39,29 +40,29 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Warehouse Stock'),
+        title: Text(AppLocalizations.of(context)!.warehouseStock),
         bottom: TabBar(
           controller: _tabController,
-          tabs: const [
-            Tab(text: 'Base Stock'),
-            Tab(text: 'Magazin Stock (Special Client)'),
+          tabs: [
+            Tab(text: AppLocalizations.of(context)!.baseStock),
+            Tab(text: AppLocalizations.of(context)!.magazinStock),
           ],
         ),
         actions: [
           IconButton(
             icon: const Icon(Icons.qr_code_scanner),
-            tooltip: 'Scan Barcode',
+            tooltip: AppLocalizations.of(context)!.scanBarcode,
             onPressed: () async {
               final code = await UniversalScanner.scan(context);
               if (code != null && context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Scanned: $code')));
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${AppLocalizations.of(context)!.scannedStr} $code')));
               }
             },
           ),
           if (ref.watch(currentUserProvider)?.role == 'ADMIN')
             IconButton(
               icon: const Icon(Icons.delete),
-              tooltip: 'Clear Selected Stock (Admin)',
+              tooltip: AppLocalizations.of(context)!.clearSelectedStockAdmin,
               onPressed: () async {
                 if (_selectedIds.isEmpty) return;
                 for (final id in _selectedIds) {
@@ -89,7 +90,7 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
           final magazinItems = filteredItems.where((i) => i.locationId == AppLocations.magazin).toList();
           
           Widget buildList(List<StockItem> listItems) {
-            if (listItems.isEmpty) return const Center(child: Text('No stock in this section.'));
+            if (listItems.isEmpty) return Center(child: Text(AppLocalizations.of(context)!.noStockInSection));
             return Column(
               children: [
                 Padding(
@@ -108,7 +109,7 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
                           });
                         },
                       ),
-                      const Text('Select All'),
+                      Text(AppLocalizations.of(context)!.selectAll),
                     ],
                   ),
                 ),
@@ -139,15 +140,15 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
                             const CircleAvatar(child: Icon(Icons.inventory_2)),
                           ],
                         ),
-                        title: Text('${item.productName} (Base Family)'),
-                        subtitle: Text('Ref: ${item.productReference} | Loc: ${item.locationName}'),
+                        title: Text('${item.productName} ${AppLocalizations.of(context)!.baseFamily}'),
+                        subtitle: Text('${AppLocalizations.of(context)!.refStr}: ${item.productReference} | ${AppLocalizations.of(context)!.locStr}: ${item.locationName}'),
                         trailing: Text(
                           '${item.quantity.toStringAsFixed(2)} ${() {
                             final u = item.unit.toLowerCase();
                             if (['ml', 'cl', 'dl', 'l'].contains(u)) return 'L';
                             if (['mg', 'g', 'kg', 't'].contains(u)) return 'KG';
                             if (u == 'm3') return 'M3';
-                            return 'Units';
+                            return AppLocalizations.of(context)!.units;
                           }()}',
                           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                         ),
@@ -164,10 +165,10 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: TextField(
-                  decoration: const InputDecoration(
-                    labelText: 'Search Stock',
-                    prefixIcon: Icon(Icons.search),
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.searchStock,
+                    prefixIcon: const Icon(Icons.search),
+                    border: const OutlineInputBorder(),
                   ),
                   onChanged: (val) {
                     setState(() {
@@ -189,7 +190,7 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
           );
         },
         loading: () => const Center(child: const LogoLoader()),
-        error: (e, s) => Center(child: Text('Error: $e')),
+        error: (e, s) => Center(child: Text('${AppLocalizations.of(context)?.errorStr}$e')),
       ),
     );
   }

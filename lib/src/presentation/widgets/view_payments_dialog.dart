@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:marko_group/src/localization/arb/app_localizations.dart';
 import '../widgets/logo_loader.dart';
 import '../../infrastructure/database/app_database.dart';
 import '../../infrastructure/database/providers.dart';
@@ -28,7 +29,7 @@ class ViewPaymentsDialog extends ConsumerWidget {
         : (db.select(db.payments)..where((t) => t.purchaseId.equals(entityId))).watch();
 
     return AlertDialog(
-      title: Text('Payments Record ($entityType)'),
+      title: Text('${AppLocalizations.of(context)!.paymentsRecord} ($entityType)'),
       content: SizedBox(
         width: 500,
         height: 400,
@@ -37,7 +38,7 @@ class ViewPaymentsDialog extends ConsumerWidget {
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: const LogoLoader());
             final payments = snapshot.data ?? [];
-            if (payments.isEmpty) return const Center(child: Text('No payments recorded.'));
+            if (payments.isEmpty) return Center(child: Text(AppLocalizations.of(context)!.noPaymentsRecorded));
             
             return ListView.separated(
               itemCount: payments.length,
@@ -54,15 +55,15 @@ class ViewPaymentsDialog extends ConsumerWidget {
                       if (p.checkImagePath != null && p.checkImagePath!.isNotEmpty)
                         IconButton(
                           icon: const Icon(Icons.image, color: Colors.teal),
-                          tooltip: 'View Check Image',
+                          tooltip: AppLocalizations.of(context)!.viewCheckImage,
                           onPressed: () {
                             showDialog(
                               context: context,
                               builder: (dialogCtx) => AlertDialog(
-                                title: const Text('Check Image'),
+                                title: Text(AppLocalizations.of(context)!.checkImage),
                                 content: Image.file(File(p.checkImagePath!)),
                                 actions: [
-                                  TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Close'))
+                                  TextButton(onPressed: () => Navigator.pop(dialogCtx), child: Text(AppLocalizations.of(context)!.close))
                                 ],
                               ),
                             );
@@ -71,16 +72,16 @@ class ViewPaymentsDialog extends ConsumerWidget {
                       if (p.isActive)
                         IconButton(
                           icon: const Icon(Icons.delete, color: Colors.red),
-                          tooltip: 'Delete Payment',
+                          tooltip: AppLocalizations.of(context)!.deletePayment,
                           onPressed: () async {
                             final confirm = await showDialog<bool>(
                               context: context,
                               builder: (ctx) => AlertDialog(
-                                title: const Text('Delete Payment?'),
-                                content: const Text('This will algebraically reverse the payment.'),
+                                title: Text(AppLocalizations.of(context)!.deletePaymentConfirm),
+                                content: Text(AppLocalizations.of(context)!.deletePaymentDesc),
                                 actions: [
-                                  TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-                                  TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
+                                  TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.of(context)!.cancelStr)),
+                                  TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(AppLocalizations.of(context)!.deleteStr, style: const TextStyle(color: Colors.red))),
                                 ],
                               ),
                             );
@@ -90,7 +91,7 @@ class ViewPaymentsDialog extends ConsumerWidget {
                           },
                         ),
                       if (!p.isActive)
-                        const Text('DELETED', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                        Text(AppLocalizations.of(context)!.deletedStr, style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
                     ],
                   ),
                 );
@@ -100,7 +101,7 @@ class ViewPaymentsDialog extends ConsumerWidget {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(AppLocalizations.of(context)!.close)),
       ],
     );
   }
