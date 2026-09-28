@@ -463,12 +463,12 @@ class PdfGeneratorService {
   }
 
     pw.Widget _buildFactureTotals(InvoiceEntity invoice, AppLocalizations l10n, String companyAddress, String companyIce, String companyRc, String companyRib, String companyEmail, String companyPhone) {
-    final amountWords = decimalToWordsTranslated(invoice.total.toDouble(), l10n.localeName);
-    
     // Facture Math logic
-    final totalTtc = invoice.total.toDouble();
-    final mtHt = totalTtc / 1.20;
+    final mtHt = invoice.total.toDouble();
     final mtTva = mtHt * 0.20;
+    final totalTtc = mtHt + mtTva;
+    
+    final amountWords = decimalToWordsTranslated(totalTtc, l10n.localeName);
     
     return pw.Column(
       children: [
