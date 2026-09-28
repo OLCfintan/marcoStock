@@ -39,8 +39,9 @@ class PdfGeneratorService {
     );
   }
 
-  void _addPages(pw.Document doc, PrintOptions options, pw.TextDirection textDir, pw.ImageProvider? bgImage, List<pw.Widget> Function() buildContent, {pw.Widget Function(pw.Context)? buildFooter}) {
+  void _addPages(pw.Document doc, PrintOptions options, pw.TextDirection textDir, pw.ImageProvider? bgImage, bool isFacture, List<pw.Widget> Function() buildContent, {pw.Widget Function(pw.Context)? buildFooter}) {
     pw.Widget backgroundBuilder(pw.Context context) {
+      if (!isFacture) return pw.Container(color: PdfColors.white);
       if (bgImage == null) {
         return pw.FullPage(
           ignoreMargins: true,
@@ -71,7 +72,7 @@ class PdfGeneratorService {
           pageTheme: pw.PageTheme(
             pageFormat: PdfPageFormat.a4.landscape,
             textDirection: textDir,
-            margin: const pw.EdgeInsets.only(left: 24, right: 24, top: 12, bottom: 24),
+            margin: isFacture ? const pw.EdgeInsets.only(left: 24, right: 24, top: 12, bottom: 24) : const pw.EdgeInsets.all(24),
             buildBackground: backgroundBuilder,
           ),
           build: (context) {
@@ -99,7 +100,7 @@ class PdfGeneratorService {
           pageTheme: pw.PageTheme(
             pageFormat: options.layout == PrintLayout.a5 ? PdfPageFormat.a5 : PdfPageFormat.a4,
             textDirection: textDir,
-            margin: const pw.EdgeInsets.only(left: 32, right: 32, top: 16, bottom: 32),
+            margin: isFacture ? const pw.EdgeInsets.only(left: 32, right: 32, top: 16, bottom: 32) : const pw.EdgeInsets.all(32),
             buildBackground: backgroundBuilder,
           ),
           footer: buildFooter,
@@ -199,14 +200,33 @@ class PdfGeneratorService {
       print('Could not load watermark: $e');
     }
 
-    _addPages(doc, options, textDir, watermarkBg, buildFooter: (context) => _buildDocumentFooter(companyAddress, companyIce, companyRc, companyRib, companyEmail, companyPhone), () => [
-            _buildHeader(invoice, client, companyName, companyAddress, companyPhone, companyTaxId, companyIce, companyRc, companyRib, companyEmail, logoImage ?? watermarkBg, l10n),
+        final isFactureDoc = invoice.documentType == 'FACTURE' || invoice.documentType == 'FACTURE_DUMMY';
+    _addPages(doc, options, textDir, watermarkBg, isFactureDoc, buildFooter: isFactureDoc ? (context) => _buildDocumentFooter(companyAddress, companyIce, companyRc, companyRib, companyEmail, companyPhone) : null, () {
+      if (isFactureDoc) {
+        return [
+          _buildFactureHeader(invoice, client, companyName, companyAddress, companyPhone, companyTaxId, companyIce, companyRc, companyRib, companyEmail, logoImage ?? watermarkBg, l10n),
+          pw.SizedBox(height: 15),
+          _buildFactureInvoiceTable(lines, productMap, l10n),
+          pw.SizedBox(height: 15),
+          _buildFactureTotals(invoice, l10n, companyAddress, companyIce, companyRc, companyRib, companyEmail, companyPhone),
+        ];
+      } else {
+        return [
+          _buildOldHeader(invoice, client, companyName, companyAddress, companyPhone, companyTaxId, logoImage, l10n),
+          pw.SizedBox(height: 32),
+          _buildOldInvoiceTable(lines, productMap, l10n),
+          pw.SizedBox(height: 16),
+          _buildOldTotals(invoice, l10n),
+          pw.SizedBox(height: 30),
+          pw.Divider(),
+          pw.Container(
+            alignment: pw.Alignment.center,
+            child: _bidiText(l10n.pdfThankYou, style: const pw.TextStyle(color: PdfColors.grey)),
+          ),
+        ];
+      }
+    });
 
-      pw.SizedBox(height: 32),
-      _buildInvoiceTable(lines, productMap, l10n),
-      pw.SizedBox(height: 16),
-      _buildTotals(invoice, l10n, companyAddress, companyIce, companyRc, companyRib, companyEmail, companyPhone),
-          ]);
 
     return doc.save();
   }
@@ -262,7 +282,7 @@ class PdfGeneratorService {
       print('Could not load watermark: $e');
     }
 
-    _addPages(doc, options, textDir, watermarkBg, buildFooter: (context) => _buildDocumentFooter(companyAddress, companyIce, companyRc, companyRib, companyEmail, companyPhone), () => [
+    _addPages(doc, options, textDir, watermarkBg, false, buildFooter: null, () => [
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
@@ -329,7 +349,7 @@ class PdfGeneratorService {
     return doc.save();
   }
 
-    pw.Widget _buildHeader(InvoiceEntity invoice, ClientEntity? client, String companyName, String companyAddress, String companyPhone, String companyTaxId, String companyIce, String companyRc, String companyRib, String companyEmail, pw.ImageProvider? logoImage, AppLocalizations l10n) {
+    pw.Widget _buildFactureHeader(InvoiceEntity invoice, ClientEntity? client, String companyName, String companyAddress, String companyPhone, String companyTaxId, String companyIce, String companyRc, String companyRib, String companyEmail, pw.ImageProvider? logoImage, AppLocalizations l10n) {
     String docTypeTitle = l10n.pdfFacture;
     if (invoice.documentType == 'BON') docTypeTitle = l10n.pdfBonDeLivraison;
     else if (invoice.documentType == 'COMMANDE') docTypeTitle = l10n.pdfBonDeCommande;
@@ -412,7 +432,7 @@ class PdfGeneratorService {
     );
   }
 
-  pw.Widget _buildInvoiceTable(List<InvoiceLineEntity> lines, Map<String, ProductEntity> productMap, AppLocalizations l10n) {
+  pw.Widget _buildFactureInvoiceTable(List<InvoiceLineEntity> lines, Map<String, ProductEntity> productMap, AppLocalizations l10n) {
     return pw.TableHelper.fromTextArray(
       headers: ['Produits', 'Quantités', 'P.U HT', 'MT HT'],
       data: lines.map((line) {
@@ -442,8 +462,13 @@ class PdfGeneratorService {
     );
   }
 
-  pw.Widget _buildTotals(InvoiceEntity invoice, AppLocalizations l10n, String companyAddress, String companyIce, String companyRc, String companyRib, String companyEmail, String companyPhone) {
+    pw.Widget _buildFactureTotals(InvoiceEntity invoice, AppLocalizations l10n, String companyAddress, String companyIce, String companyRc, String companyRib, String companyEmail, String companyPhone) {
     final amountWords = decimalToWordsTranslated(invoice.total.toDouble(), l10n.localeName);
+    
+    // Facture Math logic
+    final totalTtc = invoice.total.toDouble();
+    final mtHt = totalTtc / 1.20;
+    final mtTva = mtHt * 0.20;
     
     return pw.Column(
       children: [
@@ -464,9 +489,9 @@ class PdfGeneratorService {
                   ),
                   pw.TableRow(
                     children: [
-                      pw.Padding(padding: const pw.EdgeInsets.all(4), child: _bidiText('${invoice.subtotal.toStringAsFixed(2)} DH', style: pw.TextStyle(fontSize: 10))),
-                      pw.Padding(padding: const pw.EdgeInsets.all(4), child: _bidiText('${invoice.taxes.toStringAsFixed(2)} DH', style: pw.TextStyle(fontSize: 10))),
-                      pw.Padding(padding: const pw.EdgeInsets.all(4), child: _bidiText('${invoice.total.toStringAsFixed(2)} DH', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
+                      pw.Padding(padding: const pw.EdgeInsets.all(4), child: _bidiText('${mtHt.toStringAsFixed(2)} DH', style: pw.TextStyle(fontSize: 10))),
+                      pw.Padding(padding: const pw.EdgeInsets.all(4), child: _bidiText('${mtTva.toStringAsFixed(2)} DH', style: pw.TextStyle(fontSize: 10))),
+                      pw.Padding(padding: const pw.EdgeInsets.all(4), child: _bidiText('${totalTtc.toStringAsFixed(2)} DH', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
                     ]
                   ),
                 ]
@@ -474,7 +499,7 @@ class PdfGeneratorService {
             ),
           ]
         ),
-        pw.SizedBox(height: 15),
+pw.SizedBox(height: 15),
         pw.Container(
           alignment: pw.Alignment.centerLeft,
           child: _bidiText('${l10n.invoiceStoppedAt} ${amountWords.substring(0,1).toUpperCase() + amountWords.substring(1)}.', style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
@@ -563,4 +588,134 @@ pw.Widget _buildTotalRow(String label, String amount, {bool isBold = false, doub
     }
   }
 
+
+
+pw.Widget _buildOldHeader(InvoiceEntity invoice, ClientEntity? client, String companyName, String companyAddress, String companyPhone, String companyTaxId, pw.ImageProvider? logoImage, AppLocalizations l10n) {
+    String docTypeTitle = l10n.pdfFacture;
+    if (invoice.documentType == 'BON') docTypeTitle = l10n.pdfBonDeLivraison;
+    else if (invoice.documentType == 'COMMANDE') docTypeTitle = l10n.pdfBonDeCommande;
+    else if (invoice.documentType == 'TICKET') docTypeTitle = l10n.ticket;
+
+    return pw.Row(
+      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+      children: [
+        pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            if (logoImage != null) 
+              pw.Container(
+                height: 50,
+                margin: const pw.EdgeInsets.only(bottom: 8),
+                child: pw.Image(logoImage),
+              ),
+            _bidiText(companyName, style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
+            if (companyAddress.isNotEmpty) _bidiText(companyAddress),
+            if (companyPhone.isNotEmpty) _bidiText(companyPhone),
+            if (companyTaxId.isNotEmpty) _bidiText('Tax ID: $companyTaxId'),
+            pw.SizedBox(height: 16),
+            _bidiText(docTypeTitle.toUpperCase(), style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold, color: PdfColors.blueGrey800)),
+            pw.SizedBox(height: 8),
+            _bidiText('$docTypeTitle #: ${invoice.invoiceNumber}'),
+            _bidiText('${l10n.pdfDate}: ${invoice.date.toLocal().toString().split(' ')[0]}'),
+            _bidiText('${l10n.pdfStatus}: ${invoice.status}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+          ],
+        ),
+        pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.end,
+          children: [
+            _bidiText('Client:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.grey700)),
+            pw.SizedBox(height: 4),
+            _bidiText(invoice.clientNameOverride ?? client?.name ?? 'N/A', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
+                        if (client?.address != null && client!.address!.isNotEmpty) _bidiText(client.address!),
+            if (client?.phone != null && client!.phone!.isNotEmpty) _bidiText(client.phone!),
+            if (client?.contactDetails != null && client!.contactDetails!.isNotEmpty) _bidiText(client.contactDetails!),
+            if (client != null && invoice.documentType != 'COMMANDE') _bidiText('${l10n.pdfTotalDebt}: ${client.balance.toStringAsFixed(2)} Dhs', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.blueGrey800)),
+          ],
+        ),
+      ],
+    );
+  }
+
+pw.Widget _buildOldInvoiceTable(List<InvoiceLineEntity> lines, Map<String, ProductEntity> productMap, AppLocalizations l10n) {
+    return pw.TableHelper.fromTextArray(
+      headers: [l10n.pdfItem, l10n.pdfQty, l10n.pdfPrice, l10n.pdfTotal],
+      data: lines.map((line) {
+        final product = productMap[line.productId];
+        String productName = _localizedProductName(product, l10n.localeName);
+        
+        return [
+          productName,
+          line.quantity.toStringAsFixed(2),
+          line.unitPrice.toStringAsFixed(2),
+          line.lineTotal.toStringAsFixed(2),
+        ];
+      }).toList(),
+      headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.white),
+      headerDecoration: const pw.BoxDecoration(
+        color: PdfColors.blueGrey800,
+      ),
+      rowDecoration: const pw.BoxDecoration(
+        border: pw.Border(
+          bottom: pw.BorderSide(
+            color: PdfColors.grey300,
+            width: .5,
+          ),
+        ),
+      ),
+      cellAlignment: pw.Alignment.centerRight,
+      cellAlignments: {
+        0: pw.Alignment.centerLeft,
+      },
+    );
+  }
+
+pw.Widget _buildOldTotals(InvoiceEntity invoice, AppLocalizations l10n) {
+    final balance = invoice.total - invoice.paidAmount;
+    
+    return pw.Container(
+      alignment: pw.Alignment.centerRight,
+      child: pw.Container(
+        width: 200,
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+          children: [
+            _buildOldTotalRow('${l10n.pdfSubtotal}:', invoice.subtotal.toStringAsFixed(2)),
+            pw.Divider(),
+            _buildOldTotalRow('${l10n.pdfTotal}:', invoice.total.toStringAsFixed(2), isBold: true, fontSize: 14),
+            pw.SizedBox(height: 8),
+            _buildOldTotalRow('${l10n.pdfPaid}:', invoice.paidAmount.toStringAsFixed(2)),
+            pw.Divider(color: PdfColors.grey400),
+            _buildOldTotalRow('${l10n.pdfBalance}:', balance.toStringAsFixed(2), isBold: true, color: PdfColors.red700),
+          ],
+        ),
+      ),
+    );
+  }
+
+pw.Widget _buildOldTotalRow(String label, String amount, {bool isBold = false, double? fontSize, PdfColor? color}) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.symmetric(vertical: 2),
+      child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          _bidiText(
+            label, 
+            style: pw.TextStyle(
+              fontWeight: isBold ? pw.FontWeight.bold : pw.FontWeight.normal,
+              fontSize: fontSize,
+              color: color,
+            )
+          ),
+          _bidiText(
+            amount, 
+            style: pw.TextStyle(
+              fontWeight: isBold ? pw.FontWeight.bold : pw.FontWeight.normal,
+              fontSize: fontSize,
+              color: color,
+            )
+          ),
+        ],
+      ),
+    );
+  }
 }
