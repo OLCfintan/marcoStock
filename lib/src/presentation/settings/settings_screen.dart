@@ -131,6 +131,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               onTap: () => context.push('/garbage'),
             ),
           ListTile(
+            leading: const Icon(Icons.zoom_in),
+            title: const Text('Magnifier Zoom Factor'),
+            subtitle: Slider(
+              value: ref.watch(magnifierZoomProvider),
+              min: 1.0,
+              max: 3.0,
+              divisions: 20,
+              label: '${ref.watch(magnifierZoomProvider).toStringAsFixed(1)}x',
+              onChanged: (val) {
+                 ref.read(magnifierZoomProvider.notifier).setZoom(val);
+              },
+            ),
+          ),
+          ListTile(
             leading: const Icon(Icons.language),
             title: Text(AppLocalizations.of(context)!.language),
             trailing: DropdownButton<Locale>(

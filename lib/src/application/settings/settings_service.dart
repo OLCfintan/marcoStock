@@ -21,6 +21,10 @@ final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>((r
   return ThemeModeNotifier(ref.watch(settingsServiceProvider));
 });
 
+final magnifierZoomProvider = StateNotifierProvider<MagnifierZoomNotifier, double>((ref) {
+  return MagnifierZoomNotifier(ref.watch(settingsServiceProvider));
+});
+
 final localeProvider = StateNotifierProvider<LocaleNotifier, Locale>((ref) {
   return LocaleNotifier(ref.watch(settingsServiceProvider));
 });
@@ -48,6 +52,14 @@ class SettingsService {
 
   Future<void> setLocale(Locale locale) async {
     await _prefs.setString('locale', locale.languageCode);
+  }
+
+  double getMagnifierZoom() {
+    return _prefs.getDouble('magnifierZoom') ?? 1.25;
+  }
+
+  Future<void> setMagnifierZoom(double zoom) async {
+    await _prefs.setDouble('magnifierZoom', zoom);
   }
 
   Future<String?> getSetting(String key) async {
@@ -87,5 +99,15 @@ class LocaleNotifier extends StateNotifier<Locale> {
   void setLocale(Locale locale) {
     state = locale;
     _service.setLocale(locale);
+  }
+}
+
+class MagnifierZoomNotifier extends StateNotifier<double> {
+  final SettingsService _service;
+  MagnifierZoomNotifier(this._service) : super(_service.getMagnifierZoom());
+
+  void setZoom(double zoom) {
+    state = zoom;
+    _service.setMagnifierZoom(zoom);
   }
 }

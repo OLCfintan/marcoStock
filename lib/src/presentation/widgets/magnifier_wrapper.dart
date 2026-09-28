@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../application/settings/settings_service.dart';
 import 'package:flutter/services.dart';
 
-class MagnifierWrapper extends StatefulWidget {
+class MagnifierWrapper extends ConsumerStatefulWidget {
   final Widget child;
   const MagnifierWrapper({super.key, required this.child});
 
   @override
-  State<MagnifierWrapper> createState() => _MagnifierWrapperState();
+  ConsumerState<MagnifierWrapper> createState() => _MagnifierWrapperState();
 }
 
-class _MagnifierWrapperState extends State<MagnifierWrapper> {
+class _MagnifierWrapperState extends ConsumerState<MagnifierWrapper> {
   bool _isZoomed = false;
   Offset _mousePos = Offset.zero;
 
@@ -39,6 +41,7 @@ class _MagnifierWrapperState extends State<MagnifierWrapper> {
 
   @override
   Widget build(BuildContext context) {
+    final zoomFactor = ref.watch(magnifierZoomProvider);
     return MouseRegion(
       onHover: (event) {
         if (_isZoomed) {
@@ -62,7 +65,7 @@ class _MagnifierWrapperState extends State<MagnifierWrapper> {
                     ),
                   ),
                   size: const Size(250, 80),
-                  magnificationScale: 1.25,
+                  magnificationScale: zoomFactor,
                   focalPointOffset: Offset.zero,
                 ),
               ),
