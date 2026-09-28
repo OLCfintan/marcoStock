@@ -306,10 +306,37 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   }
 
   Future<void> _showAutoInvoiceDialog() async {
-    final targetCtrl = TextEditingController();
+    final targetHtCtrl = TextEditingController();
+    final targetTtcCtrl = TextEditingController();
     final familiesCtrl = TextEditingController(text: '3');
     final allProducts = ref.read(productsStreamProvider).valueOrNull ?? [];
     if (allProducts.isEmpty) return;
+    
+    targetHtCtrl.addListener(() {
+      if (targetHtCtrl.text.isEmpty) return;
+      if (FocusManager.instance.primaryFocus?.context?.widget is EditableText) {
+          final ht = double.tryParse(targetHtCtrl.text);
+          if (ht != null) {
+              final ttc = ht * 1.20;
+              if (targetTtcCtrl.text != ttc.toStringAsFixed(2)) {
+                  targetTtcCtrl.text = ttc.toStringAsFixed(2);
+              }
+          }
+      }
+    });
+    
+    targetTtcCtrl.addListener(() {
+      if (targetTtcCtrl.text.isEmpty) return;
+      if (FocusManager.instance.primaryFocus?.context?.widget is EditableText) {
+          final ttc = double.tryParse(targetTtcCtrl.text);
+          if (ttc != null) {
+              final ht = ttc / 1.20;
+              if (targetHtCtrl.text != ht.toStringAsFixed(2)) {
+                  targetHtCtrl.text = ht.toStringAsFixed(2);
+              }
+          }
+      }
+    });
 
     await showDialog(
       context: context,
@@ -319,10 +346,25 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
-              controller: targetCtrl,
-              decoration: const InputDecoration(labelText: 'Target Amount'),
+              controller: targetHtCtrl,
+              decoration: const InputDecoration(labelText: 'Target Amount (HT)'),
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              onChanged: (val) {
+                 final ht = double.tryParse(val) ?? 0.0;
+                 targetTtcCtrl.text = (ht * 1.20).toStringAsFixed(2);
+              },
             ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: targetTtcCtrl,
+              decoration: const InputDecoration(labelText: 'Target Amount (TTC)'),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              onChanged: (val) {
+                 final ttc = double.tryParse(val) ?? 0.0;
+                 targetHtCtrl.text = (ttc / 1.20).toStringAsFixed(2);
+              },
+            ),
+            const SizedBox(height: 8),
             TextField(
               controller: familiesCtrl,
               decoration: const InputDecoration(labelText: 'Number of Families (Categories)'),
@@ -334,7 +376,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocalizations.of(context)!.cancel)),
           TextButton(
             onPressed: () {
-              final target = double.tryParse(targetCtrl.text) ?? 0.0;
+              final target = double.tryParse(targetHtCtrl.text) ?? 0.0;
               final numFam = int.tryParse(familiesCtrl.text) ?? 1;
               if (target > 0 && numFam > 0) {
                 Navigator.pop(ctx);
@@ -369,6 +411,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
     Map<Product, int> selectedItems = {};
     double currentTotal = 0.0;
+    int totalLooseUnitsGlobally = 0;
     
     final rand = Random();
     int attempts = 0;
@@ -377,32 +420,32 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       final p = pool[rand.nextInt(pool.length)];
       final price = p.sellingPrice.toDouble();
       
-      // Box Logic: if remaining >= 500, buy by unitSize (box). Else by unit (1).
+      int uSize = p.unitSize.toDouble().toInt();
+      if (uSize < 1) uSize = 1;
+      
       double remaining = targetAmount - currentTotal;
-      int addQty = 1;
-      if (remaining >= 500.0) {
-          addQty = p.unitSize.toDouble().toInt();
-          if (addQty < 1) addQty = 1;
-          // If a box is extremely expensive (e.g. box of 1000 items), revert to 1 if it would overshoot drastically.
-          if (price * addQty > remaining * 1.5) addQty = 1;
+      
+      int addQty = uSize; 
+      
+      if (price * addQty > remaining * 1.05 || (remaining < 500.0 && rand.nextDouble() < 0.8)) {
+         addQty = 1; 
+      }
+      
+      if (addQty == 1 && uSize > 1) {
+         if (totalLooseUnitsGlobally >= 5) {
+             attempts++;
+             continue; // Exceeded global limit for loose units!
+         }
       }
       
       double cost = price * addQty;
       
       if (currentTotal + cost <= targetAmount * 1.05) {
-        int currentQty = selectedItems[p] ?? 0;
-        int newQty = currentQty + addQty;
+        selectedItems[p] = (selectedItems[p] ?? 0) + addQty;
+        currentTotal += cost;
         
-        bool allowed = true;
-        if (addQty == 1) {
-            int uSize = (p.unitSize ?? Decimal.zero).toDouble().toInt();
-            int looseUnits = (uSize > 0) ? (newQty % uSize) : newQty;
-            if (looseUnits > 5) allowed = false;
-        }
-        
-        if (allowed) {
-            selectedItems[p] = newQty;
-            currentTotal += cost;
+        if (addQty == 1 && uSize > 1) {
+            totalLooseUnitsGlobally++;
         }
       }
       
