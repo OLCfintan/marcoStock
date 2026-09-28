@@ -39,7 +39,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
   final TextEditingController _barcodeController = TextEditingController();
   final FocusNode _barcodeFocusNode = FocusNode();
-  Set<String> _multiSelectedProductIds = {};
+  final ValueNotifier<Set<String>> _multiSelectedProductIds = ValueNotifier({});
   List<String> _localOrder = [];
 
   @override
@@ -116,9 +116,9 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   }
 
   Future<void> _addMultiSelectedToCart(List<Product> allProducts) async {
-    if (_multiSelectedProductIds.isEmpty) return;
+    if (_multiSelectedProductIds.value.isEmpty) return;
     
-    final firstProductId = _multiSelectedProductIds.first;
+    final firstProductId = _multiSelectedProductIds.value.first;
     final firstProduct = allProducts.firstWhere((p) => p.id == firstProductId);
 
     final Decimal? qty = await showDialog<Decimal>(
@@ -136,7 +136,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             ? (qty / Decimal.fromInt(firstProduct.unitsPerBox)).toDecimal(scaleOnInfinitePrecision: 4)
             : qty;
 
-        for (final pid in _multiSelectedProductIds) {
+        for (final pid in _multiSelectedProductIds.value) {
           final p = allProducts.firstWhere((prod) => prod.id == pid);
           
           // Apply the box ratio to this specific product's unique packaging size
@@ -162,7 +162,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             ));
           }
         }
-        _multiSelectedProductIds.clear();
+        _multiSelectedProductIds.value = {};
       });
     }
   }
@@ -525,34 +525,39 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           ),
         ],
       ),
-      floatingActionButton: _multiSelectedProductIds.isNotEmpty
-          ? InkWell(
-              onTap: () {
-                final allProducts = productsAsync.valueOrNull ?? [];
-                _addMultiSelectedToCart(allProducts);
-              },
-              borderRadius: BorderRadius.circular(30),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                decoration: BoxDecoration(
+      floatingActionButton: ValueListenableBuilder<Set<String>>(
+        valueListenable: _multiSelectedProductIds,
+        builder: (context, selectedIds, child) {
+          return selectedIds.isNotEmpty
+              ? InkWell(
+                  onTap: () {
+                    final allProducts = productsAsync.valueOrNull ?? [];
+                    _addMultiSelectedToCart(allProducts);
+                  },
                   borderRadius: BorderRadius.circular(30),
-                  gradient: const LinearGradient(colors: [Colors.orange, Colors.green]),
-                  boxShadow: [
-                    BoxShadow(color: Colors.orange.withOpacity(0.4), blurRadius: 8, spreadRadius: 2),
-                    BoxShadow(color: Colors.green.withOpacity(0.4), blurRadius: 8, spreadRadius: 2),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.add_shopping_cart, color: Colors.white),
-                    const SizedBox(width: 8),
-                    Text('${AppLocalizations.of(context)!.addBtn} ${_multiSelectedProductIds.length}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                  ],
-                ),
-              ),
-            )
-          : null,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(30),
+                      gradient: const LinearGradient(colors: [Colors.orange, Colors.green]),
+                      boxShadow: [
+                        BoxShadow(color: Colors.orange.withValues(alpha: 0.4), blurRadius: 8, spreadRadius: 2),
+                        BoxShadow(color: Colors.green.withValues(alpha: 0.4), blurRadius: 8, spreadRadius: 2),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.add_shopping_cart, color: Colors.white),
+                        const SizedBox(width: 8),
+                        Text('${AppLocalizations.of(context)!.addBtn} ${selectedIds.length}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ),
+                )
+              : const SizedBox.shrink();
+        },
+      ),
       body: LayoutBuilder(
         builder: (context, constraints) {
           final productsWidget = productsAsync.when(
@@ -587,74 +592,79 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 itemCount: products.length,
                 itemBuilder: (context, index) {
                   final p = products[index];
-                  final isSelected = _multiSelectedProductIds.contains(p.id);
-                  return Card(
+                  return ValueListenableBuilder<Set<String>>(
                     key: ValueKey(p.id),
-                    elevation: isSelected ? 8 : 2,
-                    clipBehavior: Clip.antiAlias,
-                    shape: isSelected 
-                        ? RoundedRectangleBorder(
-                            side: const BorderSide(color: Colors.orange, width: 3),
-                            borderRadius: BorderRadius.circular(12))
-                        : null,
-                    child: InkWell(
-                      onTap: () {
-                        if (_multiSelectedProductIds.isNotEmpty) {
-                          setState(() {
-                            if (isSelected) _multiSelectedProductIds.remove(p.id);
-                            else _multiSelectedProductIds.add(p.id);
-                          });
-                        } else {
-                          _addToCart(p);
-                        }
-                      },
-                      onDoubleTap: () => ItemNavigator.openProduct(context, p),
-                      child: Stack(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [theme.colorScheme.primaryContainer, theme.colorScheme.surface],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
+                    valueListenable: _multiSelectedProductIds,
+                    builder: (context, selectedIds, child) {
+                      final isSelected = selectedIds.contains(p.id);
+                      return Card(
+                        elevation: isSelected ? 8 : 2,
+                        clipBehavior: Clip.antiAlias,
+                        shape: isSelected 
+                            ? RoundedRectangleBorder(
+                                side: const BorderSide(color: Colors.orange, width: 3),
+                                borderRadius: BorderRadius.circular(12))
+                            : null,
+                        child: InkWell(
+                          onTap: () {
+                            if (_multiSelectedProductIds.value.isNotEmpty) {
+                                final newSet = Set<String>.from(_multiSelectedProductIds.value);
+                                if (isSelected) newSet.remove(p.id);
+                                else newSet.add(p.id);
+                                _multiSelectedProductIds.value = newSet;
+                            } else {
+                              _addToCart(p);
+                            }
+                          },
+                          onDoubleTap: () => ItemNavigator.openProduct(context, p),
+                          child: Stack(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [theme.colorScheme.primaryContainer, theme.colorScheme.surface],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Expanded(child: ProductImage(product: p, size: double.infinity)),
+                                    const SizedBox(height: 8),
+                                    Text(p.localizedLabel(loc), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                    const SizedBox(height: 4),
+                                    Text('${p.sellingPrice.toStringAsFixed(2)} Dhs', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 16)),
+                                  ],
+                                ),
                               ),
-                            ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Expanded(child: ProductImage(product: p, size: double.infinity)),
-                                const SizedBox(height: 8),
-                                Text(p.localizedLabel(loc), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold)),
-                                const SizedBox(height: 4),
-                                Text('${p.sellingPrice.toStringAsFixed(2)} Dhs', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 16)),
-                              ],
-                            ),
+                              Positioned(
+                                top: 0,
+                                right: 0,
+                                child: Checkbox(
+                                  activeColor: Colors.orange,
+                                  checkColor: Colors.green,
+                                  fillColor: MaterialStateProperty.resolveWith((states) {
+                                    if (states.contains(MaterialState.selected)) {
+                                      return Colors.orange;
+                                    }
+                                    return null;
+                                  }),
+                                  value: isSelected,
+                                  onChanged: (bool? val) {
+                                    final newSet = Set<String>.from(_multiSelectedProductIds.value);
+                                    if (val == true) newSet.add(p.id);
+                                    else newSet.remove(p.id);
+                                    _multiSelectedProductIds.value = newSet;
+                                  },
+                                ),
+                              ),
+                            ],
                           ),
-                          Positioned(
-                            top: 0,
-                            right: 0,
-                            child: Checkbox(
-                              activeColor: Colors.orange,
-                              checkColor: Colors.green,
-                              fillColor: MaterialStateProperty.resolveWith((states) {
-                                if (states.contains(MaterialState.selected)) {
-                                  return Colors.orange;
-                                }
-                                return null;
-                              }),
-                              value: isSelected,
-                              onChanged: (bool? val) {
-                                setState(() {
-                                  if (val == true) _multiSelectedProductIds.add(p.id);
-                                  else _multiSelectedProductIds.remove(p.id);
-                                });
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                        ),
+                      );
+                    },
                   );
                 },
               );
