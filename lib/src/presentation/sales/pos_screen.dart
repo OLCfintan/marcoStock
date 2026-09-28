@@ -381,7 +381,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       double remaining = targetAmount - currentTotal;
       int addQty = 1;
       if (remaining >= 500.0) {
-          addQty = p.unitSize?.toInt() ?? 1;
+          addQty = p.unitSize.toDouble().toInt();
           if (addQty < 1) addQty = 1;
           // If a box is extremely expensive (e.g. box of 1000 items), revert to 1 if it would overshoot drastically.
           if (price * addQty > remaining * 1.5) addQty = 1;
