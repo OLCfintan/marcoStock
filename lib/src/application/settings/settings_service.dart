@@ -63,7 +63,7 @@ class SettingsService {
   }
 
   Future<Map<String, String>> getAllCompanySettings() async {
-    final keys = ['companyName', 'companyAddress', 'companyTaxId', 'companyTaxRate', 'companyLogoPath'];
+    final keys = ['companyName', 'companyAddress', 'companyPhone', 'companyTaxId', 'companyTaxRate', 'companyLogoPath', 'invoiceCounterPrefix'];
     final query = _db.select(_db.settings)..where((tbl) => tbl.key.isIn(keys));
     final results = await query.get();
     return { for (var e in results) e.key : e.value ?? '' };

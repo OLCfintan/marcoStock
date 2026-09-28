@@ -243,7 +243,6 @@ class PdfGeneratorService {
                     if (logoImage != null) pw.Container(height: 50, margin: const pw.EdgeInsets.only(bottom: 8), child: pw.Image(logoImage)),
                     _bidiText(companyName, style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
                     if (companyAddress.isNotEmpty) _bidiText(companyAddress),
-            if (companyPhone.isNotEmpty) _bidiText(companyPhone),
                     if (companyPhone.isNotEmpty) _bidiText(companyPhone),
                     if (companyTaxId.isNotEmpty) _bidiText('Tax ID: $companyTaxId'),
                     pw.SizedBox(height: 16),
@@ -302,6 +301,11 @@ class PdfGeneratorService {
   }
 
   pw.Widget _buildHeader(InvoiceEntity invoice, ClientEntity? client, String companyName, String companyAddress, String companyPhone, String companyTaxId, pw.ImageProvider? logoImage, AppLocalizations l10n) {
+    String docTypeTitle = l10n.pdfFacture;
+    if (invoice.documentType == 'BON') docTypeTitle = l10n.pdfBonDeLivraison;
+    else if (invoice.documentType == 'COMMANDE') docTypeTitle = l10n.pdfBonDeCommande;
+    else if (invoice.documentType == 'TICKET') docTypeTitle = l10n.ticket;
+
     return pw.Row(
       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
       children: [
@@ -319,9 +323,9 @@ class PdfGeneratorService {
             if (companyPhone.isNotEmpty) _bidiText(companyPhone),
             if (companyTaxId.isNotEmpty) _bidiText('Tax ID: $companyTaxId'),
             pw.SizedBox(height: 16),
-            _bidiText((invoice.documentType == 'BON' ? l10n.bon : (invoice.documentType == 'TICKET' ? l10n.ticket : l10n.invoice)).toUpperCase(), style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold, color: PdfColors.blueGrey800)),
+            _bidiText(docTypeTitle.toUpperCase(), style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold, color: PdfColors.blueGrey800)),
             pw.SizedBox(height: 8),
-            _bidiText('${(invoice.documentType == 'BON' ? l10n.bon : (invoice.documentType == 'TICKET' ? l10n.ticket : l10n.invoice))} #: ${invoice.invoiceNumber}'),
+            _bidiText('$docTypeTitle #: ${invoice.invoiceNumber}'),
             _bidiText('${l10n.pdfDate}: ${invoice.date.toLocal().toString().split(' ')[0]}'),
             _bidiText('${l10n.pdfStatus}: ${invoice.status}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
           ],

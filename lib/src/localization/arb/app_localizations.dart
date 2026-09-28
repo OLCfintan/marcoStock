@@ -1265,6 +1265,252 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Recent Transactions'**
   String get recentTransactionsLabel;
+
+  /// No description provided for @overview.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get overview;
+
+  /// No description provided for @salesOverTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales Over Time'**
+  String get salesOverTime;
+
+  /// No description provided for @daily.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily'**
+  String get daily;
+
+  /// No description provided for @weekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly'**
+  String get weekly;
+
+  /// No description provided for @monthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly'**
+  String get monthly;
+
+  /// No description provided for @topSellingProducts.
+  ///
+  /// In en, this message translates to:
+  /// **'Top-Selling Products'**
+  String get topSellingProducts;
+
+  /// No description provided for @employeePerformance.
+  ///
+  /// In en, this message translates to:
+  /// **'Employee Performance'**
+  String get employeePerformance;
+
+  /// No description provided for @topClientsDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'Top Clients (Debt)'**
+  String get topClientsDebt;
+
+  /// No description provided for @topSuppliersDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'Top Suppliers (Debt)'**
+  String get topSuppliersDebt;
+
+  /// No description provided for @topClientsRevenue.
+  ///
+  /// In en, this message translates to:
+  /// **'Top Clients (Cash/Revenue)'**
+  String get topClientsRevenue;
+
+  /// No description provided for @topSuppliersPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Top Suppliers (Cash Paid)'**
+  String get topSuppliersPaid;
+
+  /// No description provided for @lowStockAlerts.
+  ///
+  /// In en, this message translates to:
+  /// **'Low Stock Alerts'**
+  String get lowStockAlerts;
+
+  /// No description provided for @todaysSales.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s Sales'**
+  String get todaysSales;
+
+  /// No description provided for @todaysSalesDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s Sales Details'**
+  String get todaysSalesDetails;
+
+  /// No description provided for @totalCredit.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Credit'**
+  String get totalCredit;
+
+  /// No description provided for @totalCreditDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Credit Details'**
+  String get totalCreditDetails;
+
+  /// No description provided for @todaysCredit.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s Credit'**
+  String get todaysCredit;
+
+  /// No description provided for @todaysCreditDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s Credit Details'**
+  String get todaysCreditDetails;
+
+  /// No description provided for @stockLevelsGood.
+  ///
+  /// In en, this message translates to:
+  /// **'Stock levels are good!'**
+  String get stockLevelsGood;
+
+  /// No description provided for @currentStockMin.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Stock: {current} (Min: {min})'**
+  String currentStockMin(Object current, Object min);
+
+  /// No description provided for @restock.
+  ///
+  /// In en, this message translates to:
+  /// **'RESTOCK'**
+  String get restock;
+
+  /// No description provided for @noSalesData.
+  ///
+  /// In en, this message translates to:
+  /// **'No sales data available'**
+  String get noSalesData;
+
+  /// No description provided for @qtyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Qty: {qty}'**
+  String qtyLabel(Object qty);
+
+  /// No description provided for @noPerformanceData.
+  ///
+  /// In en, this message translates to:
+  /// **'No performance data available'**
+  String get noPerformanceData;
+
+  /// No description provided for @noClientData.
+  ///
+  /// In en, this message translates to:
+  /// **'No client data available'**
+  String get noClientData;
+
+  /// No description provided for @noSupplierData.
+  ///
+  /// In en, this message translates to:
+  /// **'No supplier data available'**
+  String get noSupplierData;
+
+  /// No description provided for @noPaymentData.
+  ///
+  /// In en, this message translates to:
+  /// **'No payment data available'**
+  String get noPaymentData;
+
+  /// No description provided for @baseWarehouseStockValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Base Warehouse Stock Value'**
+  String get baseWarehouseStockValue;
+
+  /// No description provided for @magazinStockValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Magazin Stock Value'**
+  String get magazinStockValue;
+
+  /// No description provided for @noStockData.
+  ///
+  /// In en, this message translates to:
+  /// **'No stock data'**
+  String get noStockData;
+
+  /// No description provided for @failedToLoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load data'**
+  String get failedToLoad;
+
+  /// No description provided for @bonDeLivraison.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery Note'**
+  String get bonDeLivraison;
+
+  /// No description provided for @bonDeCommande.
+  ///
+  /// In en, this message translates to:
+  /// **'Order Note'**
+  String get bonDeCommande;
+
+  /// No description provided for @pdfBonDeLivraison.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery Note'**
+  String get pdfBonDeLivraison;
+
+  /// No description provided for @pdfBonDeCommande.
+  ///
+  /// In en, this message translates to:
+  /// **'Order Note'**
+  String get pdfBonDeCommande;
+
+  /// No description provided for @pdfFacture.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice'**
+  String get pdfFacture;
+
+  /// No description provided for @invoiceCounter.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice Counter'**
+  String get invoiceCounter;
+
+  /// No description provided for @invoiceCounterPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'Counter Prefix (e.g. MG)'**
+  String get invoiceCounterPrefix;
+
+  /// No description provided for @invoiceNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice Number'**
+  String get invoiceNumber;
+
+  /// No description provided for @invoiceDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice Date'**
+  String get invoiceDate;
+
+  /// No description provided for @commandeCreatedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Order note created successfully!'**
+  String get commandeCreatedSuccessfully;
 }
 
 class _AppLocalizationsDelegate

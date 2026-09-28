@@ -31,6 +31,8 @@ class SaleRequest {
   final String currentUserId;
   final List<SaleLineRequest> lines;
   final List<SalePaymentRequest> payments;
+  final String? customInvoiceNumber;
+  final DateTime? customDate;
   
   SaleRequest({
     this.documentType = 'FACTURE',
@@ -38,6 +40,8 @@ class SaleRequest {
     required this.currentUserId,
     required this.lines,
     this.payments = const [],
+    this.customInvoiceNumber,
+    this.customDate,
   });
 }
 
@@ -74,6 +78,21 @@ class SalesService {
   final _uuid = const Uuid();
 
   SalesService(this._db);
+  
+  Future<String> getNextCustomInvoiceNumber(String prefix) async {
+    final result = await _db.customSelect(
+      "SELECT invoice_number FROM invoices WHERE invoice_number LIKE '$prefix%' ORDER BY LENGTH(invoice_number) DESC, invoice_number DESC LIMIT 1",
+    ).getSingleOrNull();
+
+    if (result != null) {
+      final lastNumStr = result.read<String>('invoice_number').substring(prefix.length);
+      final lastNum = int.tryParse(lastNumStr);
+      if (lastNum != null) {
+        return '$prefix${lastNum + 1}';
+      }
+    }
+    return '${prefix}1';
+  }
 
   /// Executes a sale atomically.
   /// Handles: Invoices, Lines, Stock, Consumables, Payments, Audit, Sync, and Client Balances.
@@ -83,31 +102,38 @@ class SalesService {
       final locationId = (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL' || client?.id == 'MAGAZIN_01') ? AppLocations.baseWarehouse : AppLocations.magazin;
 
       final invoiceId = _uuid.v4();
-      final date = DateTime.now();
+      final date = request.customDate ?? DateTime.now();
       
-      // 1. Generate Formal Invoice Number (e.g., FAC-YYYY-MM-XXXX)
-      final yearMonth = '${date.year}-${date.month.toString().padLeft(2, '0')}';
-      final prefix = request.documentType == 'BON' ? 'BON-$yearMonth' : 'FAC-$yearMonth';
-      
-      final seqQuery = _db.select(_db.documentSequences)
-        ..where((t) => t.documentType.equals('INVOICE') & t.prefix.equals(prefix));
-      final seq = await seqQuery.getSingleOrNull();
-      
-      int nextNum = 1;
-      if (seq != null) {
-        nextNum = seq.lastNumber + 1;
-        await _db.update(_db.documentSequences).replace(
-          seq.copyWith(lastNumber: nextNum)
-        );
+      // 1. Generate Formal Invoice Number
+      String invoiceNumber = '';
+      if (request.documentType == 'FACTURE' && request.customInvoiceNumber != null && request.customInvoiceNumber!.isNotEmpty) {
+        invoiceNumber = request.customInvoiceNumber!;
       } else {
-        await _db.into(_db.documentSequences).insert(DocumentSequencesCompanion.insert(
-          documentType: 'INVOICE',
-          prefix: prefix,
-          lastNumber: const drift.Value(1),
-        ));
+        final yearMonth = '${date.year}-${date.month.toString().padLeft(2, '0')}';
+        String prefix = '';
+        if (request.documentType == 'BON') prefix = 'BON-$yearMonth';
+        else if (request.documentType == 'COMMANDE') prefix = 'CMD-$yearMonth';
+        else prefix = 'FAC-$yearMonth';
+        
+        final seqQuery = _db.select(_db.documentSequences)
+          ..where((t) => t.documentType.equals('INVOICE') & t.prefix.equals(prefix));
+        final seq = await seqQuery.getSingleOrNull();
+        
+        int nextNum = 1;
+        if (seq != null) {
+          nextNum = seq.lastNumber + 1;
+          await _db.update(_db.documentSequences).replace(
+            seq.copyWith(lastNumber: nextNum)
+          );
+        } else {
+          await _db.into(_db.documentSequences).insert(DocumentSequencesCompanion.insert(
+            documentType: 'INVOICE',
+            prefix: prefix,
+            lastNumber: const drift.Value(1),
+          ));
+        }
+        invoiceNumber = '$prefix-${nextNum.toString().padLeft(4, '0')}';
       }
-      
-      final invoiceNumber = '$prefix-${nextNum.toString().padLeft(4, '0')}';
       
       Decimal subtotal = Decimal.zero;
       
@@ -127,57 +153,65 @@ class SalesService {
           lineTotal: lineTotal,
         ));
         
-        // 3. Handle Stock Deduction (Allows deduction regardless of payment status)
-        await _deductStock(
-          productId: line.productId, 
-          quantity: line.quantity, 
-          reason: 'SALE',
-          referenceOperationId: invoiceId,
-          userId: request.currentUserId,
-          locationId: locationId,
-        );
-        
-        // If selling to a Magazin or Special client, this is a transfer. We must add the stock to MAGAZIN_01.
-        if (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL' || client?.id == 'MAGAZIN_01') {
-          await _restoreStock(
-            productId: line.productId,
-            quantity: line.quantity,
-            reason: 'TRANSFER_IN',
+        if (request.documentType != 'COMMANDE') {
+          // 3. Handle Stock Deduction
+          await _deductStock(
+            productId: line.productId, 
+            quantity: line.quantity, 
+            reason: 'SALE',
             referenceOperationId: invoiceId,
             userId: request.currentUserId,
-            locationId: AppLocations.magazin,
+            locationId: locationId,
+          );
+          
+          if (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL' || client?.id == 'MAGAZIN_01') {
+            await _restoreStock(
+              productId: line.productId,
+              quantity: line.quantity,
+              reason: 'TRANSFER_IN',
+              referenceOperationId: invoiceId,
+              userId: request.currentUserId,
+              locationId: AppLocations.magazin,
+            );
+          }
+          
+          // 4. Handle Consumables Deduction
+          await _deductConsumables(
+            productId: line.productId,
+            quantity: line.quantity,
+            referenceOperationId: invoiceId,
+            userId: request.currentUserId,
+            locationId: locationId,
           );
         }
-        
-        // 4. Handle Consumables Deduction
-        await _deductConsumables(
-          productId: line.productId,
-          quantity: line.quantity,
-          referenceOperationId: invoiceId,
-          userId: request.currentUserId,
-          locationId: locationId,
-        );
       }
       
       final taxes = Decimal.zero;
       final total = subtotal + taxes;
-            Decimal paidAmount = Decimal.zero;
-      for (final p in request.payments) {
-        if (p.method != 'CREDIT') {
-          paidAmount += p.amount;
+      Decimal paidAmount = Decimal.zero;
+      
+      if (request.documentType != 'COMMANDE') {
+        for (final p in request.payments) {
+          if (p.method != 'CREDIT') {
+            paidAmount += p.amount;
+          }
         }
       }
       
-      final status = paidAmount >= total ? 'PAID' : (paidAmount > Decimal.zero ? 'PARTIAL' : 'UNPAID');
+      final status = request.documentType == 'COMMANDE' 
+          ? 'PENDING' 
+          : (paidAmount >= total ? 'PAID' : (paidAmount > Decimal.zero ? 'PARTIAL' : 'UNPAID'));
       
-      // 5. Update Client Balance (Debt) — skip for walk-in (TEMP) clients
-      final debt = total - paidAmount;
-      if (debt > Decimal.zero && client != null && client.type != 'TEMP') {
-        final newBalance = client.balance + debt;
-        await _db.update(_db.clients).replace(client.copyWith(
-          balance: newBalance,
-          updatedAt: DateTime.now(),
-        ));
+      // 5. Update Client Balance (Debt)
+      if (request.documentType != 'COMMANDE') {
+        final debt = total - paidAmount;
+        if (debt > Decimal.zero && client != null && client.type != 'TEMP') {
+          final newBalance = client.balance + debt;
+          await _db.update(_db.clients).replace(client.copyWith(
+            balance: newBalance,
+            updatedAt: DateTime.now(),
+          ));
+        }
       }
       
       // 6. Create Invoice
@@ -195,18 +229,20 @@ class SalesService {
       ));
       
       // 7. Create Payments
-      for (final p in request.payments) {
-        if (p.amount > Decimal.zero || p.method == 'CREDIT') {
-          await _db.into(_db.payments).insert(PaymentsCompanion.insert(
-            id: _uuid.v4(),
-            clientId: drift.Value(request.clientId),
-            invoiceId: drift.Value(invoiceId),
-            amount: p.amount,
-            method: p.method,
-            checkImagePath: drift.Value(p.checkImagePath),
-            date: date,
-            status: 'CLEARED',
-          ));
+      if (request.documentType != 'COMMANDE') {
+        for (final p in request.payments) {
+          if (p.amount > Decimal.zero || p.method == 'CREDIT') {
+            await _db.into(_db.payments).insert(PaymentsCompanion.insert(
+              id: _uuid.v4(),
+              clientId: drift.Value(request.clientId),
+              invoiceId: drift.Value(invoiceId),
+              amount: p.amount,
+              method: p.method,
+              checkImagePath: drift.Value(p.checkImagePath),
+              date: date,
+              status: 'CLEARED',
+            ));
+          }
         }
       }
       
@@ -227,6 +263,7 @@ class SalesService {
         entityId: invoiceId,
         operation: 'INSERT',
         payload: jsonEncode({'id': invoiceId, 'status': status}), 
+
       ));
     });
   }

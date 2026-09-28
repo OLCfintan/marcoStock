@@ -39,7 +39,7 @@ class DashboardScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Overview',
+              AppLocalizations.of(context)!.overview,
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             const SizedBox(height: 16),
@@ -49,7 +49,7 @@ class DashboardScreen extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Sales Over Time',
+                  AppLocalizations.of(context)!.salesOverTime,
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 Consumer(
@@ -62,10 +62,10 @@ class DashboardScreen extends ConsumerWidget {
                           ref.read(salesChartPeriodProvider.notifier).state = newPeriod;
                         }
                       },
-                      items: const [
-                        DropdownMenuItem(value: SalesChartPeriod.daily, child: Text('Daily')),
-                        DropdownMenuItem(value: SalesChartPeriod.weekly, child: Text('Weekly')),
-                        DropdownMenuItem(value: SalesChartPeriod.monthly, child: Text('Monthly')),
+                      items: [
+                        DropdownMenuItem(value: SalesChartPeriod.daily, child: Text(AppLocalizations.of(context)!.daily)),
+                        DropdownMenuItem(value: SalesChartPeriod.weekly, child: Text(AppLocalizations.of(context)!.weekly)),
+                        DropdownMenuItem(value: SalesChartPeriod.monthly, child: Text(AppLocalizations.of(context)!.monthly)),
                       ],
                     );
                   },
@@ -89,7 +89,7 @@ class DashboardScreen extends ConsumerWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Top-Selling Products', style: Theme.of(context).textTheme.titleLarge),
+                                Text(AppLocalizations.of(context)!.topSellingProducts, style: Theme.of(context).textTheme.titleLarge),
                                 const SizedBox(height: 16),
                                 const _TopSellingProductsList(),
                               ],
@@ -100,7 +100,7 @@ class DashboardScreen extends ConsumerWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Employee Performance', style: Theme.of(context).textTheme.titleLarge),
+                                Text(AppLocalizations.of(context)!.employeePerformance, style: Theme.of(context).textTheme.titleLarge),
                                 const SizedBox(height: 16),
                                 const _EmployeePerformanceList(),
                               ],
@@ -116,7 +116,7 @@ class DashboardScreen extends ConsumerWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Top Clients (Debt)', style: Theme.of(context).textTheme.titleLarge),
+                                Text(AppLocalizations.of(context)!.topClientsDebt, style: Theme.of(context).textTheme.titleLarge),
                                 const SizedBox(height: 16),
                                 const _TopClientsList(),
                               ],
@@ -127,7 +127,7 @@ class DashboardScreen extends ConsumerWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Top Suppliers (Debt)', style: Theme.of(context).textTheme.titleLarge),
+                                Text(AppLocalizations.of(context)!.topSuppliersDebt, style: Theme.of(context).textTheme.titleLarge),
                                 const SizedBox(height: 16),
                                 const _TopSuppliersList(),
                               ],
@@ -143,7 +143,7 @@ class DashboardScreen extends ConsumerWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Top Clients (Cash/Revenue)', style: Theme.of(context).textTheme.titleLarge),
+                                Text(AppLocalizations.of(context)!.topClientsRevenue, style: Theme.of(context).textTheme.titleLarge),
                                 const SizedBox(height: 16),
                                 const _TopClientsByRevenueList(),
                               ],
@@ -154,7 +154,7 @@ class DashboardScreen extends ConsumerWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Top Suppliers (Cash Paid)', style: Theme.of(context).textTheme.titleLarge),
+                                Text(AppLocalizations.of(context)!.topSuppliersPaid, style: Theme.of(context).textTheme.titleLarge),
                                 const SizedBox(height: 16),
                                 const _TopSuppliersByRevenueList(),
                               ],
@@ -168,27 +168,27 @@ class DashboardScreen extends ConsumerWidget {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text('Top-Selling Products', style: Theme.of(context).textTheme.titleLarge),
+                      Text(AppLocalizations.of(context)!.topSellingProducts, style: Theme.of(context).textTheme.titleLarge),
                       const SizedBox(height: 16),
                       const _TopSellingProductsList(),
                       const SizedBox(height: 32),
-                      Text('Employee Performance', style: Theme.of(context).textTheme.titleLarge),
+                      Text(AppLocalizations.of(context)!.employeePerformance, style: Theme.of(context).textTheme.titleLarge),
                       const SizedBox(height: 16),
                       const _EmployeePerformanceList(),
                       const SizedBox(height: 32),
-                      Text('Top Clients (Debt)', style: Theme.of(context).textTheme.titleLarge),
+                      Text(AppLocalizations.of(context)!.topClientsDebt, style: Theme.of(context).textTheme.titleLarge),
                       const SizedBox(height: 16),
                       const _TopClientsList(),
                       const SizedBox(height: 32),
-                      Text('Top Suppliers (Debt)', style: Theme.of(context).textTheme.titleLarge),
+                      Text(AppLocalizations.of(context)!.topSuppliersDebt, style: Theme.of(context).textTheme.titleLarge),
                       const SizedBox(height: 16),
                       const _TopSuppliersList(),
                       const SizedBox(height: 32),
-                      Text('Top Clients (Cash/Revenue)', style: Theme.of(context).textTheme.titleLarge),
+                      Text(AppLocalizations.of(context)!.topClientsRevenue, style: Theme.of(context).textTheme.titleLarge),
                       const SizedBox(height: 16),
                       const _TopClientsByRevenueList(),
                       const SizedBox(height: 32),
-                      Text('Top Suppliers (Cash Paid)', style: Theme.of(context).textTheme.titleLarge),
+                      Text(AppLocalizations.of(context)!.topSuppliersPaid, style: Theme.of(context).textTheme.titleLarge),
                       const SizedBox(height: 16),
                       const _TopSuppliersByRevenueList(),
                     ],
@@ -198,7 +198,7 @@ class DashboardScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 32),
             Text(
-              'Low Stock Alerts',
+              AppLocalizations.of(context)!.lowStockAlerts,
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 16),
@@ -231,7 +231,7 @@ class _MetricsGrid extends ConsumerWidget {
           childAspectRatio: 2.5,
           children: [
             _MetricCard(
-              title: "Today's Sales",
+              title: AppLocalizations.of(context)!.todaysSales,
               icon: Icons.point_of_sale,
               color: Colors.green,
               asyncValue: salesAsync,
@@ -247,7 +247,7 @@ class _MetricsGrid extends ConsumerWidget {
                 showDialog(
                   context: context,
                   builder: (_) => AlertDialog(
-                    title: const Text("Today's Sales Details"),
+                    title: Text(AppLocalizations.of(context)!.todaysSalesDetails),
                     content: SizedBox(
                       width: 400,
                       height: 400,
@@ -255,7 +255,7 @@ class _MetricsGrid extends ConsumerWidget {
                         itemCount: invoices.length,
                         itemBuilder: (context, index) {
                           final inv = invoices[index];
-                          final clientName = inv.clientId == null ? 'Walk-In Client' : normalClients.firstWhere((c) => c.id == inv.clientId, orElse: () => normalClients.first).name;
+                          final clientName = inv.clientId == null ? AppLocalizations.of(context)!.walkInClient : normalClients.firstWhere((c) => c.id == inv.clientId, orElse: () => normalClients.first).name;
                           return ListTile(
                             title: Text(clientName),
                             subtitle: Text(inv.date.toString()),
@@ -269,7 +269,7 @@ class _MetricsGrid extends ConsumerWidget {
               },
             ),
             _MetricCard(
-              title: 'Total Credit',
+              title: AppLocalizations.of(context)!.totalCredit,
               icon: Icons.money_off,
               color: Colors.orange,
               asyncValue: debtAsync,
@@ -283,7 +283,7 @@ class _MetricsGrid extends ConsumerWidget {
                 showDialog(
                   context: context,
                   builder: (_) => AlertDialog(
-                    title: const Text("Total Credit Details"),
+                    title: Text(AppLocalizations.of(context)!.totalCreditDetails),
                     content: SizedBox(
                       width: 400,
                       height: 400,
@@ -303,7 +303,7 @@ class _MetricsGrid extends ConsumerWidget {
               },
             ),
             _MetricCard(
-              title: "Today's Credit",
+              title: AppLocalizations.of(context)!.todaysCredit,
               icon: Icons.credit_card,
               color: Colors.redAccent,
               asyncValue: creditAsync,
@@ -322,7 +322,7 @@ class _MetricsGrid extends ConsumerWidget {
                 showDialog(
                   context: context,
                   builder: (_) => AlertDialog(
-                    title: const Text("Today's Credit Details"),
+                    title: Text(AppLocalizations.of(context)!.todaysCreditDetails),
                     content: SizedBox(
                       width: 400,
                       height: 400,
@@ -330,7 +330,7 @@ class _MetricsGrid extends ConsumerWidget {
                         itemCount: creditInvoices.length,
                         itemBuilder: (context, index) {
                           final inv = creditInvoices[index];
-                          final clientName = inv.clientId == null ? 'Walk-In Client' : normalClients.firstWhere((c) => c.id == inv.clientId, orElse: () => normalClients.first).name;
+                          final clientName = inv.clientId == null ? AppLocalizations.of(context)!.walkInClient : normalClients.firstWhere((c) => c.id == inv.clientId, orElse: () => normalClients.first).name;
                           return ListTile(
                             title: Text(clientName),
                             subtitle: Text(inv.date.toString()),
@@ -415,7 +415,7 @@ class _MetricCard extends StatelessWidget {
                     loading: () => const SizedBox(
                       height: 24,
                       width: 24,
-                      child: const LogoLoader(size: 32.0),
+                      child: LogoLoader(size: 32.0),
                     ),
                     error: (err, stack) => Text(
                       (AppLocalizations.of(context)?.errorStr ?? 'Error: ').trim(),
@@ -507,8 +507,8 @@ class _SalesChart extends ConsumerWidget {
                 ),
               );
             },
-            loading: () => const Center(child: const LogoLoader()),
-            error: (err, stack) => Center(child: Text('Failed to load chart data: $err')),
+            loading: () => const Center(child: LogoLoader()),
+            error: (err, stack) => Center(child: Text('${AppLocalizations.of(context)!.failedToLoad}: $err')),
           );
             }
           ),
@@ -530,10 +530,10 @@ class _LowStockList extends ConsumerWidget {
       child: alertsAsync.when(
         data: (alerts) {
           if (alerts.isEmpty) {
-            return const Padding(
-              padding: EdgeInsets.all(32.0),
+            return Padding(
+              padding: const EdgeInsets.all(32.0),
               child: Center(
-                child: Text('Stock levels are good!'),
+                child: Text(AppLocalizations.of(context)!.stockLevelsGood),
               ),
             );
           }
@@ -547,12 +547,12 @@ class _LowStockList extends ConsumerWidget {
               return ListTile(
                 leading: const Icon(Icons.warning, color: Colors.red),
                 title: Text(alert.productName),
-                subtitle: Text('Current Stock: ${alert.currentStock} (Min: ${alert.minimumStock})'),
+                subtitle: Text(AppLocalizations.of(context)!.currentStockMin(alert.currentStock.toString(), alert.minimumStock.toString())),
                 trailing: TextButton(
                   onPressed: () {
                     // Placeholder for navigation
                   },
-                  child: const Text('RESTOCK'),
+                  child: Text(AppLocalizations.of(context)!.restock),
                 ),
               );
             },
@@ -560,11 +560,11 @@ class _LowStockList extends ConsumerWidget {
         },
         loading: () => const Padding(
           padding: EdgeInsets.all(32.0),
-          child: Center(child: const LogoLoader()),
+          child: Center(child: LogoLoader()),
         ),
         error: (err, stack) => Padding(
           padding: const EdgeInsets.all(32.0),
-          child: Center(child: Text('Failed to load stock alerts: $err')),
+          child: Center(child: Text('${AppLocalizations.of(context)!.failedToLoad}: $err')),
         ),
       ),
     );
@@ -583,9 +583,9 @@ class _TopSellingProductsList extends ConsumerWidget {
       child: productsAsync.when(
         data: (products) {
           if (products.isEmpty) {
-            return const Padding(
-              padding: EdgeInsets.all(32.0),
-              child: Center(child: Text('No sales data available')),
+            return Padding(
+              padding: const EdgeInsets.all(32.0),
+              child: Center(child: Text(AppLocalizations.of(context)!.noSalesData)),
             );
           }
           return ListView.separated(
@@ -601,7 +601,7 @@ class _TopSellingProductsList extends ConsumerWidget {
                   child: Text('${index + 1}'),
                 ),
                 title: Text(product.productName),
-                subtitle: Text('Qty: ${product.totalQuantity}'),
+                subtitle: Text(AppLocalizations.of(context)!.qtyLabel(product.totalQuantity.toString())),
                 trailing: Text(
                   '${product.totalRevenue} Dhs',
                   style: const TextStyle(fontWeight: FontWeight.bold),
@@ -612,11 +612,11 @@ class _TopSellingProductsList extends ConsumerWidget {
         },
         loading: () => const Padding(
           padding: EdgeInsets.all(32.0),
-          child: Center(child: const LogoLoader()),
+          child: Center(child: LogoLoader()),
         ),
         error: (err, stack) => Padding(
           padding: const EdgeInsets.all(32.0),
-          child: Center(child: Text('Failed to load top products: $err')),
+          child: Center(child: Text('${AppLocalizations.of(context)!.failedToLoad}: $err')),
         ),
       ),
     );
@@ -635,9 +635,9 @@ class _EmployeePerformanceList extends ConsumerWidget {
       child: performanceAsync.when(
         data: (employees) {
           if (employees.isEmpty) {
-            return const Padding(
-              padding: EdgeInsets.all(32.0),
-              child: Center(child: Text('No performance data available')),
+            return Padding(
+              padding: const EdgeInsets.all(32.0),
+              child: Center(child: Text(AppLocalizations.of(context)!.noPerformanceData)),
             );
           }
           return ListView.separated(
@@ -670,11 +670,11 @@ class _EmployeePerformanceList extends ConsumerWidget {
         },
         loading: () => const Padding(
           padding: EdgeInsets.all(32.0),
-          child: Center(child: const LogoLoader()),
+          child: Center(child: LogoLoader()),
         ),
         error: (err, stack) => Padding(
           padding: const EdgeInsets.all(32.0),
-          child: Center(child: Text('Failed to load performance data: $err')),
+          child: Center(child: Text('${AppLocalizations.of(context)!.failedToLoad}: $err')),
         ),
       ),
     );
@@ -693,9 +693,9 @@ class _TopClientsList extends ConsumerWidget {
       child: clientsAsync.when(
         data: (clients) {
           if (clients.isEmpty) {
-            return const Padding(
-              padding: EdgeInsets.all(32.0),
-              child: Center(child: Text('No client data available')),
+            return Padding(
+              padding: const EdgeInsets.all(32.0),
+              child: Center(child: Text(AppLocalizations.of(context)!.noClientData)),
             );
           }
           return ListView.separated(
@@ -721,11 +721,11 @@ class _TopClientsList extends ConsumerWidget {
         },
         loading: () => const Padding(
           padding: EdgeInsets.all(32.0),
-          child: Center(child: const LogoLoader()),
+          child: Center(child: LogoLoader()),
         ),
         error: (err, stack) => Padding(
           padding: const EdgeInsets.all(32.0),
-          child: Center(child: Text('Failed to load top clients: $err')),
+          child: Center(child: Text('${AppLocalizations.of(context)!.failedToLoad}: $err')),
         ),
       ),
     );
@@ -744,9 +744,9 @@ class _TopSuppliersList extends ConsumerWidget {
       child: suppliersAsync.when(
         data: (suppliers) {
           if (suppliers.isEmpty) {
-            return const Padding(
-              padding: EdgeInsets.all(32.0),
-              child: Center(child: Text('No supplier data available')),
+            return Padding(
+              padding: const EdgeInsets.all(32.0),
+              child: Center(child: Text(AppLocalizations.of(context)!.noSupplierData)),
             );
           }
           return ListView.separated(
@@ -772,11 +772,11 @@ class _TopSuppliersList extends ConsumerWidget {
         },
         loading: () => const Padding(
           padding: EdgeInsets.all(32.0),
-          child: Center(child: const LogoLoader()),
+          child: Center(child: LogoLoader()),
         ),
         error: (err, stack) => Padding(
           padding: const EdgeInsets.all(32.0),
-          child: Center(child: Text('Failed to load top suppliers: $err')),
+          child: Center(child: Text('${AppLocalizations.of(context)!.failedToLoad}: $err')),
         ),
       ),
     );
@@ -798,12 +798,12 @@ class _StockPieCharts extends ConsumerWidget {
         final children = [
           Expanded(
             flex: isWide ? 1 : 0,
-            child: _buildPieCard(context, 'Base Warehouse Stock Value', baseAsync),
+            child: _buildPieCard(context, AppLocalizations.of(context)!.baseWarehouseStockValue, baseAsync),
           ),
           if (isWide) const SizedBox(width: 16) else const SizedBox(height: 16),
           Expanded(
             flex: isWide ? 1 : 0,
-            child: _buildPieCard(context, 'Magazin Stock Value', magazinAsync),
+            child: _buildPieCard(context, AppLocalizations.of(context)!.magazinStockValue, magazinAsync),
           ),
         ];
         
@@ -827,7 +827,7 @@ class _StockPieCharts extends ConsumerWidget {
                 data: (data) {
                   final validData = data.where((d) => d.value > 0).toList();
                   validData.sort((a, b) => b.value.compareTo(a.value));
-                  if (validData.isEmpty) return const Center(child: Text('No stock data', style: TextStyle(color: Colors.black)));
+                  if (validData.isEmpty) return Center(child: Text(AppLocalizations.of(context)!.noStockData, style: const TextStyle(color: Colors.black)));
                   final colors = [Colors.blue, Colors.red, Colors.green, Colors.orange, Colors.purple, Colors.teal, Colors.amber, Colors.cyan];
                   return Row(
                     children: [
@@ -886,7 +886,7 @@ class _StockPieCharts extends ConsumerWidget {
                     ],
                   );
                 },
-                loading: () => const Center(child: const LogoLoader()),
+                loading: () => const Center(child: LogoLoader()),
                 error: (err, stack) => Center(child: Text('Error: $err')),
               ),
             ),
@@ -909,9 +909,9 @@ class _TopClientsByRevenueList extends ConsumerWidget {
       child: clientsAsync.when(
         data: (clients) {
           if (clients.isEmpty) {
-            return const Padding(
-              padding: EdgeInsets.all(32.0),
-              child: Center(child: Text('No payment data available')),
+            return Padding(
+              padding: const EdgeInsets.all(32.0),
+              child: Center(child: Text(AppLocalizations.of(context)!.noPaymentData)),
             );
           }
           return ListView.separated(
@@ -937,11 +937,11 @@ class _TopClientsByRevenueList extends ConsumerWidget {
         },
         loading: () => const Padding(
           padding: EdgeInsets.all(32.0),
-          child: Center(child: const LogoLoader()),
+          child: Center(child: LogoLoader()),
         ),
         error: (err, stack) => Padding(
           padding: const EdgeInsets.all(32.0),
-          child: Center(child: Text('Failed to load: $err')),
+          child: Center(child: Text('${AppLocalizations.of(context)!.failedToLoad}: $err')),
         ),
       ),
     );
@@ -960,9 +960,9 @@ class _TopSuppliersByRevenueList extends ConsumerWidget {
       child: suppliersAsync.when(
         data: (suppliers) {
           if (suppliers.isEmpty) {
-            return const Padding(
-              padding: EdgeInsets.all(32.0),
-              child: Center(child: Text('No payment data available')),
+            return Padding(
+              padding: const EdgeInsets.all(32.0),
+              child: Center(child: Text(AppLocalizations.of(context)!.noPaymentData)),
             );
           }
           return ListView.separated(
@@ -988,11 +988,11 @@ class _TopSuppliersByRevenueList extends ConsumerWidget {
         },
         loading: () => const Padding(
           padding: EdgeInsets.all(32.0),
-          child: Center(child: const LogoLoader()),
+          child: Center(child: LogoLoader()),
         ),
         error: (err, stack) => Padding(
           padding: const EdgeInsets.all(32.0),
-          child: Center(child: Text('Failed to load: $err')),
+          child: Center(child: Text('${AppLocalizations.of(context)!.failedToLoad}: $err')),
         ),
       ),
     );

@@ -54,10 +54,8 @@ final todaySalesProvider = StreamProvider<Decimal>((ref) {
   final now = DateTime.now();
   final startOfDay = DateTime(now.year, now.month, now.day);
   
-  return db.select(db.clients).watch().asyncMap((clients) async {
-    final normalIds = clients.where((c) => c.type == 'NORMAL').map((c) => c.id).toList();
-    if (normalIds.isEmpty) return Decimal.zero;
-    final invoices = await (db.select(db.invoices)..where((t) => t.date.isBiggerOrEqualValue(startOfDay) & t.isActive.equals(true) & ((t.clientId.isIn(normalIds) | t.clientId.isNull()) | t.clientId.isNull()))).get();
+  // Watch invoices table directly for instant reactivity
+  return (db.select(db.invoices)..where((t) => t.date.isBiggerOrEqualValue(startOfDay) & t.isActive.equals(true))).watch().map((invoices) {
     return invoices.fold<Decimal>(Decimal.zero, (sum, inv) => sum + inv.total);
   });
 });
@@ -76,10 +74,8 @@ final todaysCreditProvider = StreamProvider<Decimal>((ref) {
   final now = DateTime.now();
   final startOfDay = DateTime(now.year, now.month, now.day);
   
-  return db.select(db.clients).watch().asyncMap((clients) async {
-    final normalIds = clients.where((c) => c.type == 'NORMAL').map((c) => c.id).toList();
-    if (normalIds.isEmpty) return Decimal.zero;
-    final invoices = await (db.select(db.invoices)..where((t) => t.date.isBiggerOrEqualValue(startOfDay) & t.isActive.equals(true) & ((t.clientId.isIn(normalIds) | t.clientId.isNull()) | t.clientId.isNull()))).get();
+  // Watch invoices table directly for instant reactivity
+  return (db.select(db.invoices)..where((t) => t.date.isBiggerOrEqualValue(startOfDay) & t.isActive.equals(true))).watch().map((invoices) {
     return invoices.fold<Decimal>(Decimal.zero, (sum, inv) => sum + (inv.total - inv.paidAmount));
   });
 });
@@ -237,10 +233,7 @@ final salesChartDataProvider = StreamProvider<List<ChartDataPoint>>((ref) {
   final period = ref.watch(salesChartPeriodProvider);
   final db = ref.watch(databaseProvider);
   
-  return db.select(db.clients).watch().asyncMap((clients) async {
-    final normalIds = clients.where((c) => c.type == 'NORMAL').map((c) => c.id).toList();
-    if (normalIds.isEmpty) return [];
-    final invoices = await (db.select(db.invoices)..where((t) => t.isActive.equals(true) & ((t.clientId.isIn(normalIds) | t.clientId.isNull()) | t.clientId.isNull()))).get();
+  return (db.select(db.invoices)..where((t) => t.isActive.equals(true))).watch().asyncMap((invoices) async {
     final now = DateTime.now();
     
     final data = LinkedHashMap<String, Decimal>();

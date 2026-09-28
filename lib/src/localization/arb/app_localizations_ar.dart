@@ -594,4 +594,131 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get recentTransactionsLabel => 'العمليات الأخيرة';
+
+  @override
+  String get overview => 'نظرة عامة';
+
+  @override
+  String get salesOverTime => 'المبيعات عبر الزمن';
+
+  @override
+  String get daily => 'يومي';
+
+  @override
+  String get weekly => 'أسبوعي';
+
+  @override
+  String get monthly => 'شهري';
+
+  @override
+  String get topSellingProducts => 'المنتجات الأكثر مبيعاً';
+
+  @override
+  String get employeePerformance => 'أداء الموظفين';
+
+  @override
+  String get topClientsDebt => 'أكبر العملاء (ديون)';
+
+  @override
+  String get topSuppliersDebt => 'أكبر الموردين (ديون)';
+
+  @override
+  String get topClientsRevenue => 'أكبر العملاء (نقد/إيراد)';
+
+  @override
+  String get topSuppliersPaid => 'أكبر الموردين (نقد مدفوع)';
+
+  @override
+  String get lowStockAlerts => 'تنبيهات المخزون المنخفض';
+
+  @override
+  String get todaysSales => 'مبيعات اليوم';
+
+  @override
+  String get todaysSalesDetails => 'تفاصيل مبيعات اليوم';
+
+  @override
+  String get totalCredit => 'إجمالي الديون';
+
+  @override
+  String get totalCreditDetails => 'تفاصيل إجمالي الديون';
+
+  @override
+  String get todaysCredit => 'ديون اليوم';
+
+  @override
+  String get todaysCreditDetails => 'تفاصيل ديون اليوم';
+
+  @override
+  String get stockLevelsGood => 'مستويات المخزون جيدة!';
+
+  @override
+  String currentStockMin(Object current, Object min) {
+    return 'المخزون الحالي: $current (أدنى: $min)';
+  }
+
+  @override
+  String get restock => 'إعادة تخزين';
+
+  @override
+  String get noSalesData => 'لا توجد بيانات مبيعات';
+
+  @override
+  String qtyLabel(Object qty) {
+    return 'الكمية: $qty';
+  }
+
+  @override
+  String get noPerformanceData => 'لا توجد بيانات أداء';
+
+  @override
+  String get noClientData => 'لا توجد بيانات عملاء';
+
+  @override
+  String get noSupplierData => 'لا توجد بيانات موردين';
+
+  @override
+  String get noPaymentData => 'لا توجد بيانات مدفوعات';
+
+  @override
+  String get baseWarehouseStockValue => 'قيمة مخزون المستودع الأساسي';
+
+  @override
+  String get magazinStockValue => 'قيمة مخزون المخزن';
+
+  @override
+  String get noStockData => 'لا توجد بيانات مخزون';
+
+  @override
+  String get failedToLoad => 'فشل في تحميل البيانات';
+
+  @override
+  String get bonDeLivraison => 'وصل توصيل';
+
+  @override
+  String get bonDeCommande => 'وصل طلب';
+
+  @override
+  String get pdfBonDeLivraison => 'وصل توصيل';
+
+  @override
+  String get pdfBonDeCommande => 'وصل طلب';
+
+  @override
+  String get pdfFacture => 'فاتورة';
+
+  @override
+  String get invoiceCounter => 'عداد الفواتير';
+
+  @override
+  String get invoiceCounterPrefix => 'بادئة العداد (مثال: MG)';
+
+  @override
+  String get invoiceNumber => 'رقم الفاتورة';
+
+  @override
+  String get invoiceDate => 'تاريخ الفاتورة';
+
+  @override
+  String get commandeCreatedSuccessfully => 'تم إنشاء وصل الطلب بنجاح!';
 }

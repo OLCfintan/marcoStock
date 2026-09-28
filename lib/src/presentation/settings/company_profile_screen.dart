@@ -20,6 +20,7 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
   final _taxIdCtrl = TextEditingController();
   final _taxRateCtrl = TextEditingController();
   final _logoCtrl = TextEditingController();
+  final _invoiceCounterPrefixCtrl = TextEditingController();
 
   bool _isLoading = true;
 
@@ -38,6 +39,7 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
     _taxIdCtrl.text = settings['companyTaxId'] ?? '';
     _taxRateCtrl.text = settings['companyTaxRate'] ?? '0.0';
     _logoCtrl.text = settings['companyLogoPath'] ?? '';
+    _invoiceCounterPrefixCtrl.text = settings['invoiceCounterPrefix'] ?? 'MG';
     setState(() => _isLoading = false);
   }
 
@@ -51,6 +53,7 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
     await service.setSetting('companyTaxId', _taxIdCtrl.text);
     await service.setSetting('companyTaxRate', _taxRateCtrl.text);
     await service.setSetting('companyLogoPath', _logoCtrl.text);
+    await service.setSetting('invoiceCounterPrefix', _invoiceCounterPrefixCtrl.text);
     
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.savedSuccessfully)));
@@ -102,6 +105,11 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
+                  controller: _invoiceCounterPrefixCtrl,
+                  decoration: InputDecoration(labelText: AppLocalizations.of(context)!.invoiceCounterPrefix),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
                   controller: _logoCtrl,
                   decoration: const InputDecoration(labelText: 'Logo Path / URL'),
                 ),
@@ -124,6 +132,7 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
     _taxIdCtrl.dispose();
     _taxRateCtrl.dispose();
     _logoCtrl.dispose();
+    _invoiceCounterPrefixCtrl.dispose();
     super.dispose();
   }
 }

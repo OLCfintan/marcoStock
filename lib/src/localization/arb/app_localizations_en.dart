@@ -593,4 +593,131 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get recentTransactionsLabel => 'Recent Transactions';
+
+  @override
+  String get overview => 'Overview';
+
+  @override
+  String get salesOverTime => 'Sales Over Time';
+
+  @override
+  String get daily => 'Daily';
+
+  @override
+  String get weekly => 'Weekly';
+
+  @override
+  String get monthly => 'Monthly';
+
+  @override
+  String get topSellingProducts => 'Top-Selling Products';
+
+  @override
+  String get employeePerformance => 'Employee Performance';
+
+  @override
+  String get topClientsDebt => 'Top Clients (Debt)';
+
+  @override
+  String get topSuppliersDebt => 'Top Suppliers (Debt)';
+
+  @override
+  String get topClientsRevenue => 'Top Clients (Cash/Revenue)';
+
+  @override
+  String get topSuppliersPaid => 'Top Suppliers (Cash Paid)';
+
+  @override
+  String get lowStockAlerts => 'Low Stock Alerts';
+
+  @override
+  String get todaysSales => 'Today\'s Sales';
+
+  @override
+  String get todaysSalesDetails => 'Today\'s Sales Details';
+
+  @override
+  String get totalCredit => 'Total Credit';
+
+  @override
+  String get totalCreditDetails => 'Total Credit Details';
+
+  @override
+  String get todaysCredit => 'Today\'s Credit';
+
+  @override
+  String get todaysCreditDetails => 'Today\'s Credit Details';
+
+  @override
+  String get stockLevelsGood => 'Stock levels are good!';
+
+  @override
+  String currentStockMin(Object current, Object min) {
+    return 'Current Stock: $current (Min: $min)';
+  }
+
+  @override
+  String get restock => 'RESTOCK';
+
+  @override
+  String get noSalesData => 'No sales data available';
+
+  @override
+  String qtyLabel(Object qty) {
+    return 'Qty: $qty';
+  }
+
+  @override
+  String get noPerformanceData => 'No performance data available';
+
+  @override
+  String get noClientData => 'No client data available';
+
+  @override
+  String get noSupplierData => 'No supplier data available';
+
+  @override
+  String get noPaymentData => 'No payment data available';
+
+  @override
+  String get baseWarehouseStockValue => 'Base Warehouse Stock Value';
+
+  @override
+  String get magazinStockValue => 'Magazin Stock Value';
+
+  @override
+  String get noStockData => 'No stock data';
+
+  @override
+  String get failedToLoad => 'Failed to load data';
+
+  @override
+  String get bonDeLivraison => 'Delivery Note';
+
+  @override
+  String get bonDeCommande => 'Order Note';
+
+  @override
+  String get pdfBonDeLivraison => 'Delivery Note';
+
+  @override
+  String get pdfBonDeCommande => 'Order Note';
+
+  @override
+  String get pdfFacture => 'Invoice';
+
+  @override
+  String get invoiceCounter => 'Invoice Counter';
+
+  @override
+  String get invoiceCounterPrefix => 'Counter Prefix (e.g. MG)';
+
+  @override
+  String get invoiceNumber => 'Invoice Number';
+
+  @override
+  String get invoiceDate => 'Invoice Date';
+
+  @override
+  String get commandeCreatedSuccessfully => 'Order note created successfully!';
 }

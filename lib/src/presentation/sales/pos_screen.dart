@@ -10,6 +10,7 @@ import '../widgets/product_image.dart';
 import '../widgets/item_navigator.dart';
 
 import '../../application/sales/sales_service.dart';
+import '../../application/settings/settings_service.dart';
 import '../../infrastructure/repositories/client_repository.dart';
 import '../../domain/products/product.dart';
 import '../widgets/image_picker_field.dart';
@@ -45,6 +46,18 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     super.initState();
     if (globalPosSessions.isEmpty) {
       globalPosSessions.add(PosSession(id: DateTime.now().millisecondsSinceEpoch.toString(), title: 'Cart 1'));
+    }
+  }
+
+  void _onDocumentTypeChanged(String val) async {
+    setState(() => _activeSession.selectedDocumentType = val);
+    if (val == 'FACTURE') {
+      final settings = await ref.read(settingsServiceProvider).getAllCompanySettings();
+      final prefix = settings['invoiceCounterPrefix'] ?? 'MG';
+      final nextNum = await ref.read(salesServiceProvider).getNextCustomInvoiceNumber(prefix);
+      if (mounted && _activeSession.invoiceCounterController.text.isEmpty) {
+        setState(() => _activeSession.invoiceCounterController.text = nextNum);
+      }
     }
   }
 
@@ -234,9 +247,25 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     final total = _activeSession.cart.fold(Decimal.zero, (sum, line) => sum + ((line.quantity * line.unitPrice) - line.discount));
     final paidAmount = paymentRequests.fold(Decimal.zero, (sum, p) => sum + p.amount);
     
-    if (paidAmount > total) {
+    if (paidAmount > total && _activeSession.selectedDocumentType != 'COMMANDE') {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.paymentExceedsTotal)));
       return;
+    }
+
+    DateTime? customDate;
+    if (_activeSession.selectedDocumentType == 'FACTURE') {
+      final dateText = _activeSession.invoiceDateController.text.trim();
+      if (dateText.isNotEmpty) {
+        final parts = dateText.split('/');
+        if (parts.length == 3) {
+          final day = int.tryParse(parts[0]);
+          final month = int.tryParse(parts[1]);
+          final year = int.tryParse(parts[2]);
+          if (day != null && month != null && year != null) {
+            customDate = DateTime(year, month, day);
+          }
+        }
+      }
     }
 
     final req = SaleRequest(
@@ -245,6 +274,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       currentUserId: 'ADMIN_01', 
       lines: _activeSession.cart,
       payments: paymentRequests,
+      customInvoiceNumber: _activeSession.selectedDocumentType == 'FACTURE' ? _activeSession.invoiceCounterController.text.trim() : null,
+      customDate: customDate,
     );
 
     try {
@@ -461,7 +492,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   child: DropdownButtonFormField<String>(
                     value: _activeSession.selectedDocumentType,
                     decoration: InputDecoration(
-                      labelText: 'Document Type',
+                      labelText: AppLocalizations.of(context)!.documentType,
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       filled: true,
                       fillColor: theme.colorScheme.primaryContainer.withAlpha(128),
@@ -472,12 +503,43 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                       color: theme.colorScheme.onSurface,
                     ),
                     items: [
-                      DropdownMenuItem(value: 'BON', child: Text(AppLocalizations.of(context)!.bon)),
+                      DropdownMenuItem(value: 'BON', child: Text(AppLocalizations.of(context)!.bonDeLivraison)),
+                      DropdownMenuItem(value: 'COMMANDE', child: Text(AppLocalizations.of(context)!.bonDeCommande)),
                       DropdownMenuItem(value: 'FACTURE', child: Text(AppLocalizations.of(context)!.invoice)),
                     ],
-                    onChanged: (val) => setState(() => _activeSession.selectedDocumentType = val!),
+                    onChanged: (val) => _onDocumentTypeChanged(val!),
                   ),
                 ),
+                if (_activeSession.selectedDocumentType == 'FACTURE') ...[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _activeSession.invoiceCounterController,
+                            decoration: InputDecoration(
+                              labelText: AppLocalizations.of(context)!.invoiceNumber,
+                              border: const OutlineInputBorder(),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _activeSession.invoiceDateController,
+                            decoration: InputDecoration(
+                              labelText: AppLocalizations.of(context)!.invoiceDate,
+                              border: const OutlineInputBorder(),
+                              hintText: 'DD/MM/YYYY',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: TextField(
@@ -842,13 +904,20 @@ class PosSession {
   List<SaleLineRequest> cart = [];
   List<_PaymentEntry> payments = [];
 
+  final TextEditingController invoiceCounterController = TextEditingController();
+  final TextEditingController invoiceDateController = TextEditingController();
+
   PosSession({required this.id, required this.title}) {
     payments.add(_PaymentEntry(method: 'CASH'));
+    final now = DateTime.now();
+    invoiceDateController.text = '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
   }
 
   void dispose() {
     for (var p in payments) {
       p.amountController.dispose();
     }
+    invoiceCounterController.dispose();
+    invoiceDateController.dispose();
   }
 }

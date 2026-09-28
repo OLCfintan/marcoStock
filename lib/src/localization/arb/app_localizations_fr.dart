@@ -599,4 +599,132 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get recentTransactionsLabel => 'Transactions récentes';
+
+  @override
+  String get overview => 'Vue d\'ensemble';
+
+  @override
+  String get salesOverTime => 'Ventes au fil du temps';
+
+  @override
+  String get daily => 'Quotidien';
+
+  @override
+  String get weekly => 'Hebdomadaire';
+
+  @override
+  String get monthly => 'Mensuel';
+
+  @override
+  String get topSellingProducts => 'Produits les plus vendus';
+
+  @override
+  String get employeePerformance => 'Performance des employés';
+
+  @override
+  String get topClientsDebt => 'Meilleurs clients (Crédit)';
+
+  @override
+  String get topSuppliersDebt => 'Meilleurs fournisseurs (Crédit)';
+
+  @override
+  String get topClientsRevenue => 'Meilleurs clients (Espèces/Revenu)';
+
+  @override
+  String get topSuppliersPaid => 'Meilleurs fournisseurs (Espèces payées)';
+
+  @override
+  String get lowStockAlerts => 'Alertes de stock bas';
+
+  @override
+  String get todaysSales => 'Ventes du jour';
+
+  @override
+  String get todaysSalesDetails => 'Détails des ventes du jour';
+
+  @override
+  String get totalCredit => 'Crédit total';
+
+  @override
+  String get totalCreditDetails => 'Détails du crédit total';
+
+  @override
+  String get todaysCredit => 'Crédit du jour';
+
+  @override
+  String get todaysCreditDetails => 'Détails du crédit du jour';
+
+  @override
+  String get stockLevelsGood => 'Les niveaux de stock sont bons !';
+
+  @override
+  String currentStockMin(Object current, Object min) {
+    return 'Stock actuel : $current (Min : $min)';
+  }
+
+  @override
+  String get restock => 'RÉAPPROVISIONNER';
+
+  @override
+  String get noSalesData => 'Aucune donnée de vente disponible';
+
+  @override
+  String qtyLabel(Object qty) {
+    return 'Qté : $qty';
+  }
+
+  @override
+  String get noPerformanceData => 'Aucune donnée de performance disponible';
+
+  @override
+  String get noClientData => 'Aucune donnée client disponible';
+
+  @override
+  String get noSupplierData => 'Aucune donnée fournisseur disponible';
+
+  @override
+  String get noPaymentData => 'Aucune donnée de paiement disponible';
+
+  @override
+  String get baseWarehouseStockValue => 'Valeur du stock entrepôt de base';
+
+  @override
+  String get magazinStockValue => 'Valeur du stock magasin';
+
+  @override
+  String get noStockData => 'Aucune donnée de stock';
+
+  @override
+  String get failedToLoad => 'Échec du chargement des données';
+
+  @override
+  String get bonDeLivraison => 'Bon de livraison';
+
+  @override
+  String get bonDeCommande => 'Bon de commande';
+
+  @override
+  String get pdfBonDeLivraison => 'Bon de livraison';
+
+  @override
+  String get pdfBonDeCommande => 'Bon de commande';
+
+  @override
+  String get pdfFacture => 'Facture';
+
+  @override
+  String get invoiceCounter => 'Compteur de factures';
+
+  @override
+  String get invoiceCounterPrefix => 'Préfixe du compteur (ex : MG)';
+
+  @override
+  String get invoiceNumber => 'Numéro de facture';
+
+  @override
+  String get invoiceDate => 'Date de facture';
+
+  @override
+  String get commandeCreatedSuccessfully =>
+      'Bon de commande créé avec succès !';
 }

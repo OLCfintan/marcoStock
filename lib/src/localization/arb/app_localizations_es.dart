@@ -597,4 +597,131 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get recentTransactionsLabel => 'Transacciones recientes';
+
+  @override
+  String get overview => 'Resumen';
+
+  @override
+  String get salesOverTime => 'Ventas a lo largo del tiempo';
+
+  @override
+  String get daily => 'Diario';
+
+  @override
+  String get weekly => 'Semanal';
+
+  @override
+  String get monthly => 'Mensual';
+
+  @override
+  String get topSellingProducts => 'Productos más vendidos';
+
+  @override
+  String get employeePerformance => 'Desempeño de empleados';
+
+  @override
+  String get topClientsDebt => 'Mejores clientes (Deuda)';
+
+  @override
+  String get topSuppliersDebt => 'Mejores proveedores (Deuda)';
+
+  @override
+  String get topClientsRevenue => 'Mejores clientes (Efectivo/Ingresos)';
+
+  @override
+  String get topSuppliersPaid => 'Mejores proveedores (Efectivo pagado)';
+
+  @override
+  String get lowStockAlerts => 'Alertas de stock bajo';
+
+  @override
+  String get todaysSales => 'Ventas de hoy';
+
+  @override
+  String get todaysSalesDetails => 'Detalles de las ventas de hoy';
+
+  @override
+  String get totalCredit => 'Crédito total';
+
+  @override
+  String get totalCreditDetails => 'Detalles del crédito total';
+
+  @override
+  String get todaysCredit => 'Crédito de hoy';
+
+  @override
+  String get todaysCreditDetails => 'Detalles del crédito de hoy';
+
+  @override
+  String get stockLevelsGood => '¡Los niveles de stock son buenos!';
+
+  @override
+  String currentStockMin(Object current, Object min) {
+    return 'Stock actual: $current (Mín: $min)';
+  }
+
+  @override
+  String get restock => 'REABASTECER';
+
+  @override
+  String get noSalesData => 'No hay datos de ventas disponibles';
+
+  @override
+  String qtyLabel(Object qty) {
+    return 'Cant: $qty';
+  }
+
+  @override
+  String get noPerformanceData => 'No hay datos de rendimiento disponibles';
+
+  @override
+  String get noClientData => 'No hay datos de clientes disponibles';
+
+  @override
+  String get noSupplierData => 'No hay datos de proveedores disponibles';
+
+  @override
+  String get noPaymentData => 'No hay datos de pago disponibles';
+
+  @override
+  String get baseWarehouseStockValue => 'Valor del stock del almacén base';
+
+  @override
+  String get magazinStockValue => 'Valor del stock del magazín';
+
+  @override
+  String get noStockData => 'No hay datos de stock';
+
+  @override
+  String get failedToLoad => 'Error al cargar los datos';
+
+  @override
+  String get bonDeLivraison => 'Nota de entrega';
+
+  @override
+  String get bonDeCommande => 'Nota de pedido';
+
+  @override
+  String get pdfBonDeLivraison => 'Nota de entrega';
+
+  @override
+  String get pdfBonDeCommande => 'Nota de pedido';
+
+  @override
+  String get pdfFacture => 'Factura';
+
+  @override
+  String get invoiceCounter => 'Contador de facturas';
+
+  @override
+  String get invoiceCounterPrefix => 'Prefijo del contador (ej: MG)';
+
+  @override
+  String get invoiceNumber => 'Número de factura';
+
+  @override
+  String get invoiceDate => 'Fecha de factura';
+
+  @override
+  String get commandeCreatedSuccessfully => '¡Nota de pedido creada con éxito!';
 }
