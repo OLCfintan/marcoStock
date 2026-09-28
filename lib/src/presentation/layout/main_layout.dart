@@ -120,39 +120,73 @@ class MainLayout extends ConsumerWidget {
   }
 
   Widget _buildNavItem(BuildContext context, IconData icon, String title, String routePath) {
+    return _HoverNavItem(icon: icon, title: title, routePath: routePath);
+  }
+}
+
+class _HoverNavItem extends StatefulWidget {
+  final IconData icon;
+  final String title;
+  final String routePath;
+  const _HoverNavItem({required this.icon, required this.title, required this.routePath});
+
+  @override
+  State<_HoverNavItem> createState() => _HoverNavItemState();
+}
+
+class _HoverNavItemState extends State<_HoverNavItem> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
     final currentPath = GoRouterState.of(context).matchedLocation;
-    final isSelected = currentPath == routePath;
+    final isSelected = currentPath == widget.routePath;
     final colorScheme = Theme.of(context).colorScheme;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-      child: Material(
-        type: MaterialType.transparency,
-        child: ListTile(
-          hoverColor: Color.lerp(Colors.purple, Colors.green, 0.5)!.withValues(alpha: 0.3),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        selected: isSelected,
-        selectedTileColor: colorScheme.primaryContainer,
-        leading: Icon(icon, color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant),
-        title: Text(
-          title,
-          style: TextStyle(
-            color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        child: InkWell(
+          onTap: () {
+            if (MediaQuery.of(context).size.width < 800) {
+              Navigator.of(context).pop();
+              Future.microtask(() {
+                 if (context.mounted) context.go(widget.routePath);
+              });
+            } else {
+              context.go(widget.routePath);
+            }
+          },
+          borderRadius: BorderRadius.circular(8),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: isSelected ? colorScheme.primaryContainer : Colors.transparent,
+              boxShadow: _isHovered ? [
+                BoxShadow(color: Colors.green.withValues(alpha: 0.4), blurRadius: 12, spreadRadius: 2),
+                BoxShadow(color: Colors.purple.withValues(alpha: 0.4), blurRadius: 12, spreadRadius: 2),
+              ] : [],
+              gradient: _isHovered ? LinearGradient(colors: [Colors.green.withValues(alpha: 0.2), Colors.purple.withValues(alpha: 0.2)]) : null,
+            ),
+            child: ListTile(
+              hoverColor: Colors.transparent,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              leading: Icon(widget.icon, color: isSelected ? colorScheme.primary : (_isHovered ? Colors.white : colorScheme.onSurfaceVariant)),
+              title: Text(
+                widget.title,
+                style: TextStyle(
+                  color: isSelected ? colorScheme.primary : (_isHovered ? Colors.white : colorScheme.onSurfaceVariant),
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+            ),
           ),
         ),
-        onTap: () {
-          if (MediaQuery.of(context).size.width < 800) {
-            Navigator.of(context).pop();
-            Future.microtask(() {
-               if (context.mounted) context.go(routePath);
-            });
-          } else {
-            context.go(routePath);
-          }
-        },
-      ),
       ),
     );
   }
 }
+

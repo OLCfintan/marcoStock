@@ -390,8 +390,20 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       double cost = price * addQty;
       
       if (currentTotal + cost <= targetAmount * 1.05) {
-        selectedItems[p] = (selectedItems[p] ?? 0) + addQty;
-        currentTotal += cost;
+        int currentQty = selectedItems[p] ?? 0;
+        int newQty = currentQty + addQty;
+        
+        bool allowed = true;
+        if (addQty == 1) {
+            int uSize = (p.unitSize ?? Decimal.zero).toDouble().toInt();
+            int looseUnits = (uSize > 0) ? (newQty % uSize) : newQty;
+            if (looseUnits > 5) allowed = false;
+        }
+        
+        if (allowed) {
+            selectedItems[p] = newQty;
+            currentTotal += cost;
+        }
       }
       
       if (currentTotal >= targetAmount * 0.95 && currentTotal <= targetAmount * 1.05) {
@@ -408,7 +420,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       final qty = entry.value;
       double basePrice = p.sellingPrice.toDouble();
       
-      double maxAdjust = basePrice * 0.05 * qty;
+      double maxAdjust = basePrice * 0.07 * qty;
       double adjust = 0.0;
       
       if (difference > 0 && maxAdjust > 0) {
