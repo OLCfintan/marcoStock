@@ -1511,6 +1511,528 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Order note created successfully!'**
   String get commandeCreatedSuccessfully;
+
+  /// No description provided for @changeMyPin.
+  ///
+  /// In en, this message translates to:
+  /// **'Change My PIN'**
+  String get changeMyPin;
+
+  /// No description provided for @newPinCode.
+  ///
+  /// In en, this message translates to:
+  /// **'New PIN Code'**
+  String get newPinCode;
+
+  /// No description provided for @pinUpdatedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'PIN updated successfully'**
+  String get pinUpdatedSuccessfully;
+
+  /// No description provided for @adminSecurity.
+  ///
+  /// In en, this message translates to:
+  /// **'Admin Security'**
+  String get adminSecurity;
+
+  /// No description provided for @changeAdminPin.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Admin PIN'**
+  String get changeAdminPin;
+
+  /// No description provided for @updatePersonalPin.
+  ///
+  /// In en, this message translates to:
+  /// **'Update your personal login PIN code'**
+  String get updatePersonalPin;
+
+  /// No description provided for @recycleBin.
+  ///
+  /// In en, this message translates to:
+  /// **'Recycle Bin'**
+  String get recycleBin;
+
+  /// No description provided for @exportImportSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'Export & Import System'**
+  String get exportImportSystem;
+
+  /// No description provided for @exportMarkoSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Export Marko-Save'**
+  String get exportMarkoSave;
+
+  /// No description provided for @exportFullSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'Export full system structure (DB, PDFs, Images, TXTs) to a folder.'**
+  String get exportFullSystem;
+
+  /// No description provided for @startingExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting Export... This may take a moment to generate all PDFs.'**
+  String get startingExport;
+
+  /// No description provided for @exportCompletedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Export completed successfully!'**
+  String get exportCompletedSuccessfully;
+
+  /// No description provided for @importMarkoSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Marko-Save'**
+  String get importMarkoSave;
+
+  /// No description provided for @restoreDatabaseOrBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore database (select .sqlite) or full backup (select .zip).'**
+  String get restoreDatabaseOrBackup;
+
+  /// No description provided for @confirmImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Import'**
+  String get confirmImport;
+
+  /// No description provided for @overwriteDatabaseConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'This will OVERWRITE your current database with the Marko-Save backup. Are you sure?'**
+  String get overwriteDatabaseConfirm;
+
+  /// No description provided for @yesOverwrite.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes, Overwrite'**
+  String get yesOverwrite;
+
+  /// No description provided for @importCompletedRestart.
+  ///
+  /// In en, this message translates to:
+  /// **'Import completed! Please restart the app.'**
+  String get importCompletedRestart;
+
+  /// No description provided for @importMasterData.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Master Data (TXT/CSV/PDF)'**
+  String get importMasterData;
+
+  /// No description provided for @importStrictFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Import strict format Clients, Suppliers, or Products data'**
+  String get importStrictFormat;
+
+  /// No description provided for @viewImportFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'View Import Format Instructions'**
+  String get viewImportFormat;
+
+  /// No description provided for @importFormatPrototype.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Format Prototype'**
+  String get importFormatPrototype;
+
+  /// No description provided for @importDataFormatDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Data should be plain text blocks separated by \"---\". Field names are case-insensitive. Spaces and underscores are ignored in keys.'**
+  String get importDataFormatDesc;
+
+  /// No description provided for @productTemplate.
+  ///
+  /// In en, this message translates to:
+  /// **'Product Template:'**
+  String get productTemplate;
+
+  /// No description provided for @clientTemplate.
+  ///
+  /// In en, this message translates to:
+  /// **'Client Template:'**
+  String get clientTemplate;
+
+  /// No description provided for @gotIt.
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get gotIt;
+
+  /// No description provided for @wipeDatabase.
+  ///
+  /// In en, this message translates to:
+  /// **'Wipe Database (Clear All Data)'**
+  String get wipeDatabase;
+
+  /// No description provided for @deletesAllData.
+  ///
+  /// In en, this message translates to:
+  /// **'Deletes all products, clients, stock, and history.'**
+  String get deletesAllData;
+
+  /// No description provided for @areYouAbsolutelySure.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you absolutely sure?'**
+  String get areYouAbsolutelySure;
+
+  /// No description provided for @permanentlyDeleteWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'This will permanently delete all records (Products, Clients, Stock, Invoices, etc). This cannot be undone. Are you sure you want to start fresh?'**
+  String get permanentlyDeleteWarning;
+
+  /// No description provided for @wipeEverything.
+  ///
+  /// In en, this message translates to:
+  /// **'WIPE EVERYTHING'**
+  String get wipeEverything;
+
+  /// No description provided for @wipingDatabase.
+  ///
+  /// In en, this message translates to:
+  /// **'Wiping database...'**
+  String get wipingDatabase;
+
+  /// No description provided for @databaseErasedReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Database completely erased and reset.'**
+  String get databaseErasedReset;
+
+  /// No description provided for @recycleBinAdmin.
+  ///
+  /// In en, this message translates to:
+  /// **'Recycle Bin (Admin Only)'**
+  String get recycleBinAdmin;
+
+  /// No description provided for @restoreSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore Selected'**
+  String get restoreSelected;
+
+  /// No description provided for @selectedItemsRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected items restored successfully.'**
+  String get selectedItemsRestored;
+
+  /// No description provided for @permanentlyDeleteSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanently Delete Selected'**
+  String get permanentlyDeleteSelected;
+
+  /// No description provided for @selectedItemsDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected items deleted permanently.'**
+  String get selectedItemsDeleted;
+
+  /// No description provided for @searchRecycleBin.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Recycle Bin'**
+  String get searchRecycleBin;
+
+  /// No description provided for @deletedInvoicesBons.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted Invoices & Bons'**
+  String get deletedInvoicesBons;
+
+  /// No description provided for @deletedPurchases.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted Purchases'**
+  String get deletedPurchases;
+
+  /// No description provided for @unknownSupplier.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown Supplier'**
+  String get unknownSupplier;
+
+  /// No description provided for @deletedPaymentsChecks.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted Payments & Checks'**
+  String get deletedPaymentsChecks;
+
+  /// No description provided for @restoreStr.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get restoreStr;
+
+  /// No description provided for @deletePermanentlyStr.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Permanently'**
+  String get deletePermanentlyStr;
+
+  /// No description provided for @clientStr.
+  ///
+  /// In en, this message translates to:
+  /// **'Client'**
+  String get clientStr;
+
+  /// No description provided for @supplierStr.
+  ///
+  /// In en, this message translates to:
+  /// **'Supplier'**
+  String get supplierStr;
+
+  /// No description provided for @totalStr.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get totalStr;
+
+  /// No description provided for @dhsStr.
+  ///
+  /// In en, this message translates to:
+  /// **'Dhs'**
+  String get dhsStr;
+
+  /// No description provided for @clientsManagement.
+  ///
+  /// In en, this message translates to:
+  /// **'Clients Management'**
+  String get clientsManagement;
+
+  /// No description provided for @searchClients.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Clients'**
+  String get searchClients;
+
+  /// No description provided for @selectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Select All'**
+  String get selectAll;
+
+  /// No description provided for @noClientsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No clients found.'**
+  String get noClientsFound;
+
+  /// No description provided for @noContactInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'No contact info'**
+  String get noContactInfo;
+
+  /// No description provided for @adminAccessRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Admin access required to delete.'**
+  String get adminAccessRequired;
+
+  /// No description provided for @suppliersManagement.
+  ///
+  /// In en, this message translates to:
+  /// **'Suppliers Management'**
+  String get suppliersManagement;
+
+  /// No description provided for @searchSuppliers.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Suppliers'**
+  String get searchSuppliers;
+
+  /// No description provided for @noSuppliersFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No suppliers found.'**
+  String get noSuppliersFound;
+
+  /// No description provided for @stockTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Stock Transfer'**
+  String get stockTransfer;
+
+  /// No description provided for @selectProductAndLocations.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select product and locations'**
+  String get selectProductAndLocations;
+
+  /// No description provided for @sourceDestinationSame.
+  ///
+  /// In en, this message translates to:
+  /// **'Source and destination cannot be the same'**
+  String get sourceDestinationSame;
+
+  /// No description provided for @transferSuccessful.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer successful'**
+  String get transferSuccessful;
+
+  /// No description provided for @transferFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer failed: '**
+  String get transferFailed;
+
+  /// No description provided for @sourceLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Source Location'**
+  String get sourceLocation;
+
+  /// No description provided for @destinationLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Destination Location'**
+  String get destinationLocation;
+
+  /// No description provided for @mustBeGreaterThanZero.
+  ///
+  /// In en, this message translates to:
+  /// **'Must be greater than 0'**
+  String get mustBeGreaterThanZero;
+
+  /// No description provided for @invalidNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid number'**
+  String get invalidNumber;
+
+  /// No description provided for @transferBtn.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer'**
+  String get transferBtn;
+
+  /// No description provided for @addBtn.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get addBtn;
+
+  /// No description provided for @nameOverridePdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Name (Overrides Client Name in PDF)'**
+  String get nameOverridePdf;
+
+  /// No description provided for @paymentRecordedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment recorded successfully!'**
+  String get paymentRecordedSuccessfully;
+
+  /// No description provided for @totalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Total: '**
+  String get totalLabel;
+
+  /// No description provided for @paidLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid: '**
+  String get paidLabel;
+
+  /// No description provided for @remainingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Remaining: '**
+  String get remainingLabel;
+
+  /// No description provided for @paymentAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Amount'**
+  String get paymentAmount;
+
+  /// No description provided for @setToFullRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'Set to full remaining'**
+  String get setToFullRemaining;
+
+  /// No description provided for @paymentMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Method'**
+  String get paymentMethod;
+
+  /// No description provided for @recordBtn.
+  ///
+  /// In en, this message translates to:
+  /// **'Record'**
+  String get recordBtn;
+
+  /// No description provided for @paymentsRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments Record'**
+  String get paymentsRecord;
+
+  /// No description provided for @noPaymentsRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'No payments recorded.'**
+  String get noPaymentsRecorded;
+
+  /// No description provided for @viewCheckImage.
+  ///
+  /// In en, this message translates to:
+  /// **'View Check Image'**
+  String get viewCheckImage;
+
+  /// No description provided for @close.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close;
+
+  /// No description provided for @deletePayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Payment'**
+  String get deletePayment;
+
+  /// No description provided for @deletePaymentConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Payment?'**
+  String get deletePaymentConfirm;
+
+  /// No description provided for @deletePaymentDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'This will algebraically reverse the payment.'**
+  String get deletePaymentDesc;
+
+  /// No description provided for @deletedStr.
+  ///
+  /// In en, this message translates to:
+  /// **'DELETED'**
+  String get deletedStr;
+
+  /// No description provided for @productLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Product'**
+  String get productLabel;
 }
 
 class _AppLocalizationsDelegate

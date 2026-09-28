@@ -30,7 +30,7 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Suppliers Management'),
+        title: Text(AppLocalizations.of(context)!.suppliersManagement),
         actions: [
           IconButton(
             icon: const Icon(Icons.delete),
@@ -69,7 +69,7 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
                 padding: const EdgeInsets.all(8.0),
                 child: TextField(
                   decoration: const InputDecoration(
-                    labelText: 'Search Suppliers',
+                    labelText: AppLocalizations.of(context)!.searchSuppliers,
                     prefixIcon: Icon(Icons.search),
                     border: OutlineInputBorder(),
                   ),
@@ -96,12 +96,12 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
                         });
                       },
                     ),
-                    const Text('Select All'),
+                    Text(AppLocalizations.of(context)!.selectAll),
                   ],
                 ),
               ),
               if (suppliers.isEmpty)
-                const Expanded(child: Center(child: Text('No suppliers found.')))
+                Expanded(child: Center(child: Text(AppLocalizations.of(context)!.noSuppliersFound)))
               else
                 Expanded(
                   child: ListView.builder(
@@ -137,7 +137,7 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
                           ],
                         ),
                         title: Text(supplier.name),
-                        subtitle: Text(supplier.phone ?? supplier.email ?? supplier.contactDetails ?? 'No contact info'),
+                        subtitle: Text(supplier.phone ?? supplier.email ?? supplier.contactDetails ?? AppLocalizations.of(context)!.noContactInfo),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -163,7 +163,7 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
                                     if (ref.read(currentUserProvider)?.role == 'ADMIN') {
                                       ref.read(supplierRepositoryProvider).deleteSupplier(supplier.id);
                                     } else {
-                                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Admin access required to delete.')));
+                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.adminAccessRequired)));
                                     }
                                   }
                                 },

@@ -247,7 +247,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     final total = _activeSession.cart.fold(Decimal.zero, (sum, line) => sum + ((line.quantity * line.unitPrice) - line.discount));
     final paidAmount = paymentRequests.fold(Decimal.zero, (sum, p) => sum + p.amount);
     
-    if (paidAmount > total && _activeSession.selectedDocumentType != 'COMMANDE') {
+    if (paidAmount > total && _activeSession.selectedDocumentType != 'COMMANDE' && _activeSession.selectedDocumentType != 'FACTURE') {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.paymentExceedsTotal)));
       return;
     }
@@ -738,95 +738,97 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                       const Divider(height: 24),
                       
                       // Payments List
-                      ..._activeSession.payments.asMap().entries.map((entry) {
-                        final idx = entry.key;
-                        final p = entry.value;
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.surface,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Column(
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    flex: 2,
-                                    child: DropdownButtonFormField<String>(
-                                      value: p.method,
-                                      isExpanded: true,
-                                      decoration: const InputDecoration(
-                                        labelText: 'Method',
-                                        border: InputBorder.none,
+                      if (_activeSession.selectedDocumentType != 'COMMANDE' && _activeSession.selectedDocumentType != 'FACTURE') ...[
+                        ..._activeSession.payments.asMap().entries.map((entry) {
+                          final idx = entry.key;
+                          final p = entry.value;
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.surface,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      flex: 2,
+                                      child: DropdownButtonFormField<String>(
+                                        value: p.method,
+                                        isExpanded: true,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Method',
+                                          border: InputBorder.none,
+                                        ),
+                                        items: [
+                                          DropdownMenuItem(value: 'CASH', child: Text(AppLocalizations.of(context)!.cash.toUpperCase())),
+                                          DropdownMenuItem(value: 'CHECK', child: Text(AppLocalizations.of(context)!.check.toUpperCase())),
+                                        ],
+                                        onChanged: (val) {
+                                          setState(() {
+                                            p.method = val!;
+                                            if (val == 'CREDIT') {
+                                              p.amountController.text = '0';
+                                            } else if (p.amountController.text.isEmpty || p.amountController.text == '0') {
+                                              p.amountController.text = _remainingBalance.toStringAsFixed(2);
+                                            }
+                                          });
+                                        },
                                       ),
-                                      items: [
-                                        DropdownMenuItem(value: 'CASH', child: Text(AppLocalizations.of(context)!.cash.toUpperCase())),
-                                        DropdownMenuItem(value: 'CHECK', child: Text(AppLocalizations.of(context)!.check.toUpperCase())),
-                                      ],
-                                      onChanged: (val) {
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      flex: 3,
+                                      child: TextField(
+                                        controller: p.amountController,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Amount',
+                                          prefixIcon: Icon(Icons.attach_money, size: 16),
+                                          border: InputBorder.none,
+                                        ),
+                                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                        onChanged: (val) => setState(() {}),
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete, color: Colors.red),
+                                      onPressed: () {
                                         setState(() {
-                                          p.method = val!;
-                                          if (val == 'CREDIT') {
-                                            p.amountController.text = '0';
-                                          } else if (p.amountController.text.isEmpty || p.amountController.text == '0') {
-                                            p.amountController.text = _remainingBalance.toStringAsFixed(2);
-                                          }
+                                          p.amountController.dispose();
+                                          _activeSession.payments.removeAt(idx);
                                         });
                                       },
                                     ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    flex: 3,
-                                    child: TextField(
-                                      controller: p.amountController,
-                                      decoration: const InputDecoration(
-                                        labelText: 'Amount',
-                                        prefixIcon: Icon(Icons.attach_money, size: 16),
-                                        border: InputBorder.none,
-                                      ),
-                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                      onChanged: (val) => setState(() {}),
-                                    ),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.delete, color: Colors.red),
-                                    onPressed: () {
-                                      setState(() {
-                                        p.amountController.dispose();
-                                        _activeSession.payments.removeAt(idx);
-                                      });
-                                    },
+                                  ],
+                                ),
+                                if (p.method == 'CHECK') ...[
+                                  const SizedBox(height: 8),
+                                  ImagePickerField(
+                                    label: AppLocalizations.of(context)!.checkImage,
+                                    initialValue: p.checkImagePath,
+                                    onChanged: (path) => setState(() => p.checkImagePath = path),
                                   ),
                                 ],
-                              ),
-                              if (p.method == 'CHECK') ...[
-                                const SizedBox(height: 8),
-                                ImagePickerField(
-                                  label: AppLocalizations.of(context)!.checkImage,
-                                  initialValue: p.checkImagePath,
-                                  onChanged: (path) => setState(() => p.checkImagePath = path),
-                                ),
                               ],
-                            ],
-                          ),
-                        );
-                      }),
-                      
-                      TextButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            _activeSession.payments.add(_PaymentEntry(
-                              method: 'CASH',
-                              initialAmount: _remainingBalance > Decimal.zero ? _remainingBalance.toStringAsFixed(2) : '',
-                            ));
-                          });
-                        },
-                        icon: const Icon(Icons.add),
-                        label: Text(AppLocalizations.of(context)!.addPaymentMethod),
-                      ),
+                            ),
+                          );
+                        }),
+                        
+                        TextButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              _activeSession.payments.add(_PaymentEntry(
+                                method: 'CASH',
+                                initialAmount: _remainingBalance > Decimal.zero ? _remainingBalance.toStringAsFixed(2) : '',
+                              ));
+                            });
+                          },
+                          icon: const Icon(Icons.add),
+                          label: Text(AppLocalizations.of(context)!.addPaymentMethod),
+                        ),
+                      ],
                       
                       const SizedBox(height: 16),
                       SizedBox(

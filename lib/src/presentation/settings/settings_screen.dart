@@ -32,15 +32,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Change My PIN'),
+        title: Text(AppLocalizations.of(context)!.changeMyPin),
         content: TextFormField(
           controller: newPinController,
-          decoration: const InputDecoration(labelText: 'New PIN Code'),
+          decoration: InputDecoration(labelText: AppLocalizations.of(context)!.newPinCode),
           keyboardType: TextInputType.number,
           obscureText: true,
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocalizations.of(context)!.cancelStr)),
           TextButton(
             onPressed: () async {
               final newPin = newPinController.text.trim();
@@ -54,12 +54,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ));
                   if (context.mounted) {
                     Navigator.pop(ctx);
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('PIN updated successfully')));
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.pinUpdatedSuccessfully)));
                   }
                 }
               }
             },
-            child: const Text('Save'),
+            child: Text(AppLocalizations.of(context)!.saveStr),
           ),
         ],
       ),
@@ -92,12 +92,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           if (ref.watch(currentUserProvider)?.role == 'ADMIN') ...[
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Text('Admin Security', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+              child: Text(AppLocalizations.of(context)!.adminSecurity, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey)),
             ),
             ListTile(
               leading: const Icon(Icons.password),
-              title: const Text('Change Admin PIN'),
-              subtitle: const Text('Update your personal login PIN code'),
+              title: Text(AppLocalizations.of(context)!.changeAdminPin),
+              subtitle: Text(AppLocalizations.of(context)!.updatePersonalPin),
               onTap: () {
                 _showChangePinDialog(context, ref);
               },
@@ -126,7 +126,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           if (ref.watch(currentUserProvider)?.role == 'ADMIN')
             ListTile(
               leading: const Icon(Icons.delete_outline, color: Colors.red),
-              title: const Text('Recycle Bin', style: TextStyle(color: Colors.red)),
+              title: Text(AppLocalizations.of(context)!.recycleBin, style: const TextStyle(color: Colors.red)),
               trailing: const Icon(Icons.arrow_forward_ios),
               onTap: () => context.push('/garbage'),
             ),
@@ -203,36 +203,36 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const Divider(),
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: const Text('Export & Import System', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo)),
+            child: Text(AppLocalizations.of(context)!.exportImportSystem, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo)),
           ),
           ListTile(
             leading: const Icon(Icons.outbox, color: Colors.blue),
-            title: const Text('Export Marko-Save'),
-            subtitle: const Text('Export full system structure (DB, PDFs, Images, TXTs) to a folder.'),
+            title: Text(AppLocalizations.of(context)!.exportMarkoSave),
+            subtitle: Text(AppLocalizations.of(context)!.exportFullSystem),
             onTap: () async {
               try {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Starting Export... This may take a moment to generate all PDFs.')));
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.startingExport)));
                 await ref.read(backupServiceProvider).exportData();
-                if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Export completed successfully!')));
+                if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.exportCompletedSuccessfully)));
               } catch (e) {
-                if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${AppLocalizations.of(context)!.errorStr} $e')));
               }
             },
           ),
           ListTile(
             leading: const Icon(Icons.move_to_inbox, color: Colors.green),
-            title: const Text('Import Marko-Save'),
-            subtitle: const Text('Restore database (select .sqlite) or full backup (select .zip).'),
+            title: Text(AppLocalizations.of(context)!.importMarkoSave),
+            subtitle: Text(AppLocalizations.of(context)!.restoreDatabaseOrBackup),
             onTap: () async {
               try {
                 final confirm = await showDialog<bool>(
                   context: context,
                   builder: (ctx) => AlertDialog(
-                    title: const Text('Confirm Import'),
-                    content: const Text('This will OVERWRITE your current database with the Marko-Save backup. Are you sure?'),
+                    title: Text(AppLocalizations.of(context)!.confirmImport),
+                    content: Text(AppLocalizations.of(context)!.overwriteDatabaseConfirm),
                     actions: [
-                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-                      ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Yes, Overwrite')),
+                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.of(context)!.cancelStr)),
+                      ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: Text(AppLocalizations.of(context)!.yesOverwrite)),
                     ],
                   ),
                 );
@@ -240,34 +240,34 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 if (confirm == true) {
                   await ref.read(backupServiceProvider).importData();
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Import completed! Please restart the app.')));
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.importCompletedRestart)));
                   }
                 }
               } catch (e) {
-                if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${AppLocalizations.of(context)!.errorStr} $e')));
               }
             },
           ),
           const Divider(),
           ListTile(
             leading: const Icon(Icons.file_upload, color: Colors.blue),
-            title: const Text('Import Master Data (TXT/CSV/PDF)'),
-            subtitle: const Text('Import strict format Clients, Suppliers, or Products data'),
+            title: Text(AppLocalizations.of(context)!.importMasterData),
+            subtitle: Text(AppLocalizations.of(context)!.importStrictFormat),
             trailing: IconButton(
               icon: const Icon(Icons.info_outline, color: Colors.blueGrey),
-              tooltip: 'View Import Format Instructions',
+              tooltip: AppLocalizations.of(context)!.viewImportFormat,
               onPressed: () {
                 showDialog(
                   context: context,
                   builder: (context) => AlertDialog(
-                    title: const Text('Import Format Prototype'),
+                    title: Text(AppLocalizations.of(context)!.importFormatPrototype),
                     content: SingleChildScrollView(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Data should be plain text blocks separated by "---". Field names are case-insensitive. Spaces and underscores are ignored in keys.', style: TextStyle(fontStyle: FontStyle.italic)),
+                          Text(AppLocalizations.of(context)!.importDataFormatDesc, style: const TextStyle(fontStyle: FontStyle.italic)),
                           const SizedBox(height: 16),
-                          const Text('Product Template:', style: TextStyle(fontWeight: FontWeight.bold)),
+                          Text(AppLocalizations.of(context)!.productTemplate, style: const TextStyle(fontWeight: FontWeight.bold)),
                           Container(
                             padding: const EdgeInsets.all(8),
                             
@@ -292,7 +292,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 '---'),
                           ),
                           const SizedBox(height: 16),
-                          const Text('Client Template:', style: TextStyle(fontWeight: FontWeight.bold)),
+                          Text(AppLocalizations.of(context)!.clientTemplate, style: const TextStyle(fontWeight: FontWeight.bold)),
                           Container(
                             padding: const EdgeInsets.all(8),
                             
@@ -302,7 +302,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ),
                     ),
                     actions: [
-                      TextButton(onPressed: () => Navigator.pop(context), child: const Text('Got it')),
+                      TextButton(onPressed: () => Navigator.pop(context), child: Text(AppLocalizations.of(context)!.gotIt)),
                     ],
                   ),
                 );
@@ -318,30 +318,30 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const Divider(),
           ListTile(
             leading: const Icon(Icons.delete_forever, color: Colors.red),
-            title: Text('Wipe Database (Clear All Data)', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-            subtitle: const Text('Deletes all products, clients, stock, and history.'),
+            title: Text(AppLocalizations.of(context)!.wipeDatabase, style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+            subtitle: Text(AppLocalizations.of(context)!.deletesAllData),
             onTap: () async {
               final confirm = await showDialog<bool>(
                 context: context,
                 builder: (ctx) => AlertDialog(
-                  title: const Text('Are you absolutely sure?', style: TextStyle(color: Colors.red)),
-                  content: const Text('This will permanently delete all records (Products, Clients, Stock, Invoices, etc). This cannot be undone. Are you sure you want to start fresh?'),
+                  title: Text(AppLocalizations.of(context)!.areYouAbsolutelySure, style: const TextStyle(color: Colors.red)),
+                  content: Text(AppLocalizations.of(context)!.permanentlyDeleteWarning),
                   actions: [
-                    TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                    TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.of(context)!.cancelStr)),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                       onPressed: () => Navigator.pop(ctx, true), 
-                      child: const Text('WIPE EVERYTHING', style: TextStyle(color: Colors.white))
+                      child: Text(AppLocalizations.of(context)!.wipeEverything, style: const TextStyle(color: Colors.white))
                     ),
                   ],
                 )
               );
               
               if (confirm == true && context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Wiping database...')));
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.wipingDatabase)));
                 await ref.read(databaseProvider).clearAllData();
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Database completely erased and reset.')));
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.databaseErasedReset)));
                 }
               }
             },

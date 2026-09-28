@@ -720,4 +720,276 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get commandeCreatedSuccessfully => 'Order note created successfully!';
+
+  @override
+  String get changeMyPin => 'Change My PIN';
+
+  @override
+  String get newPinCode => 'New PIN Code';
+
+  @override
+  String get pinUpdatedSuccessfully => 'PIN updated successfully';
+
+  @override
+  String get adminSecurity => 'Admin Security';
+
+  @override
+  String get changeAdminPin => 'Change Admin PIN';
+
+  @override
+  String get updatePersonalPin => 'Update your personal login PIN code';
+
+  @override
+  String get recycleBin => 'Recycle Bin';
+
+  @override
+  String get exportImportSystem => 'Export & Import System';
+
+  @override
+  String get exportMarkoSave => 'Export Marko-Save';
+
+  @override
+  String get exportFullSystem =>
+      'Export full system structure (DB, PDFs, Images, TXTs) to a folder.';
+
+  @override
+  String get startingExport =>
+      'Starting Export... This may take a moment to generate all PDFs.';
+
+  @override
+  String get exportCompletedSuccessfully => 'Export completed successfully!';
+
+  @override
+  String get importMarkoSave => 'Import Marko-Save';
+
+  @override
+  String get restoreDatabaseOrBackup =>
+      'Restore database (select .sqlite) or full backup (select .zip).';
+
+  @override
+  String get confirmImport => 'Confirm Import';
+
+  @override
+  String get overwriteDatabaseConfirm =>
+      'This will OVERWRITE your current database with the Marko-Save backup. Are you sure?';
+
+  @override
+  String get yesOverwrite => 'Yes, Overwrite';
+
+  @override
+  String get importCompletedRestart =>
+      'Import completed! Please restart the app.';
+
+  @override
+  String get importMasterData => 'Import Master Data (TXT/CSV/PDF)';
+
+  @override
+  String get importStrictFormat =>
+      'Import strict format Clients, Suppliers, or Products data';
+
+  @override
+  String get viewImportFormat => 'View Import Format Instructions';
+
+  @override
+  String get importFormatPrototype => 'Import Format Prototype';
+
+  @override
+  String get importDataFormatDesc =>
+      'Data should be plain text blocks separated by \"---\". Field names are case-insensitive. Spaces and underscores are ignored in keys.';
+
+  @override
+  String get productTemplate => 'Product Template:';
+
+  @override
+  String get clientTemplate => 'Client Template:';
+
+  @override
+  String get gotIt => 'Got it';
+
+  @override
+  String get wipeDatabase => 'Wipe Database (Clear All Data)';
+
+  @override
+  String get deletesAllData =>
+      'Deletes all products, clients, stock, and history.';
+
+  @override
+  String get areYouAbsolutelySure => 'Are you absolutely sure?';
+
+  @override
+  String get permanentlyDeleteWarning =>
+      'This will permanently delete all records (Products, Clients, Stock, Invoices, etc). This cannot be undone. Are you sure you want to start fresh?';
+
+  @override
+  String get wipeEverything => 'WIPE EVERYTHING';
+
+  @override
+  String get wipingDatabase => 'Wiping database...';
+
+  @override
+  String get databaseErasedReset => 'Database completely erased and reset.';
+
+  @override
+  String get recycleBinAdmin => 'Recycle Bin (Admin Only)';
+
+  @override
+  String get restoreSelected => 'Restore Selected';
+
+  @override
+  String get selectedItemsRestored => 'Selected items restored successfully.';
+
+  @override
+  String get permanentlyDeleteSelected => 'Permanently Delete Selected';
+
+  @override
+  String get selectedItemsDeleted => 'Selected items deleted permanently.';
+
+  @override
+  String get searchRecycleBin => 'Search Recycle Bin';
+
+  @override
+  String get deletedInvoicesBons => 'Deleted Invoices & Bons';
+
+  @override
+  String get deletedPurchases => 'Deleted Purchases';
+
+  @override
+  String get unknownSupplier => 'Unknown Supplier';
+
+  @override
+  String get deletedPaymentsChecks => 'Deleted Payments & Checks';
+
+  @override
+  String get restoreStr => 'Restore';
+
+  @override
+  String get deletePermanentlyStr => 'Delete Permanently';
+
+  @override
+  String get clientStr => 'Client';
+
+  @override
+  String get supplierStr => 'Supplier';
+
+  @override
+  String get totalStr => 'Total';
+
+  @override
+  String get dhsStr => 'Dhs';
+
+  @override
+  String get clientsManagement => 'Clients Management';
+
+  @override
+  String get searchClients => 'Search Clients';
+
+  @override
+  String get selectAll => 'Select All';
+
+  @override
+  String get noClientsFound => 'No clients found.';
+
+  @override
+  String get noContactInfo => 'No contact info';
+
+  @override
+  String get adminAccessRequired => 'Admin access required to delete.';
+
+  @override
+  String get suppliersManagement => 'Suppliers Management';
+
+  @override
+  String get searchSuppliers => 'Search Suppliers';
+
+  @override
+  String get noSuppliersFound => 'No suppliers found.';
+
+  @override
+  String get stockTransfer => 'Stock Transfer';
+
+  @override
+  String get selectProductAndLocations => 'Please select product and locations';
+
+  @override
+  String get sourceDestinationSame =>
+      'Source and destination cannot be the same';
+
+  @override
+  String get transferSuccessful => 'Transfer successful';
+
+  @override
+  String get transferFailed => 'Transfer failed: ';
+
+  @override
+  String get sourceLocation => 'Source Location';
+
+  @override
+  String get destinationLocation => 'Destination Location';
+
+  @override
+  String get mustBeGreaterThanZero => 'Must be greater than 0';
+
+  @override
+  String get invalidNumber => 'Invalid number';
+
+  @override
+  String get transferBtn => 'Transfer';
+
+  @override
+  String get addBtn => 'Add';
+
+  @override
+  String get nameOverridePdf => 'Name (Overrides Client Name in PDF)';
+
+  @override
+  String get paymentRecordedSuccessfully => 'Payment recorded successfully!';
+
+  @override
+  String get totalLabel => 'Total: ';
+
+  @override
+  String get paidLabel => 'Paid: ';
+
+  @override
+  String get remainingLabel => 'Remaining: ';
+
+  @override
+  String get paymentAmount => 'Payment Amount';
+
+  @override
+  String get setToFullRemaining => 'Set to full remaining';
+
+  @override
+  String get paymentMethod => 'Payment Method';
+
+  @override
+  String get recordBtn => 'Record';
+
+  @override
+  String get paymentsRecord => 'Payments Record';
+
+  @override
+  String get noPaymentsRecorded => 'No payments recorded.';
+
+  @override
+  String get viewCheckImage => 'View Check Image';
+
+  @override
+  String get close => 'Close';
+
+  @override
+  String get deletePayment => 'Delete Payment';
+
+  @override
+  String get deletePaymentConfirm => 'Delete Payment?';
+
+  @override
+  String get deletePaymentDesc =>
+      'This will algebraically reverse the payment.';
+
+  @override
+  String get deletedStr => 'DELETED';
+
+  @override
+  String get productLabel => 'Product';
 }

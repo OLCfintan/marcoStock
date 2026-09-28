@@ -30,7 +30,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Clients Management'),
+        title: Text(AppLocalizations.of(context)!.clientsManagement),
         actions: [
           IconButton(
             icon: const Icon(Icons.delete),
@@ -69,7 +69,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                 padding: const EdgeInsets.all(8.0),
                 child: TextField(
                   decoration: const InputDecoration(
-                    labelText: 'Search Clients',
+                    labelText: AppLocalizations.of(context)!.searchClients,
                     prefixIcon: Icon(Icons.search),
                     border: OutlineInputBorder(),
                   ),
@@ -96,12 +96,12 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                         });
                       },
                     ),
-                    const Text('Select All'),
+                    Text(AppLocalizations.of(context)!.selectAll),
                   ],
                 ),
               ),
               if (clients.isEmpty)
-                const Expanded(child: Center(child: Text('No clients found.')))
+                Expanded(child: Center(child: Text(AppLocalizations.of(context)!.noClientsFound)))
               else
                 Expanded(
                   child: ListView.builder(
@@ -137,7 +137,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                           ],
                         ),
                         title: Text(client.name),
-                        subtitle: Text(client.phone ?? client.email ?? client.contactDetails ?? 'No contact info'),
+                        subtitle: Text(client.phone ?? client.email ?? client.contactDetails ?? AppLocalizations.of(context)!.noContactInfo),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -163,7 +163,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                                     if (ref.read(currentUserProvider)?.role == 'ADMIN') {
                                       ref.read(clientRepositoryProvider).deleteClient(client.id);
                                     } else {
-                                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Admin access required to delete.')));
+                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.adminAccessRequired)));
                                     }
                                   }
                                 },

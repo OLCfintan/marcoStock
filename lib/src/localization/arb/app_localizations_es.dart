@@ -724,4 +724,283 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get commandeCreatedSuccessfully => '¡Nota de pedido creada con éxito!';
+
+  @override
+  String get changeMyPin => 'Cambiar mi PIN';
+
+  @override
+  String get newPinCode => 'Nuevo código PIN';
+
+  @override
+  String get pinUpdatedSuccessfully => 'PIN actualizado con éxito';
+
+  @override
+  String get adminSecurity => 'Seguridad de Administrador';
+
+  @override
+  String get changeAdminPin => 'Cambiar PIN de Administrador';
+
+  @override
+  String get updatePersonalPin =>
+      'Actualizar tu código PIN de inicio de sesión personal';
+
+  @override
+  String get recycleBin => 'Papelera de reciclaje';
+
+  @override
+  String get exportImportSystem => 'Sistema de Exportación e Importación';
+
+  @override
+  String get exportMarkoSave => 'Exportar Marko-Save';
+
+  @override
+  String get exportFullSystem =>
+      'Exportar estructura completa del sistema (BD, PDFs, Imágenes, TXTs) a una carpeta.';
+
+  @override
+  String get startingExport =>
+      'Iniciando exportación... Esto puede tardar un momento en generar todos los PDFs.';
+
+  @override
+  String get exportCompletedSuccessfully =>
+      '¡Exportación completada con éxito!';
+
+  @override
+  String get importMarkoSave => 'Importar Marko-Save';
+
+  @override
+  String get restoreDatabaseOrBackup =>
+      'Restaurar base de datos (seleccione .sqlite) o copia de seguridad completa (seleccione .zip).';
+
+  @override
+  String get confirmImport => 'Confirmar Importación';
+
+  @override
+  String get overwriteDatabaseConfirm =>
+      'Esto SOBRESCRIBIRÁ su base de datos actual con la copia de seguridad Marko-Save. ¿Está seguro?';
+
+  @override
+  String get yesOverwrite => 'Sí, Sobrescribir';
+
+  @override
+  String get importCompletedRestart =>
+      '¡Importación completada! Por favor, reinicie la aplicación.';
+
+  @override
+  String get importMasterData => 'Importar Datos Maestros (TXT/CSV/PDF)';
+
+  @override
+  String get importStrictFormat =>
+      'Importar datos de Clientes, Proveedores o Productos con formato estricto';
+
+  @override
+  String get viewImportFormat => 'Ver Instrucciones de Formato de Importación';
+
+  @override
+  String get importFormatPrototype => 'Prototipo de Formato de Importación';
+
+  @override
+  String get importDataFormatDesc =>
+      'Los datos deben ser bloques de texto plano separados por \"---\". Los nombres de los campos no distinguen entre mayúsculas y minúsculas. Los espacios y los guiones bajos se ignoran en las claves.';
+
+  @override
+  String get productTemplate => 'Plantilla de Producto:';
+
+  @override
+  String get clientTemplate => 'Plantilla de Cliente:';
+
+  @override
+  String get gotIt => 'Entendido';
+
+  @override
+  String get wipeDatabase => 'Borrar Base de Datos (Borrar todos los datos)';
+
+  @override
+  String get deletesAllData =>
+      'Elimina todos los productos, clientes, existencias e historial.';
+
+  @override
+  String get areYouAbsolutelySure => '¿Está absolutamente seguro?';
+
+  @override
+  String get permanentlyDeleteWarning =>
+      'Esto eliminará permanentemente todos los registros (Productos, Clientes, Stock, Facturas, etc.). Esto no se puede deshacer. ¿Está seguro de que desea comenzar de nuevo?';
+
+  @override
+  String get wipeEverything => 'BORRAR TODO';
+
+  @override
+  String get wipingDatabase => 'Borrando base de datos...';
+
+  @override
+  String get databaseErasedReset =>
+      'Base de datos completamente borrada y restablecida.';
+
+  @override
+  String get recycleBinAdmin => 'Papelera de reciclaje (Solo Administrador)';
+
+  @override
+  String get restoreSelected => 'Restaurar selección';
+
+  @override
+  String get selectedItemsRestored =>
+      'Elementos seleccionados restaurados con éxito.';
+
+  @override
+  String get permanentlyDeleteSelected => 'Eliminar selección permanentemente';
+
+  @override
+  String get selectedItemsDeleted =>
+      'Elementos seleccionados eliminados permanentemente.';
+
+  @override
+  String get searchRecycleBin => 'Buscar en la papelera';
+
+  @override
+  String get deletedInvoicesBons => 'Facturas y Bonos eliminados';
+
+  @override
+  String get deletedPurchases => 'Compras eliminadas';
+
+  @override
+  String get unknownSupplier => 'Proveedor desconocido';
+
+  @override
+  String get deletedPaymentsChecks => 'Pagos y Cheques eliminados';
+
+  @override
+  String get restoreStr => 'Restaurar';
+
+  @override
+  String get deletePermanentlyStr => 'Eliminar permanentemente';
+
+  @override
+  String get clientStr => 'Cliente';
+
+  @override
+  String get supplierStr => 'Proveedor';
+
+  @override
+  String get totalStr => 'Total';
+
+  @override
+  String get dhsStr => 'Dhs';
+
+  @override
+  String get clientsManagement => 'Gestión de clientes';
+
+  @override
+  String get searchClients => 'Buscar clientes';
+
+  @override
+  String get selectAll => 'Seleccionar todo';
+
+  @override
+  String get noClientsFound => 'No se encontraron clientes.';
+
+  @override
+  String get noContactInfo => 'Sin información de contacto';
+
+  @override
+  String get adminAccessRequired =>
+      'Se requiere acceso de administrador para eliminar.';
+
+  @override
+  String get suppliersManagement => 'Gestión de proveedores';
+
+  @override
+  String get searchSuppliers => 'Buscar proveedores';
+
+  @override
+  String get noSuppliersFound => 'No se encontraron proveedores.';
+
+  @override
+  String get stockTransfer => 'Transferencia de stock';
+
+  @override
+  String get selectProductAndLocations =>
+      'Seleccione el producto y las ubicaciones';
+
+  @override
+  String get sourceDestinationSame =>
+      'El origen y el destino no pueden ser los mismos';
+
+  @override
+  String get transferSuccessful => 'Transferencia exitosa';
+
+  @override
+  String get transferFailed => 'Fallo en la transferencia: ';
+
+  @override
+  String get sourceLocation => 'Ubicación de origen';
+
+  @override
+  String get destinationLocation => 'Ubicación de destino';
+
+  @override
+  String get mustBeGreaterThanZero => 'Debe ser mayor que 0';
+
+  @override
+  String get invalidNumber => 'Número inválido';
+
+  @override
+  String get transferBtn => 'Transferir';
+
+  @override
+  String get addBtn => 'Añadir';
+
+  @override
+  String get nameOverridePdf =>
+      'Nombre (Anula el nombre del cliente en el PDF)';
+
+  @override
+  String get paymentRecordedSuccessfully => '¡Pago registrado con éxito!';
+
+  @override
+  String get totalLabel => 'Total: ';
+
+  @override
+  String get paidLabel => 'Pagado: ';
+
+  @override
+  String get remainingLabel => 'Restante: ';
+
+  @override
+  String get paymentAmount => 'Monto del pago';
+
+  @override
+  String get setToFullRemaining => 'Establecer al total restante';
+
+  @override
+  String get paymentMethod => 'Método de pago';
+
+  @override
+  String get recordBtn => 'Registrar';
+
+  @override
+  String get paymentsRecord => 'Registro de pagos';
+
+  @override
+  String get noPaymentsRecorded => 'No hay pagos registrados.';
+
+  @override
+  String get viewCheckImage => 'Ver imagen del cheque';
+
+  @override
+  String get close => 'Cerrar';
+
+  @override
+  String get deletePayment => 'Eliminar pago';
+
+  @override
+  String get deletePaymentConfirm => '¿Eliminar pago?';
+
+  @override
+  String get deletePaymentDesc => 'Esto revertirá algebraicamente el pago.';
+
+  @override
+  String get deletedStr => 'ELIMINADO';
+
+  @override
+  String get productLabel => 'Producto';
 }

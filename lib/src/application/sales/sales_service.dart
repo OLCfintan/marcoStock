@@ -140,6 +140,8 @@ class SalesService {
       Decimal subtotal = Decimal.zero;
       
       // 2. Create Invoice Lines & Compute Totals
+      bool isDummyDoc = request.documentType == 'COMMANDE' || request.documentType == 'FACTURE' || request.documentType == 'FACTURE_DUMMY';
+
       for (final line in request.lines) {
         final lineId = _uuid.v4();
         final lineTotal = (line.quantity * line.unitPrice) - line.discount;
@@ -155,7 +157,7 @@ class SalesService {
           lineTotal: lineTotal,
         ));
         
-        if (request.documentType != 'COMMANDE') {
+        if (!isDummyDoc) {
           // 3. Handle Stock Deduction
           await _deductStock(
             productId: line.productId, 
@@ -192,7 +194,7 @@ class SalesService {
       final total = subtotal + taxes;
       Decimal paidAmount = Decimal.zero;
       
-      if (request.documentType != 'COMMANDE') {
+      if (!isDummyDoc) {
         for (final p in request.payments) {
           if (p.method != 'CREDIT') {
             paidAmount += p.amount;
@@ -200,12 +202,12 @@ class SalesService {
         }
       }
       
-      final status = request.documentType == 'COMMANDE' 
+      final status = isDummyDoc
           ? 'PENDING' 
           : (paidAmount >= total ? 'PAID' : (paidAmount > Decimal.zero ? 'PARTIAL' : 'UNPAID'));
       
       // 5. Update Client Balance (Debt)
-      if (request.documentType != 'COMMANDE') {
+      if (!isDummyDoc) {
         final debt = total - paidAmount;
         if (debt > Decimal.zero && client != null && client.type != 'TEMP') {
           final newBalance = client.balance + debt;
@@ -232,7 +234,7 @@ class SalesService {
       ));
       
       // 7. Create Payments
-      if (request.documentType != 'COMMANDE') {
+      if (!isDummyDoc) {
         for (final p in request.payments) {
           if (p.amount > Decimal.zero || p.method == 'CREDIT') {
             await _db.into(_db.payments).insert(PaymentsCompanion.insert(
@@ -283,7 +285,7 @@ class SalesService {
       }
       final locationId = (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL' || client?.id == 'MAGAZIN_01') ? AppLocations.baseWarehouse : AppLocations.magazin;
 
-      if (invoice.documentType != 'COMMANDE' && invoice.documentType != 'FACTURE_DUMMY') {
+      if (invoice.documentType != 'COMMANDE' && invoice.documentType != 'FACTURE_DUMMY' && invoice.documentType != 'FACTURE') {
         for (final line in lines) {
           // Reverse Stock Deduction
           await _restoreStock(
@@ -345,7 +347,7 @@ class SalesService {
       }
       final locationId = (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL' || client?.id == 'MAGAZIN_01') ? AppLocations.baseWarehouse : AppLocations.magazin;
 
-      if (invoice.documentType != 'COMMANDE' && invoice.documentType != 'FACTURE_DUMMY') {
+      if (invoice.documentType != 'COMMANDE' && invoice.documentType != 'FACTURE_DUMMY' && invoice.documentType != 'FACTURE') {
         for (final line in lines) {
           // Re-apply Stock Deduction
           await _deductStock(

@@ -33,14 +33,14 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedProductId == null || _fromLocationId == null || _toLocationId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select product and locations')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.selectProductAndLocations)),
       );
       return;
     }
 
     if (_fromLocationId == _toLocationId) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Source and destination cannot be the same')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.sourceDestinationSame)),
       );
       return;
     }
@@ -64,14 +64,14 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Transfer successful')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.transferSuccessful)),
         );
         Navigator.of(context).pop();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Transfer failed: $e')),
+          SnackBar(content: Text('${AppLocalizations.of(context)!.transferFailed}$e')),
         );
       }
     } finally {
@@ -87,7 +87,7 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
     final locationsAsync = ref.watch(stockLocationsStreamProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Stock Transfer')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.stockTransfer)),
       body: productsAsync.when(
         loading: () => const Center(child: const LogoLoader()),
         error: (e, st) => Center(child: Text('${(AppLocalizations.of(context)?.errorStr ?? 'Error: ')}$e')),
@@ -103,7 +103,7 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                   children: [
                     DropdownButtonFormField<String>(
                       value: _selectedProductId,
-                      decoration: const InputDecoration(labelText: 'Product'),
+                      decoration: InputDecoration(labelText: AppLocalizations.of(context)!.productLabel),
                       items: products.map((p) {
                         return DropdownMenuItem(
                           value: p.id,
@@ -116,7 +116,7 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
                       value: _fromLocationId,
-                      decoration: const InputDecoration(labelText: 'Source Location'),
+                      decoration: InputDecoration(labelText: AppLocalizations.of(context)!.sourceLocation),
                       items: locations.map((loc) {
                         return DropdownMenuItem(
                           value: loc.id,
@@ -129,7 +129,7 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
                       value: _toLocationId,
-                      decoration: const InputDecoration(labelText: 'Destination Location'),
+                      decoration: InputDecoration(labelText: AppLocalizations.of(context)!.destinationLocation),
                       items: locations.map((loc) {
                         return DropdownMenuItem(
                           value: loc.id,
@@ -142,15 +142,15 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _quantityController,
-                      decoration: const InputDecoration(labelText: 'Quantity'),
+                      decoration: InputDecoration(labelText: AppLocalizations.of(context)!.quantity),
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       validator: (val) {
                         if (val == null || val.isEmpty) return AppLocalizations.of(context)!.requiredField;
                         try {
                           final parsed = Decimal.parse(val);
-                          if (parsed <= Decimal.zero) return 'Must be greater than 0';
+                          if (parsed <= Decimal.zero) return AppLocalizations.of(context)!.mustBeGreaterThanZero;
                         } catch (e) {
-                          return 'Invalid number';
+                          return AppLocalizations.of(context)!.invalidNumber;
                         }
                         return null;
                       },
@@ -160,7 +160,7 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                       onPressed: _isLoading ? null : _submit,
                       child: _isLoading 
                         ? const LogoLoader()
-                        : const Text('Transfer'),
+                        : Text(AppLocalizations.of(context)!.transferBtn),
                     ),
                   ],
                 ),

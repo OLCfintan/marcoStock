@@ -721,4 +721,273 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get commandeCreatedSuccessfully => 'تم إنشاء وصل الطلب بنجاح!';
+
+  @override
+  String get changeMyPin => 'تغيير رقمي السري';
+
+  @override
+  String get newPinCode => 'الرمز السري الجديد';
+
+  @override
+  String get pinUpdatedSuccessfully => 'تم تحديث الرقم السري بنجاح';
+
+  @override
+  String get adminSecurity => 'أمان المسؤول';
+
+  @override
+  String get changeAdminPin => 'تغيير الرقم السري للمسؤول';
+
+  @override
+  String get updatePersonalPin => 'تحديث رمز الدخول الشخصي الخاص بك';
+
+  @override
+  String get recycleBin => 'سلة المهملات';
+
+  @override
+  String get exportImportSystem => 'نظام التصدير والاستيراد';
+
+  @override
+  String get exportMarkoSave => 'تصدير Marko-Save';
+
+  @override
+  String get exportFullSystem =>
+      'تصدير بنية النظام بالكامل (قاعدة البيانات، ملفات PDF، الصور، ملفات TXT) إلى مجلد.';
+
+  @override
+  String get startingExport =>
+      'بدء التصدير... قد يستغرق هذا بعض الوقت لإنشاء جميع ملفات PDF.';
+
+  @override
+  String get exportCompletedSuccessfully => 'تم التصدير بنجاح!';
+
+  @override
+  String get importMarkoSave => 'استيراد Marko-Save';
+
+  @override
+  String get restoreDatabaseOrBackup =>
+      'استعادة قاعدة البيانات (حدد .sqlite) أو نسخة احتياطية كاملة (حدد .zip).';
+
+  @override
+  String get confirmImport => 'تأكيد الاستيراد';
+
+  @override
+  String get overwriteDatabaseConfirm =>
+      'سيؤدي هذا إلى استبدال قاعدة بياناتك الحالية بنسخة Marko-Save الاحتياطية. هل أنت متأكد؟';
+
+  @override
+  String get yesOverwrite => 'نعم، استبدل';
+
+  @override
+  String get importCompletedRestart =>
+      'اكتمل الاستيراد! يرجى إعادة تشغيل التطبيق.';
+
+  @override
+  String get importMasterData => 'استيراد البيانات الرئيسية (TXT/CSV/PDF)';
+
+  @override
+  String get importStrictFormat =>
+      'استيراد بيانات العملاء، الموردين أو المنتجات بتنسيق صارم';
+
+  @override
+  String get viewImportFormat => 'عرض تعليمات تنسيق الاستيراد';
+
+  @override
+  String get importFormatPrototype => 'نموذج تنسيق الاستيراد';
+
+  @override
+  String get importDataFormatDesc =>
+      'يجب أن تكون البيانات عبارة عن كتل نصية عادية مفصولة بـ \"---\". أسماء الحقول غير حساسة لحالة الأحرف. يتم تجاهل المسافات والشرطات السفلية في المفاتيح.';
+
+  @override
+  String get productTemplate => 'نموذج المنتج:';
+
+  @override
+  String get clientTemplate => 'نموذج العميل:';
+
+  @override
+  String get gotIt => 'فهمت';
+
+  @override
+  String get wipeDatabase => 'مسح قاعدة البيانات (مسح كل البيانات)';
+
+  @override
+  String get deletesAllData => 'يحذف جميع المنتجات، العملاء، المخزون والتاريخ.';
+
+  @override
+  String get areYouAbsolutelySure => 'هل أنت متأكد تمامًا؟';
+
+  @override
+  String get permanentlyDeleteWarning =>
+      'سيؤدي هذا إلى حذف جميع السجلات نهائيًا (المنتجات، العملاء، المخزون، الفواتير، إلخ). لا يمكن التراجع عن هذا. هل أنت متأكد أنك تريد البدء من جديد؟';
+
+  @override
+  String get wipeEverything => 'مسح كل شيء';
+
+  @override
+  String get wipingDatabase => 'جاري مسح قاعدة البيانات...';
+
+  @override
+  String get databaseErasedReset => 'تم مسح وإعادة ضبط قاعدة البيانات بالكامل.';
+
+  @override
+  String get recycleBinAdmin => 'سلة المهملات (للمسؤولين فقط)';
+
+  @override
+  String get restoreSelected => 'استعادة المحدد';
+
+  @override
+  String get selectedItemsRestored => 'تمت استعادة العناصر المحددة بنجاح.';
+
+  @override
+  String get permanentlyDeleteSelected => 'حذف المحدد نهائياً';
+
+  @override
+  String get selectedItemsDeleted => 'تم حذف العناصر المحددة نهائياً.';
+
+  @override
+  String get searchRecycleBin => 'البحث في سلة المهملات';
+
+  @override
+  String get deletedInvoicesBons => 'الفواتير والبونات المحذوفة';
+
+  @override
+  String get deletedPurchases => 'المشتريات المحذوفة';
+
+  @override
+  String get unknownSupplier => 'مورد غير معروف';
+
+  @override
+  String get deletedPaymentsChecks => 'المدفوعات والشيكات المحذوفة';
+
+  @override
+  String get restoreStr => 'استعادة';
+
+  @override
+  String get deletePermanentlyStr => 'حذف نهائي';
+
+  @override
+  String get clientStr => 'العميل';
+
+  @override
+  String get supplierStr => 'المورد';
+
+  @override
+  String get totalStr => 'الإجمالي';
+
+  @override
+  String get dhsStr => 'درهم';
+
+  @override
+  String get clientsManagement => 'إدارة العملاء';
+
+  @override
+  String get searchClients => 'البحث عن العملاء';
+
+  @override
+  String get selectAll => 'تحديد الكل';
+
+  @override
+  String get noClientsFound => 'لم يتم العثور على عملاء.';
+
+  @override
+  String get noContactInfo => 'لا توجد معلومات اتصال';
+
+  @override
+  String get adminAccessRequired => 'مطلوب وصول المسؤول للحذف.';
+
+  @override
+  String get suppliersManagement => 'إدارة الموردين';
+
+  @override
+  String get searchSuppliers => 'البحث عن موردين';
+
+  @override
+  String get noSuppliersFound => 'لم يتم العثور على موردين.';
+
+  @override
+  String get stockTransfer => 'نقل المخزون';
+
+  @override
+  String get selectProductAndLocations => 'يرجى تحديد المنتج والمواقع';
+
+  @override
+  String get sourceDestinationSame => 'لا يمكن أن يكون المصدر والوجهة متطابقين';
+
+  @override
+  String get transferSuccessful => 'تم النقل بنجاح';
+
+  @override
+  String get transferFailed => 'فشل النقل: ';
+
+  @override
+  String get sourceLocation => 'موقع المصدر';
+
+  @override
+  String get destinationLocation => 'موقع الوجهة';
+
+  @override
+  String get mustBeGreaterThanZero => 'يجب أن يكون أكبر من 0';
+
+  @override
+  String get invalidNumber => 'رقم غير صالح';
+
+  @override
+  String get transferBtn => 'نقل';
+
+  @override
+  String get addBtn => 'إضافة';
+
+  @override
+  String get nameOverridePdf => 'الاسم (يتجاوز اسم العميل في ملف PDF)';
+
+  @override
+  String get paymentRecordedSuccessfully => 'تم تسجيل الدفع بنجاح!';
+
+  @override
+  String get totalLabel => 'الإجمالي: ';
+
+  @override
+  String get paidLabel => 'المدفوع: ';
+
+  @override
+  String get remainingLabel => 'المتبقي: ';
+
+  @override
+  String get paymentAmount => 'مبلغ الدفع';
+
+  @override
+  String get setToFullRemaining => 'تعيين إلى كامل المتبقي';
+
+  @override
+  String get paymentMethod => 'طريقة الدفع';
+
+  @override
+  String get recordBtn => 'تسجيل';
+
+  @override
+  String get paymentsRecord => 'سجل المدفوعات';
+
+  @override
+  String get noPaymentsRecorded => 'لم يتم تسجيل أي مدفوعات.';
+
+  @override
+  String get viewCheckImage => 'عرض صورة الشيك';
+
+  @override
+  String get close => 'إغلاق';
+
+  @override
+  String get deletePayment => 'حذف الدفع';
+
+  @override
+  String get deletePaymentConfirm => 'هل تريد حذف الدفع؟';
+
+  @override
+  String get deletePaymentDesc => 'سيؤدي هذا إلى عكس الدفع جبريًا.';
+
+  @override
+  String get deletedStr => 'محذوف';
+
+  @override
+  String get productLabel => 'المنتج';
 }
