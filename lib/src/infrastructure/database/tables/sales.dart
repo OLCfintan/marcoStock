@@ -21,6 +21,7 @@ class Invoices extends Table {
   BoolColumn get isActive => boolean().withDefault(const Constant(true))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   TextColumn get clientNameOverride => text().nullable()();
+  TextColumn get clientIceOverride => text().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};

@@ -1096,4 +1096,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get productLabel => 'Produit';
+
+  @override
+  String get invoiceStoppedAt => 'Arrêté la présente facture à la somme de :';
 }

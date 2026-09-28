@@ -4817,6 +4817,18 @@ class $InvoicesTable extends Invoices
         type: DriftSqlType.string,
         requiredDuringInsert: false,
       );
+  static const VerificationMeta _clientIceOverrideMeta = const VerificationMeta(
+    'clientIceOverride',
+  );
+  @override
+  late final GeneratedColumn<String> clientIceOverride =
+      GeneratedColumn<String>(
+        'client_ice_override',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -4833,6 +4845,7 @@ class $InvoicesTable extends Invoices
     isActive,
     createdAt,
     clientNameOverride,
+    clientIceOverride,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -4920,6 +4933,15 @@ class $InvoicesTable extends Invoices
         ),
       );
     }
+    if (data.containsKey('client_ice_override')) {
+      context.handle(
+        _clientIceOverrideMeta,
+        clientIceOverride.isAcceptableOrUnknown(
+          data['client_ice_override']!,
+          _clientIceOverrideMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -5000,6 +5022,10 @@ class $InvoicesTable extends Invoices
         DriftSqlType.string,
         data['${effectivePrefix}client_name_override'],
       ),
+      clientIceOverride: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}client_ice_override'],
+      ),
     );
   }
 
@@ -5033,6 +5059,7 @@ class InvoiceEntity extends DataClass implements Insertable<InvoiceEntity> {
   final bool isActive;
   final DateTime createdAt;
   final String? clientNameOverride;
+  final String? clientIceOverride;
   const InvoiceEntity({
     required this.id,
     required this.invoiceNumber,
@@ -5048,6 +5075,7 @@ class InvoiceEntity extends DataClass implements Insertable<InvoiceEntity> {
     required this.isActive,
     required this.createdAt,
     this.clientNameOverride,
+    this.clientIceOverride,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -5088,6 +5116,9 @@ class InvoiceEntity extends DataClass implements Insertable<InvoiceEntity> {
     if (!nullToAbsent || clientNameOverride != null) {
       map['client_name_override'] = Variable<String>(clientNameOverride);
     }
+    if (!nullToAbsent || clientIceOverride != null) {
+      map['client_ice_override'] = Variable<String>(clientIceOverride);
+    }
     return map;
   }
 
@@ -5114,6 +5145,10 @@ class InvoiceEntity extends DataClass implements Insertable<InvoiceEntity> {
           clientNameOverride == null && nullToAbsent
               ? const Value.absent()
               : Value(clientNameOverride),
+      clientIceOverride:
+          clientIceOverride == null && nullToAbsent
+              ? const Value.absent()
+              : Value(clientIceOverride),
     );
   }
 
@@ -5139,6 +5174,9 @@ class InvoiceEntity extends DataClass implements Insertable<InvoiceEntity> {
       clientNameOverride: serializer.fromJson<String?>(
         json['clientNameOverride'],
       ),
+      clientIceOverride: serializer.fromJson<String?>(
+        json['clientIceOverride'],
+      ),
     );
   }
   @override
@@ -5159,6 +5197,7 @@ class InvoiceEntity extends DataClass implements Insertable<InvoiceEntity> {
       'isActive': serializer.toJson<bool>(isActive),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'clientNameOverride': serializer.toJson<String?>(clientNameOverride),
+      'clientIceOverride': serializer.toJson<String?>(clientIceOverride),
     };
   }
 
@@ -5177,6 +5216,7 @@ class InvoiceEntity extends DataClass implements Insertable<InvoiceEntity> {
     bool? isActive,
     DateTime? createdAt,
     Value<String?> clientNameOverride = const Value.absent(),
+    Value<String?> clientIceOverride = const Value.absent(),
   }) => InvoiceEntity(
     id: id ?? this.id,
     invoiceNumber: invoiceNumber ?? this.invoiceNumber,
@@ -5195,6 +5235,10 @@ class InvoiceEntity extends DataClass implements Insertable<InvoiceEntity> {
         clientNameOverride.present
             ? clientNameOverride.value
             : this.clientNameOverride,
+    clientIceOverride:
+        clientIceOverride.present
+            ? clientIceOverride.value
+            : this.clientIceOverride,
   );
   InvoiceEntity copyWithCompanion(InvoicesCompanion data) {
     return InvoiceEntity(
@@ -5222,6 +5266,10 @@ class InvoiceEntity extends DataClass implements Insertable<InvoiceEntity> {
           data.clientNameOverride.present
               ? data.clientNameOverride.value
               : this.clientNameOverride,
+      clientIceOverride:
+          data.clientIceOverride.present
+              ? data.clientIceOverride.value
+              : this.clientIceOverride,
     );
   }
 
@@ -5241,7 +5289,8 @@ class InvoiceEntity extends DataClass implements Insertable<InvoiceEntity> {
           ..write('notes: $notes, ')
           ..write('isActive: $isActive, ')
           ..write('createdAt: $createdAt, ')
-          ..write('clientNameOverride: $clientNameOverride')
+          ..write('clientNameOverride: $clientNameOverride, ')
+          ..write('clientIceOverride: $clientIceOverride')
           ..write(')'))
         .toString();
   }
@@ -5262,6 +5311,7 @@ class InvoiceEntity extends DataClass implements Insertable<InvoiceEntity> {
     isActive,
     createdAt,
     clientNameOverride,
+    clientIceOverride,
   );
   @override
   bool operator ==(Object other) =>
@@ -5280,7 +5330,8 @@ class InvoiceEntity extends DataClass implements Insertable<InvoiceEntity> {
           other.notes == this.notes &&
           other.isActive == this.isActive &&
           other.createdAt == this.createdAt &&
-          other.clientNameOverride == this.clientNameOverride);
+          other.clientNameOverride == this.clientNameOverride &&
+          other.clientIceOverride == this.clientIceOverride);
 }
 
 class InvoicesCompanion extends UpdateCompanion<InvoiceEntity> {
@@ -5298,6 +5349,7 @@ class InvoicesCompanion extends UpdateCompanion<InvoiceEntity> {
   final Value<bool> isActive;
   final Value<DateTime> createdAt;
   final Value<String?> clientNameOverride;
+  final Value<String?> clientIceOverride;
   final Value<int> rowid;
   const InvoicesCompanion({
     this.id = const Value.absent(),
@@ -5314,6 +5366,7 @@ class InvoicesCompanion extends UpdateCompanion<InvoiceEntity> {
     this.isActive = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.clientNameOverride = const Value.absent(),
+    this.clientIceOverride = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   InvoicesCompanion.insert({
@@ -5331,6 +5384,7 @@ class InvoicesCompanion extends UpdateCompanion<InvoiceEntity> {
     this.isActive = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.clientNameOverride = const Value.absent(),
+    this.clientIceOverride = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        invoiceNumber = Value(invoiceNumber),
@@ -5355,6 +5409,7 @@ class InvoicesCompanion extends UpdateCompanion<InvoiceEntity> {
     Expression<bool>? isActive,
     Expression<DateTime>? createdAt,
     Expression<String>? clientNameOverride,
+    Expression<String>? clientIceOverride,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -5373,6 +5428,7 @@ class InvoicesCompanion extends UpdateCompanion<InvoiceEntity> {
       if (createdAt != null) 'created_at': createdAt,
       if (clientNameOverride != null)
         'client_name_override': clientNameOverride,
+      if (clientIceOverride != null) 'client_ice_override': clientIceOverride,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -5392,6 +5448,7 @@ class InvoicesCompanion extends UpdateCompanion<InvoiceEntity> {
     Value<bool>? isActive,
     Value<DateTime>? createdAt,
     Value<String?>? clientNameOverride,
+    Value<String?>? clientIceOverride,
     Value<int>? rowid,
   }) {
     return InvoicesCompanion(
@@ -5409,6 +5466,7 @@ class InvoicesCompanion extends UpdateCompanion<InvoiceEntity> {
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
       clientNameOverride: clientNameOverride ?? this.clientNameOverride,
+      clientIceOverride: clientIceOverride ?? this.clientIceOverride,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -5466,6 +5524,9 @@ class InvoicesCompanion extends UpdateCompanion<InvoiceEntity> {
     if (clientNameOverride.present) {
       map['client_name_override'] = Variable<String>(clientNameOverride.value);
     }
+    if (clientIceOverride.present) {
+      map['client_ice_override'] = Variable<String>(clientIceOverride.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -5489,6 +5550,7 @@ class InvoicesCompanion extends UpdateCompanion<InvoiceEntity> {
           ..write('isActive: $isActive, ')
           ..write('createdAt: $createdAt, ')
           ..write('clientNameOverride: $clientNameOverride, ')
+          ..write('clientIceOverride: $clientIceOverride, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -14315,6 +14377,7 @@ typedef $$InvoicesTableCreateCompanionBuilder =
       Value<bool> isActive,
       Value<DateTime> createdAt,
       Value<String?> clientNameOverride,
+      Value<String?> clientIceOverride,
       Value<int> rowid,
     });
 typedef $$InvoicesTableUpdateCompanionBuilder =
@@ -14333,6 +14396,7 @@ typedef $$InvoicesTableUpdateCompanionBuilder =
       Value<bool> isActive,
       Value<DateTime> createdAt,
       Value<String?> clientNameOverride,
+      Value<String?> clientIceOverride,
       Value<int> rowid,
     });
 
@@ -14418,6 +14482,11 @@ class $$InvoicesTableFilterComposer
     column: $table.clientNameOverride,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<String> get clientIceOverride => $composableBuilder(
+    column: $table.clientIceOverride,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$InvoicesTableOrderingComposer
@@ -14498,6 +14567,11 @@ class $$InvoicesTableOrderingComposer
     column: $table.clientNameOverride,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get clientIceOverride => $composableBuilder(
+    column: $table.clientIceOverride,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$InvoicesTableAnnotationComposer
@@ -14559,6 +14633,11 @@ class $$InvoicesTableAnnotationComposer
     column: $table.clientNameOverride,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get clientIceOverride => $composableBuilder(
+    column: $table.clientIceOverride,
+    builder: (column) => column,
+  );
 }
 
 class $$InvoicesTableTableManager
@@ -14606,6 +14685,7 @@ class $$InvoicesTableTableManager
                 Value<bool> isActive = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<String?> clientNameOverride = const Value.absent(),
+                Value<String?> clientIceOverride = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => InvoicesCompanion(
                 id: id,
@@ -14622,6 +14702,7 @@ class $$InvoicesTableTableManager
                 isActive: isActive,
                 createdAt: createdAt,
                 clientNameOverride: clientNameOverride,
+                clientIceOverride: clientIceOverride,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -14640,6 +14721,7 @@ class $$InvoicesTableTableManager
                 Value<bool> isActive = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<String?> clientNameOverride = const Value.absent(),
+                Value<String?> clientIceOverride = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => InvoicesCompanion.insert(
                 id: id,
@@ -14656,6 +14738,7 @@ class $$InvoicesTableTableManager
                 isActive: isActive,
                 createdAt: createdAt,
                 clientNameOverride: clientNameOverride,
+                clientIceOverride: clientIceOverride,
                 rowid: rowid,
               ),
           withReferenceMapper:

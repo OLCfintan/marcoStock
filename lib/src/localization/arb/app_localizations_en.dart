@@ -1079,4 +1079,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get productLabel => 'Product';
+
+  @override
+  String get invoiceStoppedAt =>
+      'The present invoice is stopped at the sum of :';
 }

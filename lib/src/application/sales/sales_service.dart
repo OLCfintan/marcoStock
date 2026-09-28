@@ -34,6 +34,7 @@ class SaleRequest {
   final String? customInvoiceNumber;
   final DateTime? customDate;
   final String? customClientName;
+  final String? customClientIce;
   
   SaleRequest({
     this.documentType = 'FACTURE',
@@ -44,6 +45,7 @@ class SaleRequest {
     this.customInvoiceNumber,
     this.customDate,
     this.customClientName,
+    this.customClientIce,
   });
 }
 
@@ -110,6 +112,10 @@ class SalesService {
       String invoiceNumber = '';
       if (request.documentType == 'FACTURE' && request.customInvoiceNumber != null && request.customInvoiceNumber!.isNotEmpty) {
         invoiceNumber = request.customInvoiceNumber!;
+      } else if (request.documentType == 'FACTURE' || request.documentType == 'FACTURE_DUMMY') {
+        final settings = await _db.customSelect('SELECT value FROM settings WHERE key = ?', variables: [drift.Variable.withString('invoiceCounterPrefix')]).getSingleOrNull();
+        final prefixSetting = settings?.read<String>('value') ?? 'MG';
+        invoiceNumber = await getNextCustomInvoiceNumber(prefixSetting);
       } else {
         final yearMonth = '${date.year}-${date.month.toString().padLeft(2, '0')}';
         String prefix = '';
@@ -225,6 +231,7 @@ class SalesService {
         invoiceNumber: invoiceNumber,
         clientId: drift.Value(request.clientId),
         clientNameOverride: drift.Value(request.customClientName),
+        clientIceOverride: drift.Value(request.customClientIce),
         date: date,
         subtotal: subtotal,
         taxes: taxes,
@@ -398,7 +405,7 @@ class SalesService {
   }
 
   /// Converts a BON to a FACTURE (Invoice). Generates a new dummy invoice.
-  Future<void> convertBonToInvoice(String invoiceId, {String? customInvoiceNumber, DateTime? customDate, String? customName}) async {
+  Future<void> convertBonToInvoice(String invoiceId, {String? customInvoiceNumber, DateTime? customDate, String? customName, String? customIce}) async {
     await _db.transaction(() async {
       final bon = await (_db.select(_db.invoices)..where((t) => t.id.equals(invoiceId))).getSingleOrNull();
       if (bon == null || bon.documentType != 'BON') return;
@@ -406,30 +413,12 @@ class SalesService {
       final date = customDate ?? DateTime.now();
       String invoiceNumber = '';
       
-      if (customInvoiceNumber != null && customInvoiceNumber.isNotEmpty) {
+            if (customInvoiceNumber != null && customInvoiceNumber.isNotEmpty) {
         invoiceNumber = customInvoiceNumber;
       } else {
-        final yearMonth = '${date.year}-${date.month.toString().padLeft(2, '0')}';
-        final prefix = 'FAC-$yearMonth';
-        
-        final seqQuery = _db.select(_db.documentSequences)
-          ..where((t) => t.documentType.equals('INVOICE') & t.prefix.equals(prefix));
-        final seq = await seqQuery.getSingleOrNull();
-        
-        int nextNum = 1;
-        if (seq != null) {
-          nextNum = seq.lastNumber + 1;
-          await _db.update(_db.documentSequences).replace(
-            seq.copyWith(lastNumber: nextNum)
-          );
-        } else {
-          await _db.into(_db.documentSequences).insert(DocumentSequencesCompanion.insert(
-            documentType: 'INVOICE',
-            prefix: prefix,
-            lastNumber: const drift.Value(1),
-          ));
-        }
-        invoiceNumber = '$prefix-${nextNum.toString().padLeft(4, '0')}';
+        final settings = await _db.customSelect('SELECT value FROM settings WHERE key = ?', variables: [drift.Variable.withString('invoiceCounterPrefix')]).getSingleOrNull();
+        final prefixSetting = settings?.read<String>('value') ?? 'MG';
+        invoiceNumber = await getNextCustomInvoiceNumber(prefixSetting);
       }
 
       final newInvoiceId = _uuid.v4();
@@ -440,6 +429,7 @@ class SalesService {
         invoiceNumber: invoiceNumber,
         clientId: drift.Value(bon.clientId),
         clientNameOverride: drift.Value(customName),
+        clientIceOverride: drift.Value(customIce),
         date: date,
         subtotal: bon.subtotal,
         taxes: bon.taxes,

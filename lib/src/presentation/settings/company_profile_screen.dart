@@ -21,6 +21,10 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
   final _taxRateCtrl = TextEditingController();
   final _logoCtrl = TextEditingController();
   final _invoiceCounterPrefixCtrl = TextEditingController();
+  final _iceCtrl = TextEditingController();
+  final _rcCtrl = TextEditingController();
+  final _ribCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
 
   bool _isLoading = true;
 
@@ -40,6 +44,10 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
     _taxRateCtrl.text = settings['companyTaxRate'] ?? '0.0';
     _logoCtrl.text = settings['companyLogoPath'] ?? '';
     _invoiceCounterPrefixCtrl.text = settings['invoiceCounterPrefix'] ?? 'MG';
+    _iceCtrl.text = settings['companyIce'] ?? '';
+    _rcCtrl.text = settings['companyRc'] ?? '';
+    _ribCtrl.text = settings['companyRib'] ?? '';
+    _emailCtrl.text = settings['companyEmail'] ?? '';
     setState(() => _isLoading = false);
   }
 
@@ -54,6 +62,10 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
     await service.setSetting('companyTaxRate', _taxRateCtrl.text);
     await service.setSetting('companyLogoPath', _logoCtrl.text);
     await service.setSetting('invoiceCounterPrefix', _invoiceCounterPrefixCtrl.text);
+    await service.setSetting('companyIce', _iceCtrl.text);
+    await service.setSetting('companyRc', _rcCtrl.text);
+    await service.setSetting('companyRib', _ribCtrl.text);
+    await service.setSetting('companyEmail', _emailCtrl.text);
     
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.savedSuccessfully)));
@@ -66,7 +78,7 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(AppLocalizations.of(context)!.companyProfile)),
       body: _isLoading 
-        ? const Center(child: const LogoLoader())
+        ? const Center(child: LogoLoader())
         : Form(
             key: _formKey,
             child: ListView(
@@ -89,8 +101,28 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
+                  controller: _emailCtrl,
+                  decoration: const InputDecoration(labelText: 'Company Email'),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
                   controller: _taxIdCtrl,
-                  decoration: const InputDecoration(labelText: 'Tax ID'),
+                  decoration: const InputDecoration(labelText: 'IF (Tax ID)'),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _iceCtrl,
+                  decoration: const InputDecoration(labelText: 'ICE'),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _rcCtrl,
+                  decoration: const InputDecoration(labelText: 'RC'),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _ribCtrl,
+                  decoration: const InputDecoration(labelText: 'RIB'),
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -133,6 +165,10 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
     _taxRateCtrl.dispose();
     _logoCtrl.dispose();
     _invoiceCounterPrefixCtrl.dispose();
+    _iceCtrl.dispose();
+    _rcCtrl.dispose();
+    _ribCtrl.dispose();
+    _emailCtrl.dispose();
     super.dispose();
   }
 }

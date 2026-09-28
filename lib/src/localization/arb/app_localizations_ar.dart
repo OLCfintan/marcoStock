@@ -1077,4 +1077,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get productLabel => 'المنتج';
+
+  @override
+  String get invoiceStoppedAt => 'حصرت هذه الفاتورة في مبلغ :';
 }

@@ -2207,6 +2207,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Product'**
   String get productLabel;
+
+  /// No description provided for @invoiceStoppedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'The present invoice is stopped at the sum of :'**
+  String get invoiceStoppedAt;
 }
 
 class _AppLocalizationsDelegate

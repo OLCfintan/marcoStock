@@ -313,7 +313,7 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
                     PaymentDialog.show(context, entityId: inv.id, entityType: 'INVOICE', partnerId: widget.id, currentTotal: inv.total, currentlyPaid: inv.paidAmount);
                   },
                   leading: const Icon(Icons.receipt_long, color: Colors.blue),
-                  title: Text('Invoice #${inv.invoiceNumber}'),
+                  title: Text('${inv.documentType == 'FACTURE_DUMMY' ? 'FACTURE' : inv.documentType} #${inv.invoiceNumber}' + (inv.clientNameOverride != null && inv.clientNameOverride!.isNotEmpty ? ' - ${inv.clientNameOverride}' : '')),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

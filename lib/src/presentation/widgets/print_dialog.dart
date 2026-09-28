@@ -7,11 +7,18 @@ enum PrintLayout {
   a4_2up, // 2-up A5 on A4 landscape
 }
 
+enum ExportFormat {
+  pdf,
+  image,
+  excel,
+}
+
 class PrintOptions {
   final PrintLayout layout;
   final String languageCode;
+  final ExportFormat format;
 
-  PrintOptions({required this.layout, required this.languageCode});
+  PrintOptions({required this.layout, required this.languageCode, this.format = ExportFormat.pdf});
 }
 
 class PrintDialog extends StatefulWidget {
@@ -33,12 +40,14 @@ class PrintDialog extends StatefulWidget {
 class _PrintDialogState extends State<PrintDialog> {
   late PrintLayout _selectedLayout;
   late String _selectedLang;
+  late ExportFormat _selectedFormat;
 
   @override
   void initState() {
     super.initState();
     _selectedLayout = PrintLayout.a4;
     _selectedLang = widget.defaultLanguageCode;
+    _selectedFormat = ExportFormat.pdf;
   }
 
   @override
@@ -89,6 +98,21 @@ class _PrintDialogState extends State<PrintDialog> {
             onChanged: (v) { if(v!=null) setState(() => _selectedLayout = v); },
             contentPadding: EdgeInsets.zero,
           ),
+          const SizedBox(height: 16),
+          const Text('Export Format:', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<ExportFormat>(
+            value: _selectedFormat,
+            items: const [
+              DropdownMenuItem(value: ExportFormat.pdf, child: Text('PDF Document')),
+              DropdownMenuItem(value: ExportFormat.image, child: Text('Image (JPEG)')),
+              DropdownMenuItem(value: ExportFormat.excel, child: Text('Excel (CSV)')),
+            ],
+            onChanged: (v) {
+              if (v != null) setState(() => _selectedFormat = v);
+            },
+            decoration: const InputDecoration(border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
+          ),
         ],
       ),
       actions: [
@@ -98,9 +122,9 @@ class _PrintDialogState extends State<PrintDialog> {
         ),
         ElevatedButton(
           onPressed: () {
-            Navigator.pop(context, PrintOptions(layout: _selectedLayout, languageCode: _selectedLang));
+            Navigator.pop(context, PrintOptions(layout: _selectedLayout, languageCode: _selectedLang, format: _selectedFormat));
           },
-          child: Text('Generate PDF'),
+          child: Text('Generate Document'),
         ),
       ],
     );

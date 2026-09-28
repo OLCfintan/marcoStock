@@ -351,4 +351,5 @@
   "deletePaymentDesc": "Esto revertirá algebraicamente el pago.",
   "deletedStr": "ELIMINADO",
   "productLabel": "Producto"
+  ,"invoiceStoppedAt": "La presente factura se cierra por la suma de :"
 }

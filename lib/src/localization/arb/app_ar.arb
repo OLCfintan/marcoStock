@@ -351,4 +351,5 @@
   "deletePaymentDesc": "سيؤدي هذا إلى عكس الدفع جبريًا.",
   "deletedStr": "محذوف",
   "productLabel": "المنتج"
+  ,"invoiceStoppedAt": "حصرت هذه الفاتورة في مبلغ :"
 }

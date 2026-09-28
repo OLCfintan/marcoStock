@@ -199,18 +199,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> with SingleTi
                                 child: InkWell(
                                   onDoubleTap: () {
                                     
-                                    // Replaced navigation
-                                    () async {
-                                      final options = await PrintDialog.show(context, defaultLanguageCode: Localizations.localeOf(context).languageCode);
-                                      if (options != null && context.mounted) {
-                                        Navigator.push(context, MaterialPageRoute(
-                                          builder: (_) => PdfPreviewScreen(
-                                            title: '${invoice.documentType} #${invoice.invoiceNumber}',
-                                            buildPdf: () => ref.read(pdfGeneratorProvider).generateInvoicePdf(invoice.id, options),
-                                          ),
-                                        ));
-                                      }
-                                    }();
+                                    _handlePrintInvoice(invoice, context, ref);
                                 
                                   },
                                   child: ListTile(
@@ -235,7 +224,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> with SingleTi
                                         ),
                                       ],
                                     ),
-                                    title: Text('${invoice.documentType} #${invoice.invoiceNumber} - ${client?.name ?? AppLocalizations.of(context)!.walkInClient}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                    title: Text('${invoice.documentType == 'FACTURE_DUMMY' ? 'FACTURE' : invoice.documentType} #${invoice.invoiceNumber} - ${invoice.clientNameOverride ?? client?.name ?? AppLocalizations.of(context)!.walkInClient}', style: const TextStyle(fontWeight: FontWeight.bold)),
                                     subtitle: Padding(
                                       padding: const EdgeInsets.only(top: 8.0),
                                       child: Row(
@@ -274,6 +263,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> with SingleTi
                                                 customInvoiceNumber: params['number'],
                                                 customDate: params['date'],
                                                 customName: params['name'].toString().isEmpty ? null : params['name'],
+                                                customIce: params['ice'].toString().isEmpty ? null : params['ice'],
                                               );
                                               if (context.mounted) {
                                                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.convertedSuccessfully)));
@@ -296,18 +286,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> with SingleTi
                                     ),
                                   onTap: () {
                                     
-                                    // Replaced navigation
-                                    () async {
-                                      final options = await PrintDialog.show(context, defaultLanguageCode: Localizations.localeOf(context).languageCode);
-                                      if (options != null && context.mounted) {
-                                        Navigator.push(context, MaterialPageRoute(
-                                          builder: (_) => PdfPreviewScreen(
-                                            title: '${invoice.documentType} #${invoice.invoiceNumber}',
-                                            buildPdf: () => ref.read(pdfGeneratorProvider).generateInvoicePdf(invoice.id, options),
-                                          ),
-                                        ));
-                                      }
-                                    }();
+                                    _handlePrintInvoice(invoice, context, ref);
                                 
                                   },
                                 ),
@@ -468,6 +447,32 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> with SingleTi
   }
 }
 
+  Future<void> _handlePrintInvoice(dynamic invoice, BuildContext context, WidgetRef ref) async {
+    final options = await PrintDialog.show(context, defaultLanguageCode: Localizations.localeOf(context).languageCode);
+    if (options == null || !context.mounted) return;
+
+    if (options.format == ExportFormat.pdf) {
+      Navigator.push(context, MaterialPageRoute(
+        builder: (_) => PdfPreviewScreen(
+          title: '${invoice.documentType} #${invoice.invoiceNumber}',
+          buildPdf: () => ref.read(pdfGeneratorProvider).generateInvoicePdf(invoice.id, options),
+        ),
+      ));
+    } else {
+      // Show loading
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Generating document...')));
+      try {
+        final pdfBytes = await ref.read(pdfGeneratorProvider).generateInvoicePdf(invoice.id, options);
+        final fileName = '${invoice.documentType}_${invoice.invoiceNumber}';
+        await ref.read(pdfGeneratorProvider).exportAndSharePdf(pdfBytes, fileName, options.format);
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+        }
+      }
+    }
+  }
+
 class _ConvertInvoiceDialog extends ConsumerStatefulWidget {
   const _ConvertInvoiceDialog();
   @override
@@ -478,6 +483,7 @@ class _ConvertInvoiceDialogState extends ConsumerState<_ConvertInvoiceDialog> {
   final _numberCtrl = TextEditingController();
   final _dateCtrl = TextEditingController();
   final _nameCtrl = TextEditingController();
+  final _iceCtrl = TextEditingController();
   bool _loading = true;
 
   @override
@@ -505,6 +511,7 @@ class _ConvertInvoiceDialogState extends ConsumerState<_ConvertInvoiceDialog> {
     _numberCtrl.dispose();
     _dateCtrl.dispose();
     _nameCtrl.dispose();
+    _iceCtrl.dispose();
     super.dispose();
   }
 
@@ -535,6 +542,11 @@ class _ConvertInvoiceDialogState extends ConsumerState<_ConvertInvoiceDialog> {
               controller: _nameCtrl,
               decoration: InputDecoration(labelText: AppLocalizations.of(context)!.nameOverridesClientName, border: const OutlineInputBorder()),
             ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _iceCtrl,
+              decoration: const InputDecoration(labelText: 'ICE (Overrides Client ICE)', border: OutlineInputBorder()),
+            ),
           ],
         ),
       ),
@@ -556,6 +568,7 @@ class _ConvertInvoiceDialogState extends ConsumerState<_ConvertInvoiceDialog> {
               'number': _numberCtrl.text.trim(),
               'date': customDate,
               'name': _nameCtrl.text.trim(),
+              'ice': _iceCtrl.text.trim(),
             });
           },
           child: Text(AppLocalizations.of(context)!.confirm),

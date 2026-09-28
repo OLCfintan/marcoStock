@@ -351,4 +351,5 @@
   "deletePaymentDesc": "Cela annulera algébriquement le paiement.",
   "deletedStr": "SUPPRIMÉ",
   "productLabel": "Produit"
+  ,"invoiceStoppedAt": "Arrêté la présente facture à la somme de :"
 }

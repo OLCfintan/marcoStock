@@ -351,4 +351,5 @@
   "deletePaymentDesc": "This will algebraically reverse the payment.",
   "deletedStr": "DELETED",
   "productLabel": "Product"
+  ,"invoiceStoppedAt": "The present invoice is stopped at the sum of :"
 }

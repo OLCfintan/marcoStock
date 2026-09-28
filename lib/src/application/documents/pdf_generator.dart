@@ -8,6 +8,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:decimal/decimal.dart';
 import 'package:marko_group/src/localization/arb/app_localizations.dart';
+import '../../utils/number_to_words.dart';
 
 import 'package:drift/drift.dart' as drift;
 import '../../infrastructure/database/app_database.dart';
@@ -38,13 +39,28 @@ class PdfGeneratorService {
     );
   }
 
-  void _addPages(pw.Document doc, PrintOptions options, pw.TextDirection textDir, pw.ImageProvider? bgImage, List<pw.Widget> Function() buildContent) {
+  void _addPages(pw.Document doc, PrintOptions options, pw.TextDirection textDir, pw.ImageProvider? bgImage, List<pw.Widget> Function() buildContent, {pw.Widget Function(pw.Context)? buildFooter}) {
     pw.Widget backgroundBuilder(pw.Context context) {
-      if (bgImage == null) return pw.Container();
-      return pw.Watermark(
-        child: pw.Opacity(
-          opacity: 0.25,
-          child: pw.Image(bgImage, fit: pw.BoxFit.contain),
+      if (bgImage == null) {
+        return pw.FullPage(
+          ignoreMargins: true,
+          child: pw.Container(color: PdfColors.white),
+        );
+      }
+      return pw.FullPage(
+        ignoreMargins: true,
+        child: pw.Stack(
+          children: [
+            pw.Container(color: PdfColors.white),
+            pw.Center(
+              child: pw.Watermark(
+                child: pw.Opacity(
+                  opacity: 0.25,
+                  child: pw.Image(bgImage, fit: pw.BoxFit.contain),
+                ),
+              ),
+            ),
+          ],
         ),
       );
     }
@@ -55,17 +71,24 @@ class PdfGeneratorService {
           pageTheme: pw.PageTheme(
             pageFormat: PdfPageFormat.a4.landscape,
             textDirection: textDir,
-            margin: const pw.EdgeInsets.all(24),
+            margin: const pw.EdgeInsets.only(left: 24, right: 24, top: 12, bottom: 24),
             buildBackground: backgroundBuilder,
           ),
           build: (context) {
-            return pw.Row(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
+            return pw.Column(
               children: [
-                pw.Expanded(child: pw.Column(children: buildContent())),
-                pw.SizedBox(width: 48),
-                pw.Expanded(child: pw.Column(children: buildContent())),
-              ],
+                pw.Expanded(
+                  child: pw.Row(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Expanded(child: pw.Column(children: buildContent())),
+                      pw.SizedBox(width: 48),
+                      pw.Expanded(child: pw.Column(children: buildContent())),
+                    ],
+                  ),
+                ),
+                if (buildFooter != null) buildFooter(context)
+              ]
             );
           },
         ),
@@ -76,9 +99,10 @@ class PdfGeneratorService {
           pageTheme: pw.PageTheme(
             pageFormat: options.layout == PrintLayout.a5 ? PdfPageFormat.a5 : PdfPageFormat.a4,
             textDirection: textDir,
-            margin: const pw.EdgeInsets.all(32),
+            margin: const pw.EdgeInsets.only(left: 32, right: 32, top: 16, bottom: 32),
             buildBackground: backgroundBuilder,
           ),
+          footer: buildFooter,
           build: (context) => buildContent(),
         ),
       );
@@ -148,12 +172,17 @@ class PdfGeneratorService {
     final logoBytes = companySettings['companyLogoPath'] != null && File(companySettings['companyLogoPath']!).existsSync()
         ? File(companySettings['companyLogoPath']!).readAsBytesSync()
         : null;
-    final logoImage = logoBytes != null ? pw.MemoryImage(logoBytes) : null;
+    pw.ImageProvider? logoImage = logoBytes != null ? pw.MemoryImage(logoBytes) : null;
     
-    final companyName = companySettings['companyName'] ?? 'Marko Group';
+        final companyName = companySettings['companyName'] ?? 'Marko Group';
     final companyAddress = companySettings['companyAddress'] ?? '';
     final companyPhone = companySettings['companyPhone'] ?? '';
     final companyTaxId = companySettings['companyTaxId'] ?? '';
+    final companyIce = companySettings['companyIce'] ?? '';
+    final companyRc = companySettings['companyRc'] ?? '';
+    final companyRib = companySettings['companyRib'] ?? '';
+    final companyEmail = companySettings['companyEmail'] ?? '';
+
 
     final textDir = l10n.localeName.startsWith('ar') ? pw.TextDirection.rtl : pw.TextDirection.ltr;
 
@@ -170,19 +199,14 @@ class PdfGeneratorService {
       print('Could not load watermark: $e');
     }
 
-    _addPages(doc, options, textDir, watermarkBg, () => [
-      _buildHeader(invoice, client, companyName, companyAddress, companyPhone, companyTaxId, logoImage, l10n),
+    _addPages(doc, options, textDir, watermarkBg, buildFooter: (context) => _buildDocumentFooter(companyAddress, companyIce, companyRc, companyRib, companyEmail, companyPhone), () => [
+            _buildHeader(invoice, client, companyName, companyAddress, companyPhone, companyTaxId, companyIce, companyRc, companyRib, companyEmail, logoImage ?? watermarkBg, l10n),
+
       pw.SizedBox(height: 32),
       _buildInvoiceTable(lines, productMap, l10n),
       pw.SizedBox(height: 16),
-      _buildTotals(invoice, l10n),
-      pw.Spacer(),
-      pw.Divider(),
-      pw.Container(
-        alignment: pw.Alignment.center,
-        child: _bidiText(l10n.pdfThankYou, style: const pw.TextStyle(color: PdfColors.grey)),
-      ),
-    ]);
+      _buildTotals(invoice, l10n, companyAddress, companyIce, companyRc, companyRib, companyEmail, companyPhone),
+          ]);
 
     return doc.save();
   }
@@ -211,12 +235,17 @@ class PdfGeneratorService {
     final logoBytes = companySettings['companyLogoPath'] != null && File(companySettings['companyLogoPath']!).existsSync()
         ? File(companySettings['companyLogoPath']!).readAsBytesSync()
         : null;
-    final logoImage = logoBytes != null ? pw.MemoryImage(logoBytes) : null;
+    pw.ImageProvider? logoImage = logoBytes != null ? pw.MemoryImage(logoBytes) : null;
     
-    final companyName = companySettings['companyName'] ?? 'Marko Group';
+        final companyName = companySettings['companyName'] ?? 'Marko Group';
     final companyAddress = companySettings['companyAddress'] ?? '';
     final companyPhone = companySettings['companyPhone'] ?? '';
     final companyTaxId = companySettings['companyTaxId'] ?? '';
+    final companyIce = companySettings['companyIce'] ?? '';
+    final companyRc = companySettings['companyRc'] ?? '';
+    final companyRib = companySettings['companyRib'] ?? '';
+    final companyEmail = companySettings['companyEmail'] ?? '';
+
 
     final textDir = l10n.localeName.startsWith('ar') ? pw.TextDirection.rtl : pw.TextDirection.ltr;
 
@@ -233,7 +262,7 @@ class PdfGeneratorService {
       print('Could not load watermark: $e');
     }
 
-    _addPages(doc, options, textDir, watermarkBg, () => [
+    _addPages(doc, options, textDir, watermarkBg, buildFooter: (context) => _buildDocumentFooter(companyAddress, companyIce, companyRc, companyRib, companyEmail, companyPhone), () => [
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
@@ -279,8 +308,8 @@ class PdfGeneratorService {
                 ];
               }).toList(),
               headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.white),
-              headerDecoration: const pw.BoxDecoration(color: PdfColors.blueGrey800),
-              rowDecoration: const pw.BoxDecoration(border: pw.Border(bottom: pw.BorderSide(color: PdfColors.grey300, width: .5))),
+              headerDecoration: pw.BoxDecoration(color: PdfColors.blueGrey800),
+              rowDecoration: pw.BoxDecoration(border: pw.Border(bottom: pw.BorderSide(color: PdfColors.grey300, width: .5))),
             ),
             pw.SizedBox(height: 16),
             pw.Container(
@@ -300,47 +329,84 @@ class PdfGeneratorService {
     return doc.save();
   }
 
-  pw.Widget _buildHeader(InvoiceEntity invoice, ClientEntity? client, String companyName, String companyAddress, String companyPhone, String companyTaxId, pw.ImageProvider? logoImage, AppLocalizations l10n) {
+    pw.Widget _buildHeader(InvoiceEntity invoice, ClientEntity? client, String companyName, String companyAddress, String companyPhone, String companyTaxId, String companyIce, String companyRc, String companyRib, String companyEmail, pw.ImageProvider? logoImage, AppLocalizations l10n) {
     String docTypeTitle = l10n.pdfFacture;
     if (invoice.documentType == 'BON') docTypeTitle = l10n.pdfBonDeLivraison;
     else if (invoice.documentType == 'COMMANDE') docTypeTitle = l10n.pdfBonDeCommande;
     else if (invoice.documentType == 'TICKET') docTypeTitle = l10n.ticket;
 
-    return pw.Row(
-      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+    final clientName = invoice.clientNameOverride ?? client?.name ?? 'Client Passager';
+    final clientIce = invoice.clientIceOverride ?? '';
+    
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
       children: [
-        pw.Column(
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            if (logoImage != null) 
+            pw.Expanded(
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  _bidiText(companyName, style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
+                  _bidiText('SARL AU', style: pw.TextStyle(fontSize: 10)),
+                ]
+              )
+            ),
+            if (logoImage != null)
               pw.Container(
-                height: 50,
-                margin: const pw.EdgeInsets.only(bottom: 8),
-                child: pw.Image(logoImage),
-              ),
-            _bidiText(companyName, style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
-            if (companyAddress.isNotEmpty) _bidiText(companyAddress),
-            if (companyPhone.isNotEmpty) _bidiText(companyPhone),
-            if (companyTaxId.isNotEmpty) _bidiText('Tax ID: $companyTaxId'),
-            pw.SizedBox(height: 16),
-            _bidiText(docTypeTitle.toUpperCase(), style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold, color: PdfColors.blueGrey800)),
-            pw.SizedBox(height: 8),
-            _bidiText('$docTypeTitle #: ${invoice.invoiceNumber}'),
-            _bidiText('${l10n.pdfDate}: ${invoice.date.toLocal().toString().split(' ')[0]}'),
-            _bidiText('${l10n.pdfStatus}: ${invoice.status}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                width: 200,
+                constraints: const pw.BoxConstraints(maxHeight: 120),
+                alignment: pw.Alignment.topCenter,
+                child: pw.Image(logoImage, fit: pw.BoxFit.contain),
+              )
+            else
+              pw.SizedBox(width: 200),
+            pw.Expanded(
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.end,
+                children: [
+                  _bidiText('MD DES PRODUITS CHIMIQUES', style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
+                  _bidiText('IMPORT EXPORT', style: pw.TextStyle(fontSize: 10)),
+                ]
+              )
+            ),
           ],
         ),
-        pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.end,
+        pw.SizedBox(height: 10),
+        pw.Divider(thickness: 2, color: PdfColor.fromHex('#C5A059')),
+        pw.SizedBox(height: 2),
+        pw.Divider(thickness: 1, color: PdfColor.fromHex('#C5A059')),
+        pw.SizedBox(height: 20),
+        
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           children: [
-            _bidiText('Client:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.grey700)),
-            pw.SizedBox(height: 4),
-            _bidiText(invoice.clientNameOverride ?? client?.name ?? 'N/A', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
-                        if (client?.address != null && client!.address!.isNotEmpty) _bidiText(client.address!),
-            if (client?.phone != null && client!.phone!.isNotEmpty) _bidiText(client.phone!),
-            if (client?.contactDetails != null && client!.contactDetails!.isNotEmpty) _bidiText(client.contactDetails!),
-            if (client != null && invoice.documentType != 'COMMANDE') _bidiText('${l10n.pdfTotalDebt}: ${client.balance.toStringAsFixed(2)} Dhs', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.blueGrey800)),
+            _bidiText('le : ${invoice.date.day.toString().padLeft(2,'0')}/${invoice.date.month.toString().padLeft(2,'0')}/${invoice.date.year}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+            _bidiText('${docTypeTitle.toUpperCase()} N°:${invoice.invoiceNumber}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
           ],
+        ),
+        pw.SizedBox(height: 15),
+        
+        pw.Table(
+          border: pw.TableBorder.all(color: PdfColors.black, width: 0.5),
+          children: [
+            pw.TableRow(
+              children: [
+                pw.Padding(padding: const pw.EdgeInsets.all(4), child: _bidiText('Client', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
+                pw.Padding(padding: const pw.EdgeInsets.all(4), child: _bidiText('ICE', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
+                pw.Padding(padding: const pw.EdgeInsets.all(4), child: _bidiText('Mode de reglement', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
+              ]
+            ),
+            pw.TableRow(
+              children: [
+                pw.Padding(padding: const pw.EdgeInsets.all(4), child: _bidiText(clientName, style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
+                pw.Padding(padding: const pw.EdgeInsets.all(4), child: _bidiText(clientIce.isNotEmpty ? 'ICE : $clientIce' : '', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
+                pw.Padding(padding: const pw.EdgeInsets.all(4), child: _bidiText('Espece', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
+              ]
+            ),
+          ]
         ),
       ],
     );
@@ -348,7 +414,7 @@ class PdfGeneratorService {
 
   pw.Widget _buildInvoiceTable(List<InvoiceLineEntity> lines, Map<String, ProductEntity> productMap, AppLocalizations l10n) {
     return pw.TableHelper.fromTextArray(
-      headers: [l10n.pdfItem, l10n.pdfQty, l10n.pdfPrice, l10n.pdfTotal],
+      headers: ['Produits', 'Quantités', 'P.U HT', 'MT HT'],
       data: lines.map((line) {
         final product = productMap[line.productId];
         String productName = _localizedProductName(product, l10n.localeName);
@@ -356,53 +422,107 @@ class PdfGeneratorService {
         return [
           productName,
           line.quantity.toStringAsFixed(2),
-          line.unitPrice.toStringAsFixed(2),
-          line.lineTotal.toStringAsFixed(2),
+          line.unitPrice.toStringAsFixed(2) + ' DH',
+          line.lineTotal.toStringAsFixed(2) + ' DH',
         ];
       }).toList(),
-      headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.white),
-      headerDecoration: const pw.BoxDecoration(
-        color: PdfColors.blueGrey800,
+      headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.black, fontSize: 10),
+      headerDecoration: pw.BoxDecoration(
+        color: PdfColor.fromHex('#e2e2e2'),
       ),
-      rowDecoration: const pw.BoxDecoration(
-        border: pw.Border(
-          bottom: pw.BorderSide(
-            color: PdfColors.grey300,
-            width: .5,
-          ),
-        ),
-      ),
-      cellAlignment: pw.Alignment.centerRight,
+      border: pw.TableBorder.all(color: PdfColors.black, width: 0.5),
+      cellPadding: const pw.EdgeInsets.all(6),
+      cellStyle: pw.TextStyle(fontSize: 10),
       cellAlignments: {
         0: pw.Alignment.centerLeft,
+        1: pw.Alignment.center,
+        2: pw.Alignment.center,
+        3: pw.Alignment.center,
       },
     );
   }
 
-  pw.Widget _buildTotals(InvoiceEntity invoice, AppLocalizations l10n) {
-    final balance = invoice.total - invoice.paidAmount;
+  pw.Widget _buildTotals(InvoiceEntity invoice, AppLocalizations l10n, String companyAddress, String companyIce, String companyRc, String companyRib, String companyEmail, String companyPhone) {
+    final amountWords = decimalToWordsTranslated(invoice.total.toDouble(), l10n.localeName);
     
-    return pw.Container(
-      alignment: pw.Alignment.centerRight,
-      child: pw.Container(
-        width: 200,
-        child: pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+    return pw.Column(
+      children: [
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.start,
           children: [
-            _buildTotalRow('${l10n.pdfSubtotal}:', invoice.subtotal.toStringAsFixed(2)),
-            pw.Divider(),
-            _buildTotalRow('${l10n.pdfTotal}:', invoice.total.toStringAsFixed(2), isBold: true, fontSize: 14),
-            pw.SizedBox(height: 8),
-            _buildTotalRow('${l10n.pdfPaid}:', invoice.paidAmount.toStringAsFixed(2)),
-            pw.Divider(color: PdfColors.grey400),
-            _buildTotalRow('${l10n.pdfBalance}:', balance.toStringAsFixed(2), isBold: true, color: PdfColors.red700),
-          ],
+            pw.Container(
+              width: 300,
+              child: pw.Table(
+                border: pw.TableBorder.all(color: PdfColors.black, width: 0.5),
+                children: [
+                  pw.TableRow(
+                    children: [
+                      pw.Padding(padding: const pw.EdgeInsets.all(4), child: _bidiText('Total HT', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
+                      pw.Padding(padding: const pw.EdgeInsets.all(4), child: _bidiText('MT TVA', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
+                      pw.Padding(padding: const pw.EdgeInsets.all(4), child: _bidiText('TOTAL TTC', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
+                    ]
+                  ),
+                  pw.TableRow(
+                    children: [
+                      pw.Padding(padding: const pw.EdgeInsets.all(4), child: _bidiText('${invoice.subtotal.toStringAsFixed(2)} DH', style: pw.TextStyle(fontSize: 10))),
+                      pw.Padding(padding: const pw.EdgeInsets.all(4), child: _bidiText('${invoice.taxes.toStringAsFixed(2)} DH', style: pw.TextStyle(fontSize: 10))),
+                      pw.Padding(padding: const pw.EdgeInsets.all(4), child: _bidiText('${invoice.total.toStringAsFixed(2)} DH', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
+                    ]
+                  ),
+                ]
+              ),
+            ),
+          ]
         ),
-      ),
+        pw.SizedBox(height: 15),
+        pw.Container(
+          alignment: pw.Alignment.centerLeft,
+          child: _bidiText('${l10n.invoiceStoppedAt} ${amountWords.substring(0,1).toUpperCase() + amountWords.substring(1)}.', style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
+        ),
+        pw.SizedBox(height: 40),
+        
+        // Footer Signature Area
+        pw.Container(
+          alignment: pw.Alignment.centerRight,
+          padding: const pw.EdgeInsets.only(right: 50),
+          child: pw.Container(
+            width: 150,
+            height: 80,
+            // You can add a signature image here if needed, or leave it blank
+          ),
+        ),
+        
+              ]
     );
   }
-  
-  pw.Widget _buildTotalRow(String label, String amount, {bool isBold = false, double? fontSize, PdfColor? color}) {
+
+  pw.Widget _buildDocumentFooter(String companyAddress, String companyIce, String companyRc, String companyRib, String companyEmail, String companyPhone) {
+    return pw.Column(
+      mainAxisSize: pw.MainAxisSize.min,
+      children: [
+        pw.Divider(thickness: 2, color: PdfColor.fromHex('#C5A059')),
+        pw.SizedBox(height: 2),
+        pw.Divider(thickness: 1, color: PdfColor.fromHex('#C5A059')),
+        pw.SizedBox(height: 4),
+        pw.Container(
+          alignment: pw.Alignment.center,
+          child: _bidiText('SIEGE SOCIAL : $companyAddress', style: pw.TextStyle(fontSize: 8, color: PdfColor.fromHex('#C5A059'), fontWeight: pw.FontWeight.bold)),
+        ),
+        pw.SizedBox(height: 4),
+        pw.Container(
+          alignment: pw.Alignment.center,
+          child: _bidiText('RIB : $companyRib | ICE : $companyIce | RC : $companyRc | Email : $companyEmail', style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold)),
+        ),
+        pw.SizedBox(height: 4),
+        pw.Container(
+          alignment: pw.Alignment.center,
+          child: _bidiText(companyPhone, style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold)),
+        ),
+      ],
+    );
+  }
+
+pw.Widget _buildTotalRow(String label, String amount, {bool isBold = false, double? fontSize, PdfColor? color}) {
     return pw.Padding(
       padding: const pw.EdgeInsets.symmetric(vertical: 2),
       child: pw.Row(
@@ -428,4 +548,19 @@ class PdfGeneratorService {
       ),
     );
   }
+  Future<void> exportAndSharePdf(Uint8List pdfBytes, String fileName, ExportFormat format) async {
+    if (format == ExportFormat.image) {
+      final raster = await Printing.raster(pdfBytes, pages: [0], dpi: 300).first;
+      final imageBytes = await raster.toPng();
+      await Printing.sharePdf(bytes: imageBytes, filename: '$fileName.png');
+    } else if (format == ExportFormat.excel) {
+      // Create a dummy CSV since true excel needs extra package
+      String csv = "Document,\$fileName\n";
+      csv += "NOTE: CSV export of invoice layout is experimental.\n";
+      await Printing.sharePdf(bytes: Uint8List.fromList(csv.codeUnits), filename: '$fileName.csv');
+    } else {
+      await Printing.sharePdf(bytes: pdfBytes, filename: '$fileName.pdf');
+    }
+  }
+
 }

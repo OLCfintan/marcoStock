@@ -277,6 +277,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       customInvoiceNumber: _activeSession.selectedDocumentType == 'FACTURE' ? _activeSession.invoiceCounterController.text.trim() : null,
       customDate: customDate,
       customClientName: _activeSession.selectedDocumentType == 'FACTURE' ? (_activeSession.customNameController.text.trim().isEmpty ? null : _activeSession.customNameController.text.trim()) : null,
+      customClientIce: _activeSession.selectedDocumentType == 'FACTURE' ? (_activeSession.customIceController.text.trim().isEmpty ? null : _activeSession.customIceController.text.trim()) : null,
     );
 
     try {
@@ -542,12 +543,28 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   const SizedBox(height: 8),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: TextFormField(
-                      controller: _activeSession.customNameController,
-                      decoration: InputDecoration(
-                        labelText: AppLocalizations.of(context)!.nameOverridePdf,
-                        border: OutlineInputBorder(),
-                      ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _activeSession.customNameController,
+                            decoration: InputDecoration(
+                              labelText: AppLocalizations.of(context)!.nameOverridePdf,
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _activeSession.customIceController,
+                            decoration: const InputDecoration(
+                              labelText: 'ICE',
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -921,6 +938,7 @@ class PosSession {
   final TextEditingController invoiceCounterController = TextEditingController();
   final TextEditingController invoiceDateController = TextEditingController();
   final TextEditingController customNameController = TextEditingController();
+  final TextEditingController customIceController = TextEditingController();
 
   PosSession({required this.id, required this.title}) {
     payments.add(_PaymentEntry(method: 'CASH'));
@@ -935,5 +953,6 @@ class PosSession {
     invoiceCounterController.dispose();
     invoiceDateController.dispose();
     customNameController.dispose();
+    customIceController.dispose();
   }
 }
