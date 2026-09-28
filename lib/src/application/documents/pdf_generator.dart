@@ -335,11 +335,11 @@ class PdfGeneratorService {
           children: [
             _bidiText('Client:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.grey700)),
             pw.SizedBox(height: 4),
-            _bidiText(client?.name ?? 'N/A', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
+            _bidiText(invoice.clientNameOverride ?? client?.name ?? 'N/A', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
                         if (client?.address != null && client!.address!.isNotEmpty) _bidiText(client.address!),
             if (client?.phone != null && client!.phone!.isNotEmpty) _bidiText(client.phone!),
             if (client?.contactDetails != null && client!.contactDetails!.isNotEmpty) _bidiText(client.contactDetails!),
-            if (client != null) _bidiText('${l10n.pdfTotalDebt}: ${client.balance.toStringAsFixed(2)} Dhs', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.blueGrey800)),
+            if (client != null && invoice.documentType != 'COMMANDE') _bidiText('${l10n.pdfTotalDebt}: ${client.balance.toStringAsFixed(2)} Dhs', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.blueGrey800)),
           ],
         ),
       ],

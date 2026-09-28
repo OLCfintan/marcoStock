@@ -3,6 +3,7 @@ import "pdf_preview_screen.dart";
 import '../../application/purchases/purchase_service.dart';
 import "package:marko_group/src/presentation/widgets/status_badge.dart";
 import '../../application/sales/sales_service.dart';
+import '../../application/settings/settings_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/print_dialog.dart';
@@ -263,19 +264,17 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> with SingleTi
                                         } else if (value == 'view_payments') {
                                           ViewPaymentsDialog.show(context, entityId: invoice.id, entityType: 'INVOICE');
                                         } else if (value == 'convert') {
-                                            final confirm = await showDialog<bool>(
+                                            final params = await showDialog<Map<String, dynamic>>(
                                               context: context,
-                                              builder: (ctx) => AlertDialog(
-                                                title: Text(AppLocalizations.of(context)!.convertToInvoice),
-                                                content: Text(AppLocalizations.of(context)!.convertBonToInvoice),
-                                                actions: [
-                                                  TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.of(context)!.cancel)),
-                                                  TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(AppLocalizations.of(context)!.confirm)),
-                                                ],
-                                              ),
+                                              builder: (ctx) => const _ConvertInvoiceDialog(),
                                             );
-                                            if (confirm == true) {
-                                              await ref.read(salesServiceProvider).convertBonToInvoice(invoice.id);
+                                            if (params != null) {
+                                              await ref.read(salesServiceProvider).convertBonToInvoice(
+                                                invoice.id,
+                                                customInvoiceNumber: params['number'],
+                                                customDate: params['date'],
+                                                customName: params['name'].toString().isEmpty ? null : params['name'],
+                                              );
                                               if (context.mounted) {
                                                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.convertedSuccessfully)));
                                               }
@@ -467,5 +466,101 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> with SingleTi
       ),
     );
   }
+}
 
+class _ConvertInvoiceDialog extends ConsumerStatefulWidget {
+  const _ConvertInvoiceDialog();
+  @override
+  ConsumerState<_ConvertInvoiceDialog> createState() => _ConvertInvoiceDialogState();
+}
+
+class _ConvertInvoiceDialogState extends ConsumerState<_ConvertInvoiceDialog> {
+  final _numberCtrl = TextEditingController();
+  final _dateCtrl = TextEditingController();
+  final _nameCtrl = TextEditingController();
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    _dateCtrl.text = '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
+    _loadPrefix();
+  }
+
+  Future<void> _loadPrefix() async {
+    final settings = await ref.read(settingsServiceProvider).getAllCompanySettings();
+    final prefix = settings['invoiceCounterPrefix'] ?? 'MG';
+    final nextNum = await ref.read(salesServiceProvider).getNextCustomInvoiceNumber(prefix);
+    if (mounted) {
+      setState(() {
+        _numberCtrl.text = nextNum;
+        _loading = false;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _numberCtrl.dispose();
+    _dateCtrl.dispose();
+    _nameCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) {
+      return const AlertDialog(content: SizedBox(height: 100, child: Center(child: CircularProgressIndicator())));
+    }
+    return AlertDialog(
+      title: Text(AppLocalizations.of(context)!.convertToInvoice),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(AppLocalizations.of(context)!.convertBonToInvoice),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _numberCtrl,
+              decoration: InputDecoration(labelText: AppLocalizations.of(context)!.invoiceNumber, border: const OutlineInputBorder()),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _dateCtrl,
+              decoration: InputDecoration(labelText: AppLocalizations.of(context)!.invoiceDate, hintText: 'DD/MM/YYYY', border: const OutlineInputBorder()),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _nameCtrl,
+              decoration: const InputDecoration(labelText: 'Name (Overrides Client Name in PDF)', border: OutlineInputBorder()),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context, null), child: Text(AppLocalizations.of(context)!.cancel)),
+        TextButton(
+          onPressed: () {
+            DateTime? customDate;
+            final parts = _dateCtrl.text.trim().split('/');
+            if (parts.length == 3) {
+              final d = int.tryParse(parts[0]);
+              final m = int.tryParse(parts[1]);
+              final y = int.tryParse(parts[2]);
+              if (d != null && m != null && y != null) {
+                customDate = DateTime(y, m, d);
+              }
+            }
+            Navigator.pop(context, {
+              'number': _numberCtrl.text.trim(),
+              'date': customDate,
+              'name': _nameCtrl.text.trim(),
+            });
+          },
+          child: Text(AppLocalizations.of(context)!.confirm),
+        ),
+      ],
+    );
+  }
 }

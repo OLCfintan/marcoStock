@@ -33,6 +33,7 @@ class SaleRequest {
   final List<SalePaymentRequest> payments;
   final String? customInvoiceNumber;
   final DateTime? customDate;
+  final String? customClientName;
   
   SaleRequest({
     this.documentType = 'FACTURE',
@@ -42,6 +43,7 @@ class SaleRequest {
     this.payments = const [],
     this.customInvoiceNumber,
     this.customDate,
+    this.customClientName,
   });
 }
 
@@ -220,6 +222,7 @@ class SalesService {
         documentType: drift.Value(request.documentType),
         invoiceNumber: invoiceNumber,
         clientId: drift.Value(request.clientId),
+        clientNameOverride: drift.Value(request.customClientName),
         date: date,
         subtotal: subtotal,
         taxes: taxes,
@@ -280,45 +283,47 @@ class SalesService {
       }
       final locationId = (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL' || client?.id == 'MAGAZIN_01') ? AppLocations.baseWarehouse : AppLocations.magazin;
 
-      for (final line in lines) {
-        // Reverse Stock Deduction
-        await _restoreStock(
-          productId: line.productId,
-          quantity: line.quantity,
-          reason: 'SALE_DELETED',
-          referenceOperationId: invoiceId,
-          userId: userId,
-          locationId: locationId,
-        );
-
-        // If it was a Magazin or Special client (transfer), reverse the inbound to Magazin
-        if (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL' || client?.id == 'MAGAZIN_01') {
-          await _deductStock(
+      if (invoice.documentType != 'COMMANDE' && invoice.documentType != 'FACTURE_DUMMY') {
+        for (final line in lines) {
+          // Reverse Stock Deduction
+          await _restoreStock(
             productId: line.productId,
             quantity: line.quantity,
-            reason: 'TRANSFER_REVERSED',
-            allowNegative: true,
+            reason: 'SALE_DELETED',
             referenceOperationId: invoiceId,
             userId: userId,
-            locationId: AppLocations.magazin,
+            locationId: locationId,
+          );
+
+          // If it was a Magazin or Special client (transfer), reverse the inbound to Magazin
+          if (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL' || client?.id == 'MAGAZIN_01') {
+            await _deductStock(
+              productId: line.productId,
+              quantity: line.quantity,
+              reason: 'TRANSFER_REVERSED',
+              allowNegative: true,
+              referenceOperationId: invoiceId,
+              userId: userId,
+              locationId: AppLocations.magazin,
+            );
+          }
+
+          // Reverse Consumables Deduction
+          await _restoreConsumables(
+            productId: line.productId,
+            quantity: line.quantity,
+            referenceOperationId: invoiceId,
+            userId: userId,
+            locationId: locationId,
           );
         }
 
-        // Reverse Consumables Deduction
-        await _restoreConsumables(
-          productId: line.productId,
-          quantity: line.quantity,
-          referenceOperationId: invoiceId,
-          userId: userId,
-          locationId: locationId,
-        );
-      }
-
-      // Reverse Client Debt — skip for walk-in (TEMP) clients
-      final debtAdded = invoice.total - invoice.paidAmount;
-      if (debtAdded > Decimal.zero && client != null && client.type != 'TEMP') {
-        final newBalance = client.balance - debtAdded;
-        await _db.update(_db.clients).replace(client.copyWith(balance: newBalance));
+        // Reverse Client Debt — skip for walk-in (TEMP) clients
+        final debtAdded = invoice.total - invoice.paidAmount;
+        if (debtAdded > Decimal.zero && client != null && client.type != 'TEMP') {
+          final newBalance = client.balance - debtAdded;
+          await _db.update(_db.clients).replace(client.copyWith(balance: newBalance));
+        }
       }
 
       // Mark Invoice as Deleted
@@ -340,45 +345,47 @@ class SalesService {
       }
       final locationId = (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL' || client?.id == 'MAGAZIN_01') ? AppLocations.baseWarehouse : AppLocations.magazin;
 
-      for (final line in lines) {
-        // Re-apply Stock Deduction
-        await _deductStock(
-          productId: line.productId,
-          quantity: line.quantity,
-          reason: 'SALE_RESTORED',
-          allowNegative: true,
-          referenceOperationId: invoiceId,
-          userId: userId,
-          locationId: locationId,
-        );
-
-        // Re-apply Magazin transfer if Magazin or Special client
-        if (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL' || client?.id == 'MAGAZIN_01') {
-          await _restoreStock(
+      if (invoice.documentType != 'COMMANDE' && invoice.documentType != 'FACTURE_DUMMY') {
+        for (final line in lines) {
+          // Re-apply Stock Deduction
+          await _deductStock(
             productId: line.productId,
             quantity: line.quantity,
-            reason: 'TRANSFER_IN_RESTORED',
+            reason: 'SALE_RESTORED',
+            allowNegative: true,
             referenceOperationId: invoiceId,
             userId: userId,
-            locationId: AppLocations.magazin,
+            locationId: locationId,
+          );
+
+          // Re-apply Magazin transfer if Magazin or Special client
+          if (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL' || client?.id == 'MAGAZIN_01') {
+            await _restoreStock(
+              productId: line.productId,
+              quantity: line.quantity,
+              reason: 'TRANSFER_IN_RESTORED',
+              referenceOperationId: invoiceId,
+              userId: userId,
+              locationId: AppLocations.magazin,
+            );
+          }
+
+          // Re-apply Consumables Deduction
+          await _deductConsumables(
+            productId: line.productId,
+            quantity: line.quantity,
+            referenceOperationId: invoiceId,
+            userId: userId,
+            locationId: locationId,
           );
         }
 
-        // Re-apply Consumables Deduction
-        await _deductConsumables(
-          productId: line.productId,
-          quantity: line.quantity,
-          referenceOperationId: invoiceId,
-          userId: userId,
-          locationId: locationId,
-        );
-      }
-
-      // Re-apply Client Debt — skip for walk-in (TEMP) clients
-      final debtAdded = invoice.total - invoice.paidAmount;
-      if (debtAdded > Decimal.zero && client != null && client.type != 'TEMP') {
-        final newBalance = client.balance + debtAdded;
-        await _db.update(_db.clients).replace(client.copyWith(balance: newBalance));
+        // Re-apply Client Debt — skip for walk-in (TEMP) clients
+        final debtAdded = invoice.total - invoice.paidAmount;
+        if (debtAdded > Decimal.zero && client != null && client.type != 'TEMP') {
+          final newBalance = client.balance + debtAdded;
+          await _db.update(_db.clients).replace(client.copyWith(balance: newBalance));
+        }
       }
 
       // Mark Invoice as Active
@@ -388,50 +395,78 @@ class SalesService {
     });
   }
 
-  /// Converts a BON to a FACTURE (Invoice). Generates a new invoice number.
-  Future<void> convertBonToInvoice(String invoiceId) async {
+  /// Converts a BON to a FACTURE (Invoice). Generates a new dummy invoice.
+  Future<void> convertBonToInvoice(String invoiceId, {String? customInvoiceNumber, DateTime? customDate, String? customName}) async {
     await _db.transaction(() async {
-      final invoice = await (_db.select(_db.invoices)..where((t) => t.id.equals(invoiceId))).getSingleOrNull();
-      if (invoice == null || invoice.documentType != 'BON') return;
+      final bon = await (_db.select(_db.invoices)..where((t) => t.id.equals(invoiceId))).getSingleOrNull();
+      if (bon == null || bon.documentType != 'BON') return;
 
-      final date = DateTime.now();
-      final yearMonth = '${date.year}-${date.month.toString().padLeft(2, '0')}';
-      final prefix = 'FAC-$yearMonth';
+      final date = customDate ?? DateTime.now();
+      String invoiceNumber = '';
       
-      final seqQuery = _db.select(_db.documentSequences)
-        ..where((t) => t.documentType.equals('INVOICE') & t.prefix.equals(prefix));
-      final seq = await seqQuery.getSingleOrNull();
-      
-      int nextNum = 1;
-      if (seq != null) {
-        nextNum = seq.lastNumber + 1;
-        await _db.update(_db.documentSequences).replace(
-          seq.copyWith(lastNumber: nextNum)
-        );
+      if (customInvoiceNumber != null && customInvoiceNumber.isNotEmpty) {
+        invoiceNumber = customInvoiceNumber;
       } else {
-        await _db.into(_db.documentSequences).insert(DocumentSequencesCompanion.insert(
-          documentType: 'INVOICE',
-          prefix: prefix,
-          lastNumber: const drift.Value(1),
+        final yearMonth = '${date.year}-${date.month.toString().padLeft(2, '0')}';
+        final prefix = 'FAC-$yearMonth';
+        
+        final seqQuery = _db.select(_db.documentSequences)
+          ..where((t) => t.documentType.equals('INVOICE') & t.prefix.equals(prefix));
+        final seq = await seqQuery.getSingleOrNull();
+        
+        int nextNum = 1;
+        if (seq != null) {
+          nextNum = seq.lastNumber + 1;
+          await _db.update(_db.documentSequences).replace(
+            seq.copyWith(lastNumber: nextNum)
+          );
+        } else {
+          await _db.into(_db.documentSequences).insert(DocumentSequencesCompanion.insert(
+            documentType: 'INVOICE',
+            prefix: prefix,
+            lastNumber: const drift.Value(1),
+          ));
+        }
+        invoiceNumber = '$prefix-${nextNum.toString().padLeft(4, '0')}';
+      }
+
+      final newInvoiceId = _uuid.v4();
+      
+      await _db.into(_db.invoices).insert(InvoicesCompanion.insert(
+        id: newInvoiceId,
+        documentType: const drift.Value('FACTURE_DUMMY'),
+        invoiceNumber: invoiceNumber,
+        clientId: drift.Value(bon.clientId),
+        clientNameOverride: drift.Value(customName),
+        date: date,
+        subtotal: bon.subtotal,
+        taxes: bon.taxes,
+        total: bon.total,
+        paidAmount: Decimal.zero,
+        status: 'UNPAID',
+        notes: drift.Value('Converted from BON: ${bon.invoiceNumber}'),
+      ));
+
+      final lines = await (_db.select(_db.invoiceLines)..where((t) => t.invoiceId.equals(bon.id))).get();
+      for (final line in lines) {
+        await _db.into(_db.invoiceLines).insert(InvoiceLinesCompanion.insert(
+          id: _uuid.v4(),
+          invoiceId: newInvoiceId,
+          productId: line.productId,
+          quantity: line.quantity,
+          unitPrice: line.unitPrice,
+          discount: line.discount,
+          lineTotal: line.lineTotal,
         ));
       }
-      
-      final invoiceNumber = '$prefix-${nextNum.toString().padLeft(4, '0')}';
-
-      await (_db.update(_db.invoices)..where((t) => t.id.equals(invoiceId))).write(
-        InvoicesCompanion(
-          documentType: const drift.Value('FACTURE'),
-          invoiceNumber: drift.Value(invoiceNumber),
-        )
-      );
 
       await _db.into(_db.auditLogs).insert(AuditLogsCompanion.insert(
         id: _uuid.v4(),
         userId: 'SYSTEM',
         action: 'CONVERT_BON',
         entityType: 'INVOICE',
-        entityId: invoiceId,
-        details: jsonEncode({'oldNumber': invoice.invoiceNumber, 'newNumber': invoiceNumber}),
+        entityId: newInvoiceId,
+        details: jsonEncode({'sourceBonId': bon.id, 'newNumber': invoiceNumber}),
       ));
     });
   }

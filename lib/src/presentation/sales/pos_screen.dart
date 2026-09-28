@@ -276,6 +276,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       payments: paymentRequests,
       customInvoiceNumber: _activeSession.selectedDocumentType == 'FACTURE' ? _activeSession.invoiceCounterController.text.trim() : null,
       customDate: customDate,
+      customClientName: _activeSession.selectedDocumentType == 'FACTURE' ? (_activeSession.customNameController.text.trim().isEmpty ? null : _activeSession.customNameController.text.trim()) : null,
     );
 
     try {
@@ -536,6 +537,17 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: TextFormField(
+                      controller: _activeSession.customNameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Name (Overrides Client Name in PDF)',
+                        border: OutlineInputBorder(),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -906,6 +918,7 @@ class PosSession {
 
   final TextEditingController invoiceCounterController = TextEditingController();
   final TextEditingController invoiceDateController = TextEditingController();
+  final TextEditingController customNameController = TextEditingController();
 
   PosSession({required this.id, required this.title}) {
     payments.add(_PaymentEntry(method: 'CASH'));
@@ -919,5 +932,6 @@ class PosSession {
     }
     invoiceCounterController.dispose();
     invoiceDateController.dispose();
+    customNameController.dispose();
   }
 }
