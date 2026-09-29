@@ -80,7 +80,7 @@ class _AppIdleWrapperState extends ConsumerState<AppIdleWrapper> {
                         });
                         _resetTimer();
                       },
-                      correctPassword: 'admin', // Hardcoded admin lock for now
+                      correctPassword: ref.watch(currentUserProvider)?.pinCode ?? '1234', 
                     );
                   },
                 ),
