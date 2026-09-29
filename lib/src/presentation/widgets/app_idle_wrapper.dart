@@ -17,11 +17,12 @@ class AppIdleWrapper extends ConsumerStatefulWidget {
 class _AppIdleWrapperState extends ConsumerState<AppIdleWrapper> {
   Timer? _timer;
   bool _isScreensaverActive = false;
+  DateTime _lastActive = DateTime.now();
 
   @override
   void initState() {
     super.initState();
-    _startTimer();
+    _startPeriodicTimer();
     HardwareKeyboard.instance.addHandler(_handleKey);
   }
 
@@ -32,38 +33,42 @@ class _AppIdleWrapperState extends ConsumerState<AppIdleWrapper> {
     super.dispose();
   }
 
+  void _markActive() {
+    _lastActive = DateTime.now();
+  }
+
   bool _handleKey(KeyEvent event) {
-    _resetTimer();
+    _markActive();
     return false;
   }
 
-  void _startTimer() {
+  void _startPeriodicTimer() {
     _timer?.cancel();
-    final delayMinutes = ref.read(sleepDelayProvider);
-    if (delayMinutes > 0) {
-      _timer = Timer(Duration(minutes: delayMinutes), () {
+    _timer = Timer.periodic(const Duration(seconds: 2), (timer) {
+      if (_isScreensaverActive) return;
+      if (!mounted) return;
+      
+      final delayMinutes = ref.read(sleepDelayProvider);
+      if (delayMinutes <= 0 || delayMinutes >= 9999) return; // Never or disabled
+      
+      final diff = DateTime.now().difference(_lastActive);
+      if (diff.inMinutes >= delayMinutes) {
         setState(() {
           _isScreensaverActive = true;
         });
-      });
-    }
-  }
-
-  void _resetTimer() {
-    if (_isScreensaverActive) return; // Don't reset if already showing screensaver, wait for unlock
-    _startTimer();
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(sleepDelayProvider, (prev, next) {
-      if (!_isScreensaverActive) _startTimer();
-    });
+    // No need to reset timer on provider change, the periodic timer checks the provider dynamically.
 
     return Listener(
-      onPointerDown: (_) => _resetTimer(),
-      onPointerMove: (_) => _resetTimer(),
-      onPointerHover: (_) => _resetTimer(),
+      onPointerDown: (_) => _markActive(),
+      onPointerMove: (_) => _markActive(),
+      onPointerHover: (_) => _markActive(),
+      behavior: HitTestBehavior.translucent,
       child: Stack(
         children: [
           widget.child,
@@ -78,7 +83,7 @@ class _AppIdleWrapperState extends ConsumerState<AppIdleWrapper> {
                         setState(() {
                           _isScreensaverActive = false;
                         });
-                        _resetTimer();
+                        _markActive();
                       },
                       correctPassword: ref.watch(currentUserProvider)?.pinCode ?? '1234', 
                     );

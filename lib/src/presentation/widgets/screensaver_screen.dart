@@ -25,7 +25,7 @@ class _ScreensaverScreenState extends State<ScreensaverScreen> with SingleTicker
   @override
   void initState() {
     super.initState();
-    for (int i = 0; i < 40; i++) {
+    for (int i = 0; i < 15; i++) {
       _boids.add(Boid(
         position: Offset(_rand.nextDouble() * 1000, _rand.nextDouble() * 1000),
         velocity: Offset((_rand.nextDouble() - 0.5) * 4, (_rand.nextDouble() - 0.5) * 4),
@@ -195,24 +195,49 @@ class _ScreensaverScreenState extends State<ScreensaverScreen> with SingleTicker
 class Boid {
   Offset position;
   Offset velocity;
-  final double maxSpeed = 3.0;
 
   Boid({required this.position, required this.velocity});
 
-  void update(Size bounds, Offset mousePos) {
-    final d = (position - mousePos).distance;
-    if (d < 150) {
-      final repel = (position - mousePos) / d;
-      velocity += repel * 1.5;
+  void update(Size size, Offset mousePos) {
+    // Extremely lightweight update without N^2 checking.
+    // Fish simply swim in their direction, bounce off walls, and flee the mouse.
+    
+    // Flee mouse
+    final dMouseSq = (position - mousePos).distanceSquared;
+    if (dMouseSq < 40000) { // 200 pixel radius
+      final escape = (position - mousePos);
+      if (escape.dx != 0 || escape.dy != 0) {
+          final norm = escape / escape.distance;
+          velocity += norm * 0.5;
+      }
     }
+    
+    // Constant forward speed
+    if (velocity.distanceSquared > 0) {
+      final norm = velocity / velocity.distance;
+      velocity = norm * 2.0; // Fixed speed
+    } else {
+      velocity = const Offset(2.0, 0);
+    }
+    
     position += velocity;
-    if (velocity.distance > maxSpeed) {
-      velocity = (velocity / velocity.distance) * maxSpeed;
+    
+    // Bounce walls
+    if (position.dx < 0) {
+      position = Offset(0, position.dy);
+      velocity = Offset(-velocity.dx, velocity.dy);
+    } else if (position.dx > size.width) {
+      position = Offset(size.width, position.dy);
+      velocity = Offset(-velocity.dx, velocity.dy);
     }
-    if (position.dx < -50) position = Offset(bounds.width + 50, position.dy);
-    if (position.dx > bounds.width + 50) position = Offset(-50, position.dy);
-    if (position.dy < -50) position = Offset(position.dx, bounds.height + 50);
-    if (position.dy > bounds.height + 50) position = Offset(position.dx, -50);
+    
+    if (position.dy < 0) {
+      position = Offset(position.dx, 0);
+      velocity = Offset(velocity.dx, -velocity.dy);
+    } else if (position.dy > size.height) {
+      position = Offset(position.dx, size.height);
+      velocity = Offset(velocity.dx, -velocity.dy);
+    }
   }
 }
 
