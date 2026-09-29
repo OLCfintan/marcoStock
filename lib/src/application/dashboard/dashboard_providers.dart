@@ -55,7 +55,7 @@ final todaySalesProvider = StreamProvider<Decimal>((ref) {
   final startOfDay = DateTime(now.year, now.month, now.day);
   
   // Watch invoices table directly for instant reactivity
-  return (db.select(db.invoices)..where((t) => t.date.isBiggerOrEqualValue(startOfDay) & t.isActive.equals(true))).watch().map((invoices) {
+  return (db.select(db.invoices)..where((t) => t.date.isBiggerOrEqualValue(startOfDay) & t.isActive.equals(true) & t.documentType.isNotIn(['COMMANDE', 'FACTURE', 'FACTURE_DUMMY']))).watch().map((invoices) {
     return invoices.fold<Decimal>(Decimal.zero, (sum, inv) => sum + inv.total);
   });
 });
@@ -75,7 +75,7 @@ final todaysCreditProvider = StreamProvider<Decimal>((ref) {
   final startOfDay = DateTime(now.year, now.month, now.day);
   
   // Watch invoices table directly for instant reactivity
-  return (db.select(db.invoices)..where((t) => t.date.isBiggerOrEqualValue(startOfDay) & t.isActive.equals(true))).watch().map((invoices) {
+  return (db.select(db.invoices)..where((t) => t.date.isBiggerOrEqualValue(startOfDay) & t.isActive.equals(true) & t.documentType.isNotIn(['COMMANDE', 'FACTURE', 'FACTURE_DUMMY']))).watch().map((invoices) {
     return invoices.fold<Decimal>(Decimal.zero, (sum, inv) => sum + (inv.total - inv.paidAmount));
   });
 });
@@ -86,7 +86,7 @@ final topSellingProductsProvider = StreamProvider<List<TopProduct>>((ref) {
   return db.select(db.clients).watch().asyncMap((clients) async {
     final normalIds = clients.where((c) => c.type == 'NORMAL').map((c) => c.id).toList();
     if (normalIds.isEmpty) return [];
-    final invoices = await (db.select(db.invoices)..where((t) => t.isActive.equals(true) & ((t.clientId.isIn(normalIds) | t.clientId.isNull()) | t.clientId.isNull()))).get();
+    final invoices = await (db.select(db.invoices)..where((t) => t.isActive.equals(true) & t.documentType.isNotIn(['COMMANDE', 'FACTURE', 'FACTURE_DUMMY']) & ((t.clientId.isIn(normalIds) | t.clientId.isNull()) | t.clientId.isNull()))).get();
     final activeInvoiceIds = invoices.map((i) => i.id).toList();
     final map = <String, TopProduct>{};
     if (activeInvoiceIds.isEmpty) return [];
@@ -233,7 +233,7 @@ final salesChartDataProvider = StreamProvider<List<ChartDataPoint>>((ref) {
   final period = ref.watch(salesChartPeriodProvider);
   final db = ref.watch(databaseProvider);
   
-  return (db.select(db.invoices)..where((t) => t.isActive.equals(true))).watch().asyncMap((invoices) async {
+  return (db.select(db.invoices)..where((t) => t.isActive.equals(true) & t.documentType.isNotIn(['COMMANDE', 'FACTURE', 'FACTURE_DUMMY']))).watch().asyncMap((invoices) async {
     final now = DateTime.now();
     
     final data = LinkedHashMap<String, Decimal>();
@@ -326,7 +326,7 @@ final remindersProvider = StreamProvider<List<ReminderInfo>>((ref) {
     }
     
     // Unpaid Invoices
-    final invoices = await (db.select(db.invoices)..where((t) => t.isActive.equals(true))).get();
+    final invoices = await (db.select(db.invoices)..where((t) => t.isActive.equals(true) & t.documentType.isNotIn(['COMMANDE', 'FACTURE', 'FACTURE_DUMMY']))).get();
     for (final inv in invoices.where((i) => i.status == 'UNPAID' || i.status == 'PARTIAL')) {
       final diff = DateTime.now().difference(inv.date).inDays;
       if (diff > 7) { // Due more than 7 days
