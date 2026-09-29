@@ -113,6 +113,13 @@ class PdfGeneratorService {
 
 
 
+  String _localizedPaymentMethod(String? method, AppLocalizations l10n) {
+    if (method == 'CASH') return l10n.cash;
+    if (method == 'CHECK') return l10n.check;
+    if (method == 'LETTER') return l10n.letter;
+    return method ?? l10n.cash;
+  }
+
   String _localizedProductName(ProductEntity? product, String locale) {
     if (product == null) return 'Unknown';
     String finalName = product.name;
