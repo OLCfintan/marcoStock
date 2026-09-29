@@ -764,6 +764,25 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                     onChanged: (val) => _onDocumentTypeChanged(val!),
                   ),
                 ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: DropdownButtonFormField<String>(
+                    value: _activeSession.selectedPaymentMethod,
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context)!.modeDeReglement,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      filled: true,
+                    ),
+                    items: [
+                      DropdownMenuItem(value: 'CASH', child: Text(AppLocalizations.of(context)!.cash)),
+                      DropdownMenuItem(value: 'CHECK', child: Text(AppLocalizations.of(context)!.check)),
+                      DropdownMenuItem(value: 'LETTER', child: Text(AppLocalizations.of(context)!.letter)),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) setState(() => _activeSession.selectedPaymentMethod = val);
+                    },
+                  ),
+                ),
                 if (_activeSession.selectedDocumentType == 'FACTURE') ...[
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
