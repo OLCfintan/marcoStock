@@ -212,7 +212,7 @@ class PdfGeneratorService {
         ];
       } else {
         return [
-          _buildOldHeader(invoice, client, companyName, companyAddress, companyPhone, companyTaxId, logoImage, l10n),
+          _buildOldHeader(invoice, client, companyName, companyAddress, companyPhone, companyTaxId, logoImage ?? watermarkBg, l10n),
           pw.SizedBox(height: 32),
           _buildOldInvoiceTable(lines, productMap, l10n),
           pw.SizedBox(height: 16),
@@ -289,7 +289,7 @@ class PdfGeneratorService {
                 pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
-                    if (logoImage != null) pw.Container(height: 50, margin: const pw.EdgeInsets.only(bottom: 8), child: pw.Image(logoImage)),
+                    if (logoImage != null || watermarkBg != null) pw.Container(height: 80, constraints: const pw.BoxConstraints(maxWidth: 250), margin: const pw.EdgeInsets.only(bottom: 8), child: pw.Image(logoImage ?? watermarkBg!, fit: pw.BoxFit.contain)),
                     _bidiText(companyName, style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
                     if (companyAddress.isNotEmpty) _bidiText(companyAddress),
                     if (companyPhone.isNotEmpty) _bidiText(companyPhone),
@@ -604,8 +604,8 @@ pw.Widget _buildOldHeader(InvoiceEntity invoice, ClientEntity? client, String co
           children: [
             if (logoImage != null) 
               pw.Container(
-                height: 80,
-                constraints: const pw.BoxConstraints(maxWidth: 250),
+                height: 100,
+                constraints: const pw.BoxConstraints(maxWidth: 300),
                 margin: const pw.EdgeInsets.only(bottom: 8),
                 child: pw.Image(logoImage, fit: pw.BoxFit.contain),
               ),
