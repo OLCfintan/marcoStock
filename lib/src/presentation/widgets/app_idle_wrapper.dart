@@ -69,14 +69,21 @@ class _AppIdleWrapperState extends ConsumerState<AppIdleWrapper> {
           widget.child,
           if (_isScreensaverActive)
             Positioned.fill(
-              child: ScreensaverScreen(
-                onUnlock: () {
-                  setState(() {
-                    _isScreensaverActive = false;
-                  });
-                  _resetTimer();
-                },
-                correctPassword: 'admin', // Hardcoded admin lock for now
+              child: Navigator(
+                onGenerateRoute: (settings) => PageRouteBuilder(
+                  opaque: false,
+                  pageBuilder: (context, animation, secondaryAnimation) {
+                    return ScreensaverScreen(
+                      onUnlock: () {
+                        setState(() {
+                          _isScreensaverActive = false;
+                        });
+                        _resetTimer();
+                      },
+                      correctPassword: 'admin', // Hardcoded admin lock for now
+                    );
+                  },
+                ),
               ),
             ),
         ],

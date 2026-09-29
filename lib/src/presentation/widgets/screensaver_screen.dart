@@ -41,7 +41,7 @@ class _ScreensaverScreenState extends State<ScreensaverScreen> with SingleTicker
     for (var boid in _boids) {
       boid.update(size, _mousePos);
     }
-    setState(() {});
+    // Removed setState, we use AnimatedBuilder below
   }
 
   @override
@@ -87,28 +87,36 @@ class _ScreensaverScreenState extends State<ScreensaverScreen> with SingleTicker
                 ),
               ),
             ),
-            // Fishes
-            Positioned.fill(
-              child: CustomPaint(
-                painter: AquariumPainter(_boids),
-              ),
-            ),
-            // Custom Cursor
-            Positioned(
-              left: _mousePos.dx - 30,
-              top: _mousePos.dy - 30,
-              child: IgnorePointer(
-                child: Container(
-                  width: 60, height: 60,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                       BoxShadow(color: Colors.white.withValues(alpha: 0.5), blurRadius: 15, spreadRadius: 5),
-                    ],
-                  ),
-                  child: ClipOval(child: Image.asset('assets/images/logo.jpeg', fit: BoxFit.cover)),
-                ),
-              ),
+            // Fishes and Cursor (Animated efficiently)
+            AnimatedBuilder(
+              animation: _ticker,
+              builder: (context, child) {
+                return Stack(
+                  children: [
+                    Positioned.fill(
+                      child: CustomPaint(
+                        painter: AquariumPainter(_boids),
+                      ),
+                    ),
+                    Positioned(
+                      left: _mousePos.dx - 30,
+                      top: _mousePos.dy - 30,
+                      child: IgnorePointer(
+                        child: Container(
+                          width: 60, height: 60,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                               BoxShadow(color: Colors.white.withValues(alpha: 0.5), blurRadius: 15, spreadRadius: 5),
+                            ],
+                          ),
+                          child: ClipOval(child: Image.asset('assets/images/logo.jpeg', fit: BoxFit.cover)),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
             
             // Password Modal
