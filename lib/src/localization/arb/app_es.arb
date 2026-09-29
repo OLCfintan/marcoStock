@@ -350,6 +350,8 @@
   "deletePaymentConfirm": "¿Eliminar pago?",
   "deletePaymentDesc": "Esto revertirá algebraicamente el pago.",
   "deletedStr": "ELIMINADO",
-  "productLabel": "Producto"
-  ,"invoiceStoppedAt": "La presente factura se cierra por la suma de :"
+  "productLabel": "Producto",
+  "invoiceStoppedAt": "La presente factura se cierra por la suma de :",
+  "modeDeReglement": "Método de Pago",
+  "letter": "Letra"
 }

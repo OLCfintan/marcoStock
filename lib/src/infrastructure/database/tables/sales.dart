@@ -16,6 +16,7 @@ class Invoices extends Table {
   TextColumn get paidAmount => text().map(const DecimalConverter())();
   
   TextColumn get status => text()(); // 'UNPAID', 'PARTIAL', 'PAID'
+  TextColumn get paymentMethod => text().nullable()();
   TextColumn get notes => text().nullable()();
   
   BoolColumn get isActive => boolean().withDefault(const Constant(true))();

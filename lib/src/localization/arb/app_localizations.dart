@@ -2213,6 +2213,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The present invoice is stopped at the sum of :'**
   String get invoiceStoppedAt;
+
+  /// No description provided for @modeDeReglement.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Method'**
+  String get modeDeReglement;
+
+  /// No description provided for @letter.
+  ///
+  /// In en, this message translates to:
+  /// **'Letter/Draft'**
+  String get letter;
 }
 
 class _AppLocalizationsDelegate

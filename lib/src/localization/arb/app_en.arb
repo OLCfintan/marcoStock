@@ -350,6 +350,8 @@
   "deletePaymentConfirm": "Delete Payment?",
   "deletePaymentDesc": "This will algebraically reverse the payment.",
   "deletedStr": "DELETED",
-  "productLabel": "Product"
-  ,"invoiceStoppedAt": "The present invoice is stopped at the sum of :"
+  "productLabel": "Product",
+  "invoiceStoppedAt": "The present invoice is stopped at the sum of :",
+  "modeDeReglement": "Payment Method",
+  "letter": "Letter/Draft"
 }

@@ -1083,4 +1083,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get invoiceStoppedAt =>
       'The present invoice is stopped at the sum of :';
+
+  @override
+  String get modeDeReglement => 'Payment Method';
+
+  @override
+  String get letter => 'Letter/Draft';
 }

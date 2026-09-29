@@ -4770,6 +4770,17 @@ class $InvoicesTable extends Invoices
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _paymentMethodMeta = const VerificationMeta(
+    'paymentMethod',
+  );
+  @override
+  late final GeneratedColumn<String> paymentMethod = GeneratedColumn<String>(
+    'payment_method',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _notesMeta = const VerificationMeta('notes');
   @override
   late final GeneratedColumn<String> notes = GeneratedColumn<String>(
@@ -4841,6 +4852,7 @@ class $InvoicesTable extends Invoices
     total,
     paidAmount,
     status,
+    paymentMethod,
     notes,
     isActive,
     createdAt,
@@ -4905,6 +4917,15 @@ class $InvoicesTable extends Invoices
       );
     } else if (isInserting) {
       context.missing(_statusMeta);
+    }
+    if (data.containsKey('payment_method')) {
+      context.handle(
+        _paymentMethodMeta,
+        paymentMethod.isAcceptableOrUnknown(
+          data['payment_method']!,
+          _paymentMethodMeta,
+        ),
+      );
     }
     if (data.containsKey('notes')) {
       context.handle(
@@ -5004,6 +5025,10 @@ class $InvoicesTable extends Invoices
             DriftSqlType.string,
             data['${effectivePrefix}status'],
           )!,
+      paymentMethod: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payment_method'],
+      ),
       notes: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}notes'],
@@ -5055,6 +5080,7 @@ class InvoiceEntity extends DataClass implements Insertable<InvoiceEntity> {
   final Decimal total;
   final Decimal paidAmount;
   final String status;
+  final String? paymentMethod;
   final String? notes;
   final bool isActive;
   final DateTime createdAt;
@@ -5071,6 +5097,7 @@ class InvoiceEntity extends DataClass implements Insertable<InvoiceEntity> {
     required this.total,
     required this.paidAmount,
     required this.status,
+    this.paymentMethod,
     this.notes,
     required this.isActive,
     required this.createdAt,
@@ -5108,6 +5135,9 @@ class InvoiceEntity extends DataClass implements Insertable<InvoiceEntity> {
       );
     }
     map['status'] = Variable<String>(status);
+    if (!nullToAbsent || paymentMethod != null) {
+      map['payment_method'] = Variable<String>(paymentMethod);
+    }
     if (!nullToAbsent || notes != null) {
       map['notes'] = Variable<String>(notes);
     }
@@ -5137,6 +5167,10 @@ class InvoiceEntity extends DataClass implements Insertable<InvoiceEntity> {
       total: Value(total),
       paidAmount: Value(paidAmount),
       status: Value(status),
+      paymentMethod:
+          paymentMethod == null && nullToAbsent
+              ? const Value.absent()
+              : Value(paymentMethod),
       notes:
           notes == null && nullToAbsent ? const Value.absent() : Value(notes),
       isActive: Value(isActive),
@@ -5168,6 +5202,7 @@ class InvoiceEntity extends DataClass implements Insertable<InvoiceEntity> {
       total: serializer.fromJson<Decimal>(json['total']),
       paidAmount: serializer.fromJson<Decimal>(json['paidAmount']),
       status: serializer.fromJson<String>(json['status']),
+      paymentMethod: serializer.fromJson<String?>(json['paymentMethod']),
       notes: serializer.fromJson<String?>(json['notes']),
       isActive: serializer.fromJson<bool>(json['isActive']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
@@ -5193,6 +5228,7 @@ class InvoiceEntity extends DataClass implements Insertable<InvoiceEntity> {
       'total': serializer.toJson<Decimal>(total),
       'paidAmount': serializer.toJson<Decimal>(paidAmount),
       'status': serializer.toJson<String>(status),
+      'paymentMethod': serializer.toJson<String?>(paymentMethod),
       'notes': serializer.toJson<String?>(notes),
       'isActive': serializer.toJson<bool>(isActive),
       'createdAt': serializer.toJson<DateTime>(createdAt),
@@ -5212,6 +5248,7 @@ class InvoiceEntity extends DataClass implements Insertable<InvoiceEntity> {
     Decimal? total,
     Decimal? paidAmount,
     String? status,
+    Value<String?> paymentMethod = const Value.absent(),
     Value<String?> notes = const Value.absent(),
     bool? isActive,
     DateTime? createdAt,
@@ -5228,6 +5265,8 @@ class InvoiceEntity extends DataClass implements Insertable<InvoiceEntity> {
     total: total ?? this.total,
     paidAmount: paidAmount ?? this.paidAmount,
     status: status ?? this.status,
+    paymentMethod:
+        paymentMethod.present ? paymentMethod.value : this.paymentMethod,
     notes: notes.present ? notes.value : this.notes,
     isActive: isActive ?? this.isActive,
     createdAt: createdAt ?? this.createdAt,
@@ -5259,6 +5298,10 @@ class InvoiceEntity extends DataClass implements Insertable<InvoiceEntity> {
       paidAmount:
           data.paidAmount.present ? data.paidAmount.value : this.paidAmount,
       status: data.status.present ? data.status.value : this.status,
+      paymentMethod:
+          data.paymentMethod.present
+              ? data.paymentMethod.value
+              : this.paymentMethod,
       notes: data.notes.present ? data.notes.value : this.notes,
       isActive: data.isActive.present ? data.isActive.value : this.isActive,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
@@ -5286,6 +5329,7 @@ class InvoiceEntity extends DataClass implements Insertable<InvoiceEntity> {
           ..write('total: $total, ')
           ..write('paidAmount: $paidAmount, ')
           ..write('status: $status, ')
+          ..write('paymentMethod: $paymentMethod, ')
           ..write('notes: $notes, ')
           ..write('isActive: $isActive, ')
           ..write('createdAt: $createdAt, ')
@@ -5307,6 +5351,7 @@ class InvoiceEntity extends DataClass implements Insertable<InvoiceEntity> {
     total,
     paidAmount,
     status,
+    paymentMethod,
     notes,
     isActive,
     createdAt,
@@ -5327,6 +5372,7 @@ class InvoiceEntity extends DataClass implements Insertable<InvoiceEntity> {
           other.total == this.total &&
           other.paidAmount == this.paidAmount &&
           other.status == this.status &&
+          other.paymentMethod == this.paymentMethod &&
           other.notes == this.notes &&
           other.isActive == this.isActive &&
           other.createdAt == this.createdAt &&
@@ -5345,6 +5391,7 @@ class InvoicesCompanion extends UpdateCompanion<InvoiceEntity> {
   final Value<Decimal> total;
   final Value<Decimal> paidAmount;
   final Value<String> status;
+  final Value<String?> paymentMethod;
   final Value<String?> notes;
   final Value<bool> isActive;
   final Value<DateTime> createdAt;
@@ -5362,6 +5409,7 @@ class InvoicesCompanion extends UpdateCompanion<InvoiceEntity> {
     this.total = const Value.absent(),
     this.paidAmount = const Value.absent(),
     this.status = const Value.absent(),
+    this.paymentMethod = const Value.absent(),
     this.notes = const Value.absent(),
     this.isActive = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -5380,6 +5428,7 @@ class InvoicesCompanion extends UpdateCompanion<InvoiceEntity> {
     required Decimal total,
     required Decimal paidAmount,
     required String status,
+    this.paymentMethod = const Value.absent(),
     this.notes = const Value.absent(),
     this.isActive = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -5405,6 +5454,7 @@ class InvoicesCompanion extends UpdateCompanion<InvoiceEntity> {
     Expression<String>? total,
     Expression<String>? paidAmount,
     Expression<String>? status,
+    Expression<String>? paymentMethod,
     Expression<String>? notes,
     Expression<bool>? isActive,
     Expression<DateTime>? createdAt,
@@ -5423,6 +5473,7 @@ class InvoicesCompanion extends UpdateCompanion<InvoiceEntity> {
       if (total != null) 'total': total,
       if (paidAmount != null) 'paid_amount': paidAmount,
       if (status != null) 'status': status,
+      if (paymentMethod != null) 'payment_method': paymentMethod,
       if (notes != null) 'notes': notes,
       if (isActive != null) 'is_active': isActive,
       if (createdAt != null) 'created_at': createdAt,
@@ -5444,6 +5495,7 @@ class InvoicesCompanion extends UpdateCompanion<InvoiceEntity> {
     Value<Decimal>? total,
     Value<Decimal>? paidAmount,
     Value<String>? status,
+    Value<String?>? paymentMethod,
     Value<String?>? notes,
     Value<bool>? isActive,
     Value<DateTime>? createdAt,
@@ -5462,6 +5514,7 @@ class InvoicesCompanion extends UpdateCompanion<InvoiceEntity> {
       total: total ?? this.total,
       paidAmount: paidAmount ?? this.paidAmount,
       status: status ?? this.status,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
       notes: notes ?? this.notes,
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
@@ -5512,6 +5565,9 @@ class InvoicesCompanion extends UpdateCompanion<InvoiceEntity> {
     if (status.present) {
       map['status'] = Variable<String>(status.value);
     }
+    if (paymentMethod.present) {
+      map['payment_method'] = Variable<String>(paymentMethod.value);
+    }
     if (notes.present) {
       map['notes'] = Variable<String>(notes.value);
     }
@@ -5546,6 +5602,7 @@ class InvoicesCompanion extends UpdateCompanion<InvoiceEntity> {
           ..write('total: $total, ')
           ..write('paidAmount: $paidAmount, ')
           ..write('status: $status, ')
+          ..write('paymentMethod: $paymentMethod, ')
           ..write('notes: $notes, ')
           ..write('isActive: $isActive, ')
           ..write('createdAt: $createdAt, ')
@@ -14373,6 +14430,7 @@ typedef $$InvoicesTableCreateCompanionBuilder =
       required Decimal total,
       required Decimal paidAmount,
       required String status,
+      Value<String?> paymentMethod,
       Value<String?> notes,
       Value<bool> isActive,
       Value<DateTime> createdAt,
@@ -14392,6 +14450,7 @@ typedef $$InvoicesTableUpdateCompanionBuilder =
       Value<Decimal> total,
       Value<Decimal> paidAmount,
       Value<String> status,
+      Value<String?> paymentMethod,
       Value<String?> notes,
       Value<bool> isActive,
       Value<DateTime> createdAt,
@@ -14460,6 +14519,11 @@ class $$InvoicesTableFilterComposer
 
   ColumnFilters<String> get status => $composableBuilder(
     column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get paymentMethod => $composableBuilder(
+    column: $table.paymentMethod,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -14548,6 +14612,11 @@ class $$InvoicesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get paymentMethod => $composableBuilder(
+    column: $table.paymentMethod,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get notes => $composableBuilder(
     column: $table.notes,
     builder: (column) => ColumnOrderings(column),
@@ -14620,6 +14689,11 @@ class $$InvoicesTableAnnotationComposer
   GeneratedColumn<String> get status =>
       $composableBuilder(column: $table.status, builder: (column) => column);
 
+  GeneratedColumn<String> get paymentMethod => $composableBuilder(
+    column: $table.paymentMethod,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get notes =>
       $composableBuilder(column: $table.notes, builder: (column) => column);
 
@@ -14681,6 +14755,7 @@ class $$InvoicesTableTableManager
                 Value<Decimal> total = const Value.absent(),
                 Value<Decimal> paidAmount = const Value.absent(),
                 Value<String> status = const Value.absent(),
+                Value<String?> paymentMethod = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
@@ -14698,6 +14773,7 @@ class $$InvoicesTableTableManager
                 total: total,
                 paidAmount: paidAmount,
                 status: status,
+                paymentMethod: paymentMethod,
                 notes: notes,
                 isActive: isActive,
                 createdAt: createdAt,
@@ -14717,6 +14793,7 @@ class $$InvoicesTableTableManager
                 required Decimal total,
                 required Decimal paidAmount,
                 required String status,
+                Value<String?> paymentMethod = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
@@ -14734,6 +14811,7 @@ class $$InvoicesTableTableManager
                 total: total,
                 paidAmount: paidAmount,
                 status: status,
+                paymentMethod: paymentMethod,
                 notes: notes,
                 isActive: isActive,
                 createdAt: createdAt,

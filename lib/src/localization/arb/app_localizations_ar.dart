@@ -1080,4 +1080,10 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get invoiceStoppedAt => 'حصرت هذه الفاتورة في مبلغ :';
+
+  @override
+  String get modeDeReglement => 'طريقة الدفع';
+
+  @override
+  String get letter => 'كمبيالة';
 }

@@ -1095,4 +1095,10 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get invoiceStoppedAt =>
       'La presente factura se cierra por la suma de :';
+
+  @override
+  String get modeDeReglement => 'Método de Pago';
+
+  @override
+  String get letter => 'Letra';
 }

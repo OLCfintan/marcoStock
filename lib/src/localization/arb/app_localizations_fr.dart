@@ -1099,4 +1099,10 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get invoiceStoppedAt => 'Arrêté la présente facture à la somme de :';
+
+  @override
+  String get modeDeReglement => 'Mode de Règlement';
+
+  @override
+  String get letter => 'Traite';
 }

@@ -350,6 +350,8 @@
   "deletePaymentConfirm": "هل تريد حذف الدفع؟",
   "deletePaymentDesc": "سيؤدي هذا إلى عكس الدفع جبريًا.",
   "deletedStr": "محذوف",
-  "productLabel": "المنتج"
-  ,"invoiceStoppedAt": "حصرت هذه الفاتورة في مبلغ :"
+  "productLabel": "المنتج",
+  "invoiceStoppedAt": "حصرت هذه الفاتورة في مبلغ :",
+  "modeDeReglement": "طريقة الدفع",
+  "letter": "كمبيالة"
 }

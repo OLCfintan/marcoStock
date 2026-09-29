@@ -473,6 +473,12 @@ class PdfGeneratorService {
     
     return pw.Column(
       children: [
+        if (invoice.paymentMethod != null)
+          pw.Container(
+            alignment: pw.Alignment.centerLeft,
+            margin: const pw.EdgeInsets.only(bottom: 12),
+            child: _bidiText('${l10n.modeDeReglement}: ${_localizedPaymentMethod(invoice.paymentMethod, l10n)}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 12)),
+          ),
         pw.Row(
           mainAxisAlignment: pw.MainAxisAlignment.start,
           children: [
@@ -711,13 +717,25 @@ pw.Widget _buildOldInvoiceTable(List<InvoiceLineEntity> lines, Map<String, Produ
 pw.Widget _buildOldTotals(InvoiceEntity invoice, AppLocalizations l10n) {
     final balance = invoice.total - invoice.paidAmount;
     
-    return pw.Container(
-      alignment: pw.Alignment.centerRight,
-      child: pw.Container(
-        width: 200,
-        child: pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+    return pw.Row(
+      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
+            if (invoice.paymentMethod != null)
+              pw.Padding(
+                padding: const pw.EdgeInsets.only(top: 8),
+                child: _bidiText('${l10n.modeDeReglement}: ${_localizedPaymentMethod(invoice.paymentMethod, l10n)}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 12)),
+              ),
+          ],
+        ),
+        pw.Container(
+          width: 200,
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+            children: [
             _buildOldTotalRow('${l10n.pdfSubtotal}:', invoice.subtotal.toStringAsFixed(2)),
             pw.Divider(),
             _buildOldTotalRow('${l10n.pdfTotal}:', invoice.total.toStringAsFixed(2), isBold: true, fontSize: 14),
@@ -725,9 +743,10 @@ pw.Widget _buildOldTotals(InvoiceEntity invoice, AppLocalizations l10n) {
             _buildOldTotalRow('${l10n.pdfPaid}:', invoice.paidAmount.toStringAsFixed(2)),
             pw.Divider(color: PdfColors.grey400),
             _buildOldTotalRow('${l10n.pdfBalance}:', balance.toStringAsFixed(2), isBold: true, color: PdfColors.red700),
-          ],
+            ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
