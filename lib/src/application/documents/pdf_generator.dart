@@ -604,9 +604,10 @@ pw.Widget _buildOldHeader(InvoiceEntity invoice, ClientEntity? client, String co
           children: [
             if (logoImage != null) 
               pw.Container(
-                height: 50,
+                height: 80,
+                constraints: const pw.BoxConstraints(maxWidth: 250),
                 margin: const pw.EdgeInsets.only(bottom: 8),
-                child: pw.Image(logoImage),
+                child: pw.Image(logoImage, fit: pw.BoxFit.contain),
               ),
             _bidiText(companyName, style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
             if (companyAddress.isNotEmpty) _bidiText(companyAddress),
