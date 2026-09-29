@@ -21,6 +21,10 @@ final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>((r
   return ThemeModeNotifier(ref.watch(settingsServiceProvider));
 });
 
+final sleepDelayProvider = StateNotifierProvider<SleepDelayNotifier, int>((ref) {
+  return SleepDelayNotifier(ref.watch(settingsServiceProvider));
+});
+
 final magnifierZoomProvider = StateNotifierProvider<MagnifierZoomNotifier, double>((ref) {
   return MagnifierZoomNotifier(ref.watch(settingsServiceProvider));
 });
@@ -60,6 +64,14 @@ class SettingsService {
 
   Future<void> setMagnifierZoom(double zoom) async {
     await _prefs.setDouble('magnifierZoom', zoom);
+  }
+
+  int getSleepDelay() {
+    return _prefs.getInt('sleepDelay') ?? 5; // Default 5 minutes
+  }
+
+  Future<void> setSleepDelay(int minutes) async {
+    await _prefs.setInt('sleepDelay', minutes);
   }
 
   Future<String?> getSetting(String key) async {
@@ -109,5 +121,15 @@ class MagnifierZoomNotifier extends StateNotifier<double> {
   void setZoom(double zoom) {
     state = zoom;
     _service.setMagnifierZoom(zoom);
+  }
+}
+
+class SleepDelayNotifier extends StateNotifier<int> {
+  final SettingsService _service;
+  SleepDelayNotifier(this._service) : super(_service.getSleepDelay());
+
+  void setDelay(int minutes) {
+    state = minutes;
+    _service.setSleepDelay(minutes);
   }
 }

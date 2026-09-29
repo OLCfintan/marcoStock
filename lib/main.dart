@@ -8,6 +8,7 @@ import 'dart:ui' show PlatformDispatcher;
 import 'src/routing/app_router.dart';
 import 'src/application/settings/settings_service.dart';
 import 'src/presentation/widgets/magnifier_wrapper.dart';
+import 'src/presentation/widgets/app_idle_wrapper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -60,7 +61,7 @@ class MarkoGroupApp extends ConsumerWidget {
     final seedColor = Colors.indigo;
 
     return MaterialApp.router(
-      builder: (context, child) => MagnifierWrapper(child: child!),
+      builder: (context, child) => AppIdleWrapper(child: MagnifierWrapper(child: child!)),
       title: 'Marko Group',
       debugShowCheckedModeBanner: false,
       locale: locale,
