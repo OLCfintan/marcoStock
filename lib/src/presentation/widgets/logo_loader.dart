@@ -63,12 +63,20 @@ class _LogoLoaderState extends State<LogoLoader> with SingleTickerProviderStateM
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // Premium Golden Crystal Background
+              // Pure code sleek background
               Positioned.fill(
-                child: Image.asset(
-                  'assets/images/loading_bg.jpg',
-                  fit: BoxFit.cover,
-                  filterQuality: FilterQuality.low, // Lower quality for RAM efficiency
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Theme.of(context).colorScheme.surface,
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
+                        Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.1),
+                      ],
+                    ),
+                  ),
                 ),
               ),
               // Premium Diagonal Lines and Traveling Stickers
