@@ -76,7 +76,7 @@ class _AppIdleWrapperState extends ConsumerState<AppIdleWrapper> {
                   });
                   _resetTimer();
                 },
-                correctPassword: ref.watch(currentUserProvider)?.passwordHash ?? 'admin',
+                correctPassword: 'admin', // Hardcoded admin lock for now
               ),
             ),
         ],
