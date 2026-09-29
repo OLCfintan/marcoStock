@@ -28,20 +28,7 @@ class _LogoLoaderState extends State<LogoLoader> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
-    if (widget.size < 60) {
-      // For small inline loaders, fallback to simple rotating logo
-      return Center(
-        child: RotationTransition(
-          turns: _controller,
-          child: ClipOval(
-            clipBehavior: Clip.antiAliasWithSaveLayer, 
-            child: Image.asset('assets/images/logo.jpeg', width: widget.size, height: widget.size, fit: BoxFit.cover, filterQuality: FilterQuality.high)
-          ),
-        ),
-      );
-    }
-
-    // For large/fullscreen loaders, show the premium puzzle crystal background
+    // Always show the premium puzzle crystal background, regardless of size
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: SizedBox(
@@ -64,26 +51,29 @@ class _LogoLoaderState extends State<LogoLoader> with SingleTickerProviderStateM
                 final progress = _controller.value;
                 final offset = -widget.size + (progress * widget.size * 2);
                 
+                final stickerSize = widget.size * 0.3;
+                final logoSize = widget.size * 0.4;
+                
                 return Stack(
                   children: [
                     // Moving Sticker 1
                     Positioned(
                       left: offset,
                       top: offset,
-                      child: const Icon(Icons.format_paint, color: Colors.blueAccent, size: 30),
+                      child: Icon(Icons.format_paint, color: Colors.blueAccent, size: stickerSize),
                     ),
                     // Moving Sticker 2 (Chemical)
                     Positioned(
-                      left: offset + 60,
-                      top: offset - 30,
-                      child: const Icon(Icons.science, color: Colors.greenAccent, size: 30),
+                      left: offset + (widget.size * 0.6),
+                      top: offset - (widget.size * 0.3),
+                      child: Icon(Icons.science, color: Colors.greenAccent, size: stickerSize),
                     ),
                     // Moving Original Logo
                     Positioned(
-                      left: offset + 20,
-                      top: offset + 20,
+                      left: offset + (widget.size * 0.2),
+                      top: offset + (widget.size * 0.2),
                       child: ClipOval(
-                        child: Image.asset('assets/images/logo.jpeg', width: 40, height: 40, fit: BoxFit.cover),
+                        child: Image.asset('assets/images/logo.jpeg', width: logoSize, height: logoSize, fit: BoxFit.cover),
                       ),
                     ),
                   ],

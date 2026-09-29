@@ -15,8 +15,12 @@ class ScreensaverScreen extends StatefulWidget {
 class _ScreensaverScreenState extends State<ScreensaverScreen> with SingleTickerProviderStateMixin {
   late AnimationController _ticker;
   final List<Boid> _boids = [];
-  Offset _mousePos = Offset(-1000, -1000);
+  Offset _mousePos = const Offset(-1000, -1000);
   final Random _rand = Random();
+  
+  bool _showPasswordInput = false;
+  String _errorMsg = '';
+  final TextEditingController _pwdCtrl = TextEditingController();
 
   @override
   void initState() {
@@ -37,52 +41,24 @@ class _ScreensaverScreenState extends State<ScreensaverScreen> with SingleTicker
     for (var boid in _boids) {
       boid.update(size, _mousePos);
     }
-    setState(() {}); // trigger repaint
+    setState(() {});
   }
 
   @override
   void dispose() {
     _ticker.dispose();
+    _pwdCtrl.dispose();
     super.dispose();
   }
 
-  void _showUnlockDialog() {
-    final ctrl = TextEditingController();
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Unlock Application'),
-        content: TextField(
-          controller: ctrl,
-          obscureText: true,
-          decoration: const InputDecoration(labelText: 'Password'),
-          autofocus: true,
-          onSubmitted: (val) {
-             if (val == widget.correctPassword) {
-                 Navigator.pop(ctx);
-                 widget.onUnlock();
-             } else {
-                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Incorrect password')));
-             }
-          },
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () {
-              if (ctrl.text == widget.correctPassword) {
-                 Navigator.pop(ctx);
-                 widget.onUnlock();
-              } else {
-                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Incorrect password')));
-              }
-            },
-            child: const Text('Unlock'),
-          ),
-        ],
-      ),
-    );
+  void _attemptUnlock() {
+    if (_pwdCtrl.text == widget.correctPassword) {
+      widget.onUnlock();
+    } else {
+      setState(() {
+        _errorMsg = 'Incorrect password';
+      });
+    }
   }
 
   @override
@@ -134,23 +110,73 @@ class _ScreensaverScreenState extends State<ScreensaverScreen> with SingleTicker
                 ),
               ),
             ),
-            // Unlock Button
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 50.0),
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.lock_open, color: Colors.blueAccent),
-                  label: const Text('Unlock', style: TextStyle(color: Colors.blueAccent, fontSize: 18)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white.withValues(alpha: 0.9),
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+            
+            // Password Modal
+            if (_showPasswordInput)
+              Center(
+                child: Container(
+                  width: 300,
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 10)],
                   ),
-                  onPressed: _showUnlockDialog,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.lock, size: 48, color: Colors.blueAccent),
+                      const SizedBox(height: 16),
+                      Material(
+                        color: Colors.transparent,
+                        child: TextField(
+                          controller: _pwdCtrl,
+                          obscureText: true,
+                          autofocus: true,
+                          decoration: const InputDecoration(labelText: 'Password'),
+                          onSubmitted: (_) => _attemptUnlock(),
+                        ),
+                      ),
+                      if (_errorMsg.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(_errorMsg, style: const TextStyle(color: Colors.red)),
+                        ),
+                      const SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          TextButton(
+                            onPressed: () => setState(() { _showPasswordInput = false; _errorMsg = ''; _pwdCtrl.clear(); }),
+                            child: const Text('Cancel'),
+                          ),
+                          ElevatedButton(
+                            onPressed: _attemptUnlock,
+                            child: const Text('Unlock'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 50.0),
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.lock_open, color: Colors.blueAccent),
+                    label: const Text('Unlock', style: TextStyle(color: Colors.blueAccent, fontSize: 18)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white.withValues(alpha: 0.9),
+                      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                    ),
+                    onPressed: () => setState(() => _showPasswordInput = true),
+                  ),
                 ),
               ),
-            ),
           ],
         ),
       ),
@@ -166,22 +192,15 @@ class Boid {
   Boid({required this.position, required this.velocity});
 
   void update(Size bounds, Offset mousePos) {
-    // Basic avoidance of mouse
     final d = (position - mousePos).distance;
     if (d < 150) {
       final repel = (position - mousePos) / d;
       velocity += repel * 1.5;
     }
-
-    // Move
     position += velocity;
-
-    // Limit speed
     if (velocity.distance > maxSpeed) {
       velocity = (velocity / velocity.distance) * maxSpeed;
     }
-
-    // Wrap around bounds
     if (position.dx < -50) position = Offset(bounds.width + 50, position.dy);
     if (position.dx > bounds.width + 50) position = Offset(-50, position.dy);
     if (position.dy < -50) position = Offset(position.dx, bounds.height + 50);
@@ -201,26 +220,20 @@ class AquariumPainter extends CustomPainter {
       canvas.save();
       canvas.translate(boid.position.dx, boid.position.dy);
       canvas.rotate(angle);
-      
-      // Draw fish body (orange with opacity)
       paint.color = Colors.orangeAccent.withValues(alpha: 0.8);
       final path = Path()
-        ..moveTo(10, 0) // nose
+        ..moveTo(10, 0)
         ..quadraticBezierTo(5, -8, -10, -3)
-        ..lineTo(-15, -8) // tail fin top
-        ..lineTo(-10, 0) // tail center
-        ..lineTo(-15, 8) // tail fin bottom
+        ..lineTo(-15, -8)
+        ..lineTo(-10, 0)
+        ..lineTo(-15, 8)
         ..lineTo(-10, 3)
         ..quadraticBezierTo(5, 8, 10, 0);
-        
       canvas.drawPath(path, paint);
-      
-      // Eye
       paint.color = Colors.white;
       canvas.drawCircle(const Offset(4, -2), 1.5, paint);
       paint.color = Colors.black;
       canvas.drawCircle(const Offset(4.5, -2), 0.5, paint);
-      
       canvas.restore();
     }
   }
