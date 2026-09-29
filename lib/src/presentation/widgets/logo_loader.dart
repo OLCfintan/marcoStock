@@ -79,10 +79,57 @@ class _LogoLoaderState extends State<LogoLoader> with SingleTickerProviderStateM
                   ),
                 ),
               ),
-              // Premium Diagonal Lines and Traveling Stickers
+              // Premium Diagonal Lines
               Positioned.fill(
                 child: CustomPaint(
                   painter: _PremiumDiagonalPainter(_controller),
+                ),
+              ),
+              // Traveling logos along the diagonals
+              AnimatedBuilder(
+                animation: _controller,
+                builder: (context, child) {
+                  final progress = _controller.value;
+                  return Stack(
+                    fit: StackFit.expand,
+                    children: List.generate(3, (i) {
+                      final moveProgress = (progress + (i * 0.33)) % 1.0;
+                      final offset = (w * 0.3) * (i - 1);
+                      final p1 = Offset(-h + offset, -h);
+                      final p2 = Offset(w + offset, w + h);
+                      final pos = Offset.lerp(p1, p2, moveProgress)!;
+                      return Positioned(
+                        left: pos.dx - 24,
+                        top: pos.dy - 24,
+                        child: RotationTransition(
+                           turns: _controller,
+                           child: ClipOval(
+                             clipBehavior: Clip.antiAliasWithSaveLayer,
+                             child: Image.asset('assets/images/logo.jpeg', width: 48, height: 48, fit: BoxFit.cover, filterQuality: FilterQuality.medium),
+                           ),
+                        ),
+                      );
+                    }),
+                  );
+                },
+              ),
+              // Center main pulsing/rotating logo
+              Center(
+                child: AnimatedBuilder(
+                  animation: _controller,
+                  builder: (context, child) {
+                     final pulse = 1.0 + 0.1 * math.sin(_controller.value * math.pi * 2);
+                     return Transform.scale(
+                       scale: pulse,
+                       child: RotationTransition(
+                         turns: _controller,
+                         child: ClipOval(
+                           clipBehavior: Clip.antiAliasWithSaveLayer,
+                           child: Image.asset('assets/images/logo.jpeg', width: 120, height: 120, fit: BoxFit.cover, filterQuality: FilterQuality.medium),
+                         ),
+                       ),
+                     );
+                  }
                 ),
               ),
             ],
@@ -123,19 +170,6 @@ class _PremiumDiagonalPainter extends CustomPainter {
       final p2 = Offset(size.width + offset, size.width + size.height);
       
       canvas.drawLine(p1, p2, paint);
-      
-      // Moving dot/sticker inside the line
-      final stickerPaint = Paint()
-        ..color = lineColors[i]
-        ..style = PaintingStyle.fill
-        ..maskFilter = const MaskFilter.blur(BlurStyle.solid, 8);
-        
-      // Offset by progress
-      final moveProgress = (progress + (i * 0.3)) % 1.0;
-      final stickerPos = Offset.lerp(p1, p2, moveProgress)!;
-      
-      canvas.drawCircle(stickerPos, 12, stickerPaint);
-      canvas.drawCircle(stickerPos, 6, Paint()..color = Colors.white);
     }
   }
 
