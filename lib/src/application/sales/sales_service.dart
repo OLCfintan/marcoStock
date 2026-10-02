@@ -35,6 +35,7 @@ class SaleRequest {
   final DateTime? customDate;
   final String? customClientName;
   final String? customClientIce;
+  final String companyBranch;
   
   SaleRequest({
     this.documentType = 'FACTURE',
@@ -46,6 +47,7 @@ class SaleRequest {
     this.customDate,
     this.customClientName,
     this.customClientIce,
+    this.companyBranch = 'MARKO_GROUP',
   });
 }
 

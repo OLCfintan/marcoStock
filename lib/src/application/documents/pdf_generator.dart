@@ -325,7 +325,7 @@ class PdfGeneratorService {
       print('Could not load watermark: $e');
     }
 
-    _addPages(doc, options, textDir, finalLogo ?? watermarkBg, false, buildFooter: null, () => [
+    _addPages(doc, options, textDir, watermarkBg, false, buildFooter: null, () => [
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
