@@ -274,6 +274,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       clientId: _activeSession.selectedClientId!,
       currentUserId: 'ADMIN_01', 
       lines: _activeSession.cart,
+      companyBranch: _activeSession.selectedCompanyBranch,
       payments: paymentRequests,
       customInvoiceNumber: _activeSession.selectedDocumentType == 'FACTURE' ? _activeSession.invoiceCounterController.text.trim() : null,
       customDate: customDate,
@@ -780,6 +781,25 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                     ],
                     onChanged: (val) {
                       if (val != null) setState(() => _activeSession.selectedPaymentMethod = val);
+                    },
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: DropdownButtonFormField<String>(
+                    value: _activeSession.selectedCompanyBranch,
+                    decoration: InputDecoration(
+                      labelText: 'Company Branch',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      filled: true,
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'MARKO_GROUP', child: Text('Marko Group')),
+                      DropdownMenuItem(value: 'MARKO_PEINT', child: Text('Marko Peint')),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) setState(() => _activeSession.selectedCompanyBranch = val);
                     },
                   ),
                 ),
