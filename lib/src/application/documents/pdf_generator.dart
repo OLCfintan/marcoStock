@@ -223,7 +223,7 @@ class PdfGeneratorService {
 
         final isFactureDoc = invoice.documentType == 'FACTURE' || invoice.documentType == 'FACTURE_DUMMY';
     
-    String finalCompanyName = companyNameRaw;
+    String finalCompanyName = companyName;
     pw.ImageProvider? finalLogo = logoImage;
     if (invoice.companyBranch == 'MARKO_PEINT') {
         finalCompanyName = 'Marko Peint';
