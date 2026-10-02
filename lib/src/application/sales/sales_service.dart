@@ -249,6 +249,8 @@ class SalesService {
         total: total,
         paidAmount: paidAmount,
         status: status,
+        companyBranch: drift.Value(request.companyBranch),
+        paymentMethod: drift.Value(request.payments.isNotEmpty ? request.payments.first.method : null),
       ));
       
       // 7. Create Payments

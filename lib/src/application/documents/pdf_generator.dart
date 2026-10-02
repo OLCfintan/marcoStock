@@ -230,7 +230,7 @@ class PdfGeneratorService {
         finalLogo = markoPeintLogo;
     }
     
-    _addPages(doc, options, textDir, finalLogo ?? watermarkBg, isFactureDoc, buildFooter: (context) => _buildDocumentFooter(isFactureDoc ? companyInvoiceAddress : companyAddress, companyIce, companyRc, companyRib, companyEmail, companyPhone, companyTaxId, companyTp), () {
+    _addPages(doc, options, textDir, finalLogo ?? watermarkBg, isFactureDoc, buildFooter: isFactureDoc ? (context) => _buildDocumentFooter(isFactureDoc ? companyInvoiceAddress : companyAddress, companyIce, companyRc, companyRib, companyEmail, companyPhone, companyTaxId, companyTp) : null, () {
       if (isFactureDoc) {
         return [
           _buildFactureHeader(invoice, client, finalCompanyName, companyInvoiceAddress, companyPhone, companyTaxId, companyIce, companyRc, companyRib, companyEmail, finalLogo ?? watermarkBg, l10n),
