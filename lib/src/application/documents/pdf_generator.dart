@@ -40,7 +40,7 @@ class PdfGeneratorService {
     );
   }
 
-  void _addPages(pw.Document doc, PrintOptions options, pw.TextDirection textDir, pw.ImageProvider? bgImage, bool isFacture, List<pw.Widget> Function() buildContent, {pw.Widget Function(pw.Context)? buildFooter}) {
+  void _addPages(pw.Document doc, PrintOptions options, pw.TextDirection textDir, pw.ImageProvider? bgImage, bool isFacture, List<pw.Widget> Function() buildContent, {pw.Widget Function(pw.Context)? buildFooter, double bgOpacity = 0.20}) {
     pw.Widget backgroundBuilder(pw.Context context) {
       if (bgImage == null) {
         return pw.FullPage(
@@ -53,12 +53,10 @@ class PdfGeneratorService {
         child: pw.Stack(
           children: [
             pw.Container(color: PdfColors.white),
-            pw.Center(
-              child: pw.Watermark(
-                child: pw.Opacity(
-                  opacity: 0.25,
-                  child: pw.Image(bgImage, fit: pw.BoxFit.contain),
-                ),
+            pw.Positioned.fill(
+              child: pw.Opacity(
+                opacity: bgOpacity,
+                child: pw.Center(child: pw.Image(bgImage, fit: pw.BoxFit.contain)), // contain is better for logos so they don't stretch out of bounds
               ),
             ),
           ],
@@ -225,15 +223,20 @@ class PdfGeneratorService {
     
     String finalCompanyName = companyName;
     pw.ImageProvider? finalLogo = logoImage;
+    pw.ImageProvider? finalBg = watermarkBg;
+    double finalOpacity = 1.0;
+    
     if (invoice.companyBranch == 'MARKO_PEINT') {
         finalCompanyName = 'Marko Peint';
         finalLogo = markoPeintLogo;
+        finalBg = markoPeintLogo;
+        finalOpacity = 0.15;
     }
     
-    _addPages(doc, options, textDir, finalLogo ?? watermarkBg, isFactureDoc, buildFooter: isFactureDoc ? (context) => _buildDocumentFooter(isFactureDoc ? companyInvoiceAddress : companyAddress, companyIce, companyRc, companyRib, companyEmail, companyPhone, companyTaxId, companyTp) : null, () {
+    _addPages(doc, options, textDir, finalBg, isFactureDoc, bgOpacity: finalOpacity, buildFooter: isFactureDoc ? (context) => _buildDocumentFooter(companyInvoiceAddress, companyIce, companyRc, companyRib, companyEmail, companyPhone, companyTaxId, companyTp) : (context) => _buildBonFooter(l10n), () {
       if (isFactureDoc) {
         return [
-          _buildFactureHeader(invoice, client, finalCompanyName, companyInvoiceAddress, companyPhone, companyTaxId, companyIce, companyRc, companyRib, companyEmail, finalLogo ?? watermarkBg, l10n),
+          _buildFactureHeader(invoice, client, finalCompanyName, companyInvoiceAddress, companyPhone, companyTaxId, companyIce, companyRc, companyRib, companyEmail, finalLogo, l10n),
           pw.SizedBox(height: 15),
           _buildFactureInvoiceTable(lines, productMap, l10n),
           pw.SizedBox(height: 15),
@@ -241,17 +244,11 @@ class PdfGeneratorService {
         ];
       } else {
         return [
-          _buildOldHeader(invoice, client, finalCompanyName, companyAddress, companyPhone, companyTaxId, finalLogo ?? watermarkBg, l10n),
+          _buildOldHeader(invoice, client, finalCompanyName, companyAddress, companyPhone, companyTaxId, finalLogo, l10n),
           pw.SizedBox(height: 32),
           _buildOldInvoiceTable(lines, productMap, l10n),
           pw.SizedBox(height: 16),
           _buildOldTotals(invoice, l10n),
-          pw.SizedBox(height: 30),
-          pw.Divider(),
-          pw.Container(
-            alignment: pw.Alignment.center,
-            child: _bidiText(l10n.pdfThankYou, style: const pw.TextStyle(color: PdfColors.grey)),
-          ),
         ];
       }
     });
@@ -325,7 +322,7 @@ class PdfGeneratorService {
       print('Could not load watermark: $e');
     }
 
-    _addPages(doc, options, textDir, watermarkBg, false, buildFooter: null, () => [
+    _addPages(doc, options, textDir, watermarkBg, false, bgOpacity: 1.0, buildFooter: null, () => [
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
@@ -400,8 +397,11 @@ class PdfGeneratorService {
     final clientName = invoice.clientNameOverride ?? client?.name ?? 'Client Passager';
     final clientIce = invoice.clientIceOverride ?? '';
     
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+    return pw.Container(
+      color: PdfColors.white,
+      padding: const pw.EdgeInsets.all(8),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.stretch,
       children: [
         pw.Row(
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -469,7 +469,7 @@ class PdfGeneratorService {
             ),
           ]
         ),
-      ],
+      ]),
     );
   }
 
@@ -565,6 +565,21 @@ pw.SizedBox(height: 15),
         ),
         
               ]
+    );
+  }
+
+  pw.Widget _buildBonFooter(AppLocalizations l10n) {
+    return pw.Column(
+      mainAxisSize: pw.MainAxisSize.min,
+      children: [
+        pw.SizedBox(height: 10),
+        pw.Divider(thickness: 1, color: PdfColors.grey400),
+        pw.SizedBox(height: 4),
+        pw.Container(
+          alignment: pw.Alignment.center,
+          child: _bidiText(l10n.pdfThankYou, style: const pw.TextStyle(color: PdfColors.grey, fontSize: 10)),
+        ),
+      ],
     );
   }
 
