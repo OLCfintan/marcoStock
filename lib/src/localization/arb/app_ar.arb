@@ -353,5 +353,7 @@
   "productLabel": "المنتج",
   "invoiceStoppedAt": "حصرت هذه الفاتورة في مبلغ :",
   "modeDeReglement": "طريقة الدفع",
-  "letter": "كمبيالة"
+  "letter": "كمبيالة",
+  "invoiceAddress": "عنوان الفاتورة",
+  "companyTp": "ضريبة المهنية"
 }

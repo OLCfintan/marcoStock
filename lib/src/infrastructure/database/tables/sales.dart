@@ -17,6 +17,7 @@ class Invoices extends Table {
   
   TextColumn get status => text()(); // 'UNPAID', 'PARTIAL', 'PAID'
   TextColumn get paymentMethod => text().nullable()();
+  TextColumn get companyBranch => text().nullable().withDefault(const Constant('MARKO_GROUP'))(); // 'MARKO_GROUP' or 'MARKO_PEINT'
   TextColumn get notes => text().nullable()();
   
   BoolColumn get isActive => boolean().withDefault(const Constant(true))();

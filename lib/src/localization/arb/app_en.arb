@@ -353,5 +353,7 @@
   "productLabel": "Product",
   "invoiceStoppedAt": "The present invoice is stopped at the sum of :",
   "modeDeReglement": "Payment Method",
-  "letter": "Letter/Draft"
+  "letter": "Letter/Draft",
+  "invoiceAddress": "Invoice Address",
+  "companyTp": "TP (Taxe Prof.)"
 }

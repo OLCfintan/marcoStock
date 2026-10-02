@@ -353,5 +353,7 @@
   "productLabel": "Producto",
   "invoiceStoppedAt": "La presente factura se cierra por la suma de :",
   "modeDeReglement": "Método de Pago",
-  "letter": "Letra"
+  "letter": "Letra",
+  "invoiceAddress": "Dirección (Facturas)",
+  "companyTp": "TP"
 }

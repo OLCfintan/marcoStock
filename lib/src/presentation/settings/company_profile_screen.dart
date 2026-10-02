@@ -16,6 +16,8 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
   final _addressCtrl = TextEditingController();
+  final _invoiceAddressCtrl = TextEditingController();
+  final _tpCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   final _taxIdCtrl = TextEditingController();
   final _taxRateCtrl = TextEditingController();
@@ -39,6 +41,8 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
     final settings = await service.getAllCompanySettings();
     _nameCtrl.text = settings['companyName'] ?? '';
     _addressCtrl.text = settings['companyAddress'] ?? '';
+    _invoiceAddressCtrl.text = settings['companyInvoiceAddress'] ?? '';
+    _tpCtrl.text = settings['companyTp'] ?? '';
     _phoneCtrl.text = settings['companyPhone'] ?? '';
     _taxIdCtrl.text = settings['companyTaxId'] ?? '';
     _taxRateCtrl.text = settings['companyTaxRate'] ?? '0.0';
@@ -57,6 +61,8 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
     final service = ref.read(settingsServiceProvider);
     await service.setSetting('companyName', _nameCtrl.text);
     await service.setSetting('companyAddress', _addressCtrl.text);
+    await service.setSetting('companyInvoiceAddress', _invoiceAddressCtrl.text);
+    await service.setSetting('companyTp', _tpCtrl.text);
     await service.setSetting('companyPhone', _phoneCtrl.text);
     await service.setSetting('companyTaxId', _taxIdCtrl.text);
     await service.setSetting('companyTaxRate', _taxRateCtrl.text);

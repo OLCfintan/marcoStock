@@ -1204,6 +1204,7 @@ class PosSession {
   String? selectedClientTier;
   String selectedDocumentType = 'BON';
   String selectedPaymentMethod = 'CASH'; // 'CASH', 'CHECK', 'LETTER'
+  String selectedCompanyBranch = 'MARKO_GROUP'; // 'MARKO_GROUP' or 'MARKO_PEINT'
   List<SaleLineRequest> cart = [];
   List<_PaymentEntry> payments = [];
   String? editingId;

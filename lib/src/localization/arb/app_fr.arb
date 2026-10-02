@@ -353,5 +353,7 @@
   "productLabel": "Produit",
   "invoiceStoppedAt": "Arrêté la présente facture à la somme de :",
   "modeDeReglement": "Mode de Règlement",
-  "letter": "Traite"
+  "letter": "Traite",
+  "invoiceAddress": "Adresse (Factures)",
+  "companyTp": "TP"
 }

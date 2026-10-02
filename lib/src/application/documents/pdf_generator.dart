@@ -42,7 +42,6 @@ class PdfGeneratorService {
 
   void _addPages(pw.Document doc, PrintOptions options, pw.TextDirection textDir, pw.ImageProvider? bgImage, bool isFacture, List<pw.Widget> Function() buildContent, {pw.Widget Function(pw.Context)? buildFooter}) {
     pw.Widget backgroundBuilder(pw.Context context) {
-      if (!isFacture) return pw.Container(color: PdfColors.white);
       if (bgImage == null) {
         return pw.FullPage(
           ignoreMargins: true,
@@ -183,10 +182,12 @@ class PdfGeneratorService {
         : null;
     pw.ImageProvider? logoImage = logoBytes != null ? pw.MemoryImage(logoBytes) : null;
     
-        final companyName = companySettings['companyName'] ?? 'Marko Group';
+    final companyNameRaw = companySettings['companyName'] ?? 'Marko Group';
     final companyAddress = companySettings['companyAddress'] ?? '';
+    final companyInvoiceAddress = companySettings['companyInvoiceAddress'] ?? companyAddress;
     final companyPhone = companySettings['companyPhone'] ?? '';
     final companyTaxId = companySettings['companyTaxId'] ?? '';
+    final companyTp = companySettings['companyTp'] ?? '';
     final companyIce = companySettings['companyIce'] ?? '';
     final companyRc = companySettings['companyRc'] ?? '';
     final companyRib = companySettings['companyRib'] ?? '';
@@ -196,6 +197,18 @@ class PdfGeneratorService {
     final textDir = l10n.localeName.startsWith('ar') ? pw.TextDirection.rtl : pw.TextDirection.ltr;
 
     pw.ImageProvider? watermarkBg;
+    pw.ImageProvider? markoPeintLogo;
+    try {
+      final file = File('assets/images/logo.jpeg');
+      if (file.existsSync()) {
+        markoPeintLogo = pw.MemoryImage(file.readAsBytesSync());
+      } else {
+        final ByteData data = await rootBundle.load('assets/images/logo.jpeg');
+        markoPeintLogo = pw.MemoryImage(data.buffer.asUint8List());
+      }
+    } catch (e) {
+      print('Could not load marko peint logo: $e');
+    }
     try {
       final file = File('assets/images/pdf_logo.jpeg');
       if (file.existsSync()) {
@@ -209,18 +222,26 @@ class PdfGeneratorService {
     }
 
         final isFactureDoc = invoice.documentType == 'FACTURE' || invoice.documentType == 'FACTURE_DUMMY';
-    _addPages(doc, options, textDir, watermarkBg, isFactureDoc, buildFooter: isFactureDoc ? (context) => _buildDocumentFooter(companyAddress, companyIce, companyRc, companyRib, companyEmail, companyPhone) : null, () {
+    
+    String finalCompanyName = companyNameRaw;
+    pw.ImageProvider? finalLogo = logoImage;
+    if (invoice.companyBranch == 'MARKO_PEINT') {
+        finalCompanyName = 'Marko Peint';
+        finalLogo = markoPeintLogo;
+    }
+    
+    _addPages(doc, options, textDir, watermarkBg, isFactureDoc, buildFooter: isFactureDoc ? (context) => _buildDocumentFooter(isFactureDoc ? companyInvoiceAddress : companyAddress, companyIce, companyRc, companyRib, companyEmail, companyPhone, companyTaxId, companyTp) : null, () {
       if (isFactureDoc) {
         return [
-          _buildFactureHeader(invoice, client, companyName, companyAddress, companyPhone, companyTaxId, companyIce, companyRc, companyRib, companyEmail, logoImage ?? watermarkBg, l10n),
+          _buildFactureHeader(invoice, client, finalCompanyName, companyInvoiceAddress, companyPhone, companyTaxId, companyIce, companyRc, companyRib, companyEmail, finalLogo ?? watermarkBg, l10n),
           pw.SizedBox(height: 15),
           _buildFactureInvoiceTable(lines, productMap, l10n),
           pw.SizedBox(height: 15),
-          _buildFactureTotals(invoice, l10n, companyAddress, companyIce, companyRc, companyRib, companyEmail, companyPhone),
+          _buildFactureTotals(invoice, l10n, companyInvoiceAddress, companyIce, companyRc, companyRib, companyEmail, companyPhone),
         ];
       } else {
         return [
-          _buildOldHeader(invoice, client, companyName, companyAddress, companyPhone, companyTaxId, logoImage ?? watermarkBg, l10n),
+          _buildOldHeader(invoice, client, finalCompanyName, companyAddress, companyPhone, companyTaxId, finalLogo ?? watermarkBg, l10n),
           pw.SizedBox(height: 32),
           _buildOldInvoiceTable(lines, productMap, l10n),
           pw.SizedBox(height: 16),
@@ -265,10 +286,12 @@ class PdfGeneratorService {
         : null;
     pw.ImageProvider? logoImage = logoBytes != null ? pw.MemoryImage(logoBytes) : null;
     
-        final companyName = companySettings['companyName'] ?? 'Marko Group';
+    final companyNameRaw = companySettings['companyName'] ?? 'Marko Group';
     final companyAddress = companySettings['companyAddress'] ?? '';
+    final companyInvoiceAddress = companySettings['companyInvoiceAddress'] ?? companyAddress;
     final companyPhone = companySettings['companyPhone'] ?? '';
     final companyTaxId = companySettings['companyTaxId'] ?? '';
+    final companyTp = companySettings['companyTp'] ?? '';
     final companyIce = companySettings['companyIce'] ?? '';
     final companyRc = companySettings['companyRc'] ?? '';
     final companyRib = companySettings['companyRib'] ?? '';
@@ -278,6 +301,18 @@ class PdfGeneratorService {
     final textDir = l10n.localeName.startsWith('ar') ? pw.TextDirection.rtl : pw.TextDirection.ltr;
 
     pw.ImageProvider? watermarkBg;
+    pw.ImageProvider? markoPeintLogo;
+    try {
+      final file = File('assets/images/logo.jpeg');
+      if (file.existsSync()) {
+        markoPeintLogo = pw.MemoryImage(file.readAsBytesSync());
+      } else {
+        final ByteData data = await rootBundle.load('assets/images/logo.jpeg');
+        markoPeintLogo = pw.MemoryImage(data.buffer.asUint8List());
+      }
+    } catch (e) {
+      print('Could not load marko peint logo: $e');
+    }
     try {
       final file = File('assets/images/pdf_logo.jpeg');
       if (file.existsSync()) {
@@ -383,9 +418,8 @@ class PdfGeneratorService {
             ),
             if (logoImage != null)
               pw.Container(
-                width: 200,
-                constraints: const pw.BoxConstraints(maxHeight: 120),
-                alignment: pw.Alignment.topCenter,
+                height: 100,
+                alignment: pw.Alignment.center,
                 child: pw.Image(logoImage, fit: pw.BoxFit.contain),
               )
             else
@@ -534,7 +568,7 @@ pw.SizedBox(height: 15),
     );
   }
 
-  pw.Widget _buildDocumentFooter(String companyAddress, String companyIce, String companyRc, String companyRib, String companyEmail, String companyPhone) {
+  pw.Widget _buildDocumentFooter(String companyAddress, String companyIce, String companyRc, String companyRib, String companyEmail, String companyPhone, String companyTaxId, String companyTp) {
     return pw.Column(
       mainAxisSize: pw.MainAxisSize.min,
       children: [
@@ -549,7 +583,12 @@ pw.SizedBox(height: 15),
         pw.SizedBox(height: 4),
         pw.Container(
           alignment: pw.Alignment.center,
-          child: _bidiText('RIB : $companyRib | ICE : $companyIce | RC : $companyRc | Email : $companyEmail', style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold)),
+          child: _bidiText('RIB : $companyRib | ICE : $companyIce | RC : $companyRc | IF : $companyTaxId | TP : $companyTp', style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold)),
+        ),
+        pw.SizedBox(height: 4),
+        pw.Container(
+          alignment: pw.Alignment.center,
+          child: _bidiText('Email : $companyEmail', style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold)),
         ),
         pw.SizedBox(height: 4),
         pw.Container(
