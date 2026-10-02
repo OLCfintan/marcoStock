@@ -98,7 +98,12 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _addressCtrl,
-                  decoration: const InputDecoration(labelText: 'Company Address'),
+                  decoration: const InputDecoration(labelText: 'Bons Address'),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _invoiceAddressCtrl,
+                  decoration: const InputDecoration(labelText: 'Invoice Address'),
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -114,6 +119,11 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
                 TextFormField(
                   controller: _taxIdCtrl,
                   decoration: const InputDecoration(labelText: 'IF (Tax ID)'),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _tpCtrl,
+                  decoration: const InputDecoration(labelText: 'TP'),
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
