@@ -1105,4 +1105,10 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get letter => 'Traite';
+
+  @override
+  String get invoiceAddress => 'Adresse (Factures)';
+
+  @override
+  String get companyTp => 'TP';
 }

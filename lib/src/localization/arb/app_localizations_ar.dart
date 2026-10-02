@@ -1086,4 +1086,10 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get letter => 'كمبيالة';
+
+  @override
+  String get invoiceAddress => 'عنوان الفاتورة';
+
+  @override
+  String get companyTp => 'ضريبة المهنية';
 }

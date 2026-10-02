@@ -1089,4 +1089,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get letter => 'Letter/Draft';
+
+  @override
+  String get invoiceAddress => 'Invoice Address';
+
+  @override
+  String get companyTp => 'TP (Taxe Prof.)';
 }

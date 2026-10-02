@@ -1101,4 +1101,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get letter => 'Letra';
+
+  @override
+  String get invoiceAddress => 'Dirección (Facturas)';
+
+  @override
+  String get companyTp => 'TP';
 }

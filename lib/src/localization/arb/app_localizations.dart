@@ -2225,6 +2225,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Letter/Draft'**
   String get letter;
+
+  /// No description provided for @invoiceAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice Address'**
+  String get invoiceAddress;
+
+  /// No description provided for @companyTp.
+  ///
+  /// In en, this message translates to:
+  /// **'TP (Taxe Prof.)'**
+  String get companyTp;
 }
 
 class _AppLocalizationsDelegate

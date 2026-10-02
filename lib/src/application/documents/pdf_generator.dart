@@ -182,7 +182,7 @@ class PdfGeneratorService {
         : null;
     pw.ImageProvider? logoImage = logoBytes != null ? pw.MemoryImage(logoBytes) : null;
     
-    final companyNameRaw = companySettings['companyName'] ?? 'Marko Group';
+    final companyName = companySettings['companyName'] ?? 'Marko Group';
     final companyAddress = companySettings['companyAddress'] ?? '';
     final companyInvoiceAddress = companySettings['companyInvoiceAddress'] ?? companyAddress;
     final companyPhone = companySettings['companyPhone'] ?? '';
@@ -286,7 +286,7 @@ class PdfGeneratorService {
         : null;
     pw.ImageProvider? logoImage = logoBytes != null ? pw.MemoryImage(logoBytes) : null;
     
-    final companyNameRaw = companySettings['companyName'] ?? 'Marko Group';
+    final companyName = companySettings['companyName'] ?? 'Marko Group';
     final companyAddress = companySettings['companyAddress'] ?? '';
     final companyInvoiceAddress = companySettings['companyInvoiceAddress'] ?? companyAddress;
     final companyPhone = companySettings['companyPhone'] ?? '';
