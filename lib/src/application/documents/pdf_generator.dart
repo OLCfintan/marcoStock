@@ -236,7 +236,7 @@ class PdfGeneratorService {
     _addPages(doc, options, textDir, finalBg, isFactureDoc, bgOpacity: finalOpacity, buildFooter: isFactureDoc ? (context) => _buildDocumentFooter(companyInvoiceAddress, companyIce, companyRc, companyRib, companyEmail, companyPhone, companyTaxId, companyTp) : (context) => _buildBonFooter(l10n), () {
       if (isFactureDoc) {
         return [
-          _buildFactureHeader(invoice, client, finalCompanyName, companyInvoiceAddress, companyPhone, companyTaxId, companyIce, companyRc, companyRib, companyEmail, finalLogo, l10n),
+          _buildFactureHeader(invoice, client, finalCompanyName, companyInvoiceAddress, companyPhone, companyTaxId, companyIce, companyRc, companyRib, companyEmail, finalLogo ?? watermarkBg, l10n),
           pw.SizedBox(height: 15),
           _buildFactureInvoiceTable(lines, productMap, l10n),
           pw.SizedBox(height: 15),
@@ -397,11 +397,8 @@ class PdfGeneratorService {
     final clientName = invoice.clientNameOverride ?? client?.name ?? 'Client Passager';
     final clientIce = invoice.clientIceOverride ?? '';
     
-    return pw.Container(
-      color: PdfColors.white,
-      padding: const pw.EdgeInsets.all(8),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
       children: [
         pw.Row(
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -420,7 +417,11 @@ class PdfGeneratorService {
               pw.Container(
                 height: 100,
                 alignment: pw.Alignment.center,
-                child: pw.Image(logoImage, fit: pw.BoxFit.contain),
+                child: pw.ClipRRect(
+                  horizontalRadius: 16,
+                  verticalRadius: 16,
+                  child: pw.Image(logoImage, fit: pw.BoxFit.contain),
+                ),
               )
             else
               pw.SizedBox(width: 200),
@@ -469,7 +470,7 @@ class PdfGeneratorService {
             ),
           ]
         ),
-      ]),
+      ],
     );
   }
 
