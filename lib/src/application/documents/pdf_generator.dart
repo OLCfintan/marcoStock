@@ -40,7 +40,7 @@ class PdfGeneratorService {
     );
   }
 
-  void _addPages(pw.Document doc, PrintOptions options, pw.TextDirection textDir, pw.ImageProvider? bgImage, bool isFacture, List<pw.Widget> Function() buildContent, {pw.Widget Function(pw.Context)? buildFooter, double bgOpacity = 0.20}) {
+  void _addPages(pw.Document doc, PrintOptions options, pw.TextDirection textDir, pw.ImageProvider? bgImage, bool isFacture, List<pw.Widget> Function() buildContent, {pw.Widget Function(pw.Context)? buildFooter, double bgOpacity = 0.25, pw.BoxFit bgFit = pw.BoxFit.cover}) {
     pw.Widget backgroundBuilder(pw.Context context) {
       if (bgImage == null) {
         return pw.FullPage(
@@ -56,7 +56,7 @@ class PdfGeneratorService {
             pw.Positioned.fill(
               child: pw.Opacity(
                 opacity: bgOpacity,
-                child: pw.Center(child: pw.Image(bgImage, fit: pw.BoxFit.contain)), // contain is better for logos so they don't stretch out of bounds
+                child: pw.Image(bgImage, fit: bgFit),
               ),
             ),
           ],
@@ -224,16 +224,18 @@ class PdfGeneratorService {
     String finalCompanyName = companyName;
     pw.ImageProvider? finalLogo = logoImage;
     pw.ImageProvider? finalBg = watermarkBg;
-    double finalOpacity = 1.0;
+    double finalOpacity = 0.25;
+    pw.BoxFit finalBgFit = pw.BoxFit.cover;
     
     if (invoice.companyBranch == 'MARKO_PEINT') {
         finalCompanyName = 'Marko Peint';
         finalLogo = markoPeintLogo;
         finalBg = markoPeintLogo;
         finalOpacity = 0.15;
+        finalBgFit = pw.BoxFit.contain;
     }
     
-    _addPages(doc, options, textDir, finalBg, isFactureDoc, bgOpacity: finalOpacity, buildFooter: isFactureDoc ? (context) => _buildDocumentFooter(companyInvoiceAddress, companyIce, companyRc, companyRib, companyEmail, companyPhone, companyTaxId, companyTp) : (context) => _buildBonFooter(l10n), () {
+    _addPages(doc, options, textDir, finalBg, isFactureDoc, bgOpacity: finalOpacity, bgFit: finalBgFit, buildFooter: isFactureDoc ? (context) => _buildDocumentFooter(companyInvoiceAddress, companyIce, companyRc, companyRib, companyEmail, companyPhone, companyTaxId, companyTp) : (context) => _buildBonFooter(l10n), () {
       if (isFactureDoc) {
         return [
           _buildFactureHeader(invoice, client, finalCompanyName, companyInvoiceAddress, companyPhone, companyTaxId, companyIce, companyRc, companyRib, companyEmail, finalLogo ?? watermarkBg, l10n),
@@ -322,7 +324,7 @@ class PdfGeneratorService {
       print('Could not load watermark: $e');
     }
 
-    _addPages(doc, options, textDir, watermarkBg, false, bgOpacity: 1.0, buildFooter: null, () => [
+    _addPages(doc, options, textDir, watermarkBg, false, bgOpacity: 0.25, buildFooter: null, () => [
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
