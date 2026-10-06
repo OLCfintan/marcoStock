@@ -293,7 +293,7 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
   Widget _buildTransactionsTab(AppDatabase db) {
     if (widget.type == HumanType.client) {
       return StreamBuilder<List<InvoiceEntity>>(
-        stream: (db.select(db.invoices)..where((t) => t.clientId.equals(widget.id) & t.isActive.equals(true))..orderBy([(t) => drift.OrderingTerm(expression: t.date, mode: drift.OrderingMode.desc)])).watch(),
+        stream: (db.select(db.invoices)..where((t) => t.clientId.equals(widget.id) & t.isActive.equals(true) & t.documentType.isNotIn(['FACTURE', 'FACTURE_DUMMY', 'COMMANDE']))..orderBy([(t) => drift.OrderingTerm(expression: t.date, mode: drift.OrderingMode.desc)])).watch(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) return const Center(child: const LogoLoader());
           final items = snapshot.data!;
@@ -353,7 +353,7 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
       );
     } else if (widget.type == HumanType.supplier) {
       return StreamBuilder<List<PurchaseEntity>>(
-        stream: (db.select(db.purchases)..where((t) => t.supplierId.equals(widget.id) & t.isActive.equals(true))..orderBy([(t) => drift.OrderingTerm(expression: t.date, mode: drift.OrderingMode.desc)])).watch(),
+        stream: (db.select(db.purchases)..where((t) => t.supplierId.equals(widget.id) & t.isActive.equals(true) & t.documentType.isNotIn(['FACTURE', 'FACTURE_DUMMY', 'COMMANDE']))..orderBy([(t) => drift.OrderingTerm(expression: t.date, mode: drift.OrderingMode.desc)])).watch(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) return const Center(child: const LogoLoader());
           final items = snapshot.data!;

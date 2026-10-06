@@ -36,7 +36,7 @@ final purchasesStreamProvider =
     StreamProvider.autoDispose<List<PurchaseWithSupplier>>((ref) {
       final db = ref.watch(databaseProvider);
       final query = (db.select(db.purchases)
-        ..where((t) => t.isActive.equals(true))).join([
+        ..where((t) => t.isActive.equals(true) & t.documentType.isNotIn(['FACTURE', 'FACTURE_DUMMY', 'COMMANDE']))).join([
         drift.leftOuterJoin(
           db.suppliers,
           db.suppliers.id.equalsExp(db.purchases.supplierId),
@@ -64,7 +64,7 @@ final invoicesStreamProvider =
       final db = ref.watch(databaseProvider);
 
       final query = (db.select(db.invoices)
-        ..where((t) => t.isActive.equals(true))).join([
+        ..where((t) => t.isActive.equals(true) & t.documentType.isNotIn(['FACTURE', 'FACTURE_DUMMY', 'COMMANDE']))).join([
         drift.leftOuterJoin(
           db.clients,
           db.clients.id.equalsExp(db.invoices.clientId),
