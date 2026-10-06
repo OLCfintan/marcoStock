@@ -40,7 +40,7 @@ class PdfGeneratorService {
     );
   }
 
-  void _addPages(pw.Document doc, PrintOptions options, pw.TextDirection textDir, pw.ImageProvider? bgImage, bool isFacture, List<pw.Widget> Function() buildContent, {pw.Widget Function(pw.Context)? buildFooter, double bgOpacity = 0.25, pw.BoxFit bgFit = pw.BoxFit.cover}) {
+  void _addPages(pw.Document doc, PrintOptions options, pw.TextDirection textDir, pw.ImageProvider? bgImage, bool isFacture, pw.Font font, pw.Font boldFont, List<pw.Widget> Function() buildContent, {pw.Widget Function(pw.Context)? buildFooter, double bgOpacity = 0.25, pw.BoxFit bgFit = pw.BoxFit.cover}) {
     pw.Widget backgroundBuilder(pw.Context context) {
       if (bgImage == null) {
         return pw.FullPage(
@@ -75,12 +75,10 @@ class PdfGeneratorService {
             buildBackground: backgroundBuilder,
             theme: options.layout == PrintLayout.a5 
                 ? pw.ThemeData.withFont(
-                    base: pw.Font.helvetica(),
-                    bold: pw.Font.helveticaBold(),
-                    italic: pw.Font.helveticaOblique(),
-                    boldItalic: pw.Font.helveticaBoldOblique(),
-                  ).copyWith(defaultTextStyle: pw.TextStyle(fontSize: 8)) // reduce default font size for a5
-                : pw.ThemeData.withFont(),
+                    base: font,
+                    bold: boldFont,
+                  ).copyWith(defaultTextStyle: pw.TextStyle(fontSize: 8, font: font, fontBold: boldFont)) // reduce default font size for a5
+                : null,
           ),
           footer: buildFooter,
           build: (context) => buildContent(),
@@ -215,7 +213,7 @@ class PdfGeneratorService {
         finalBgFit = pw.BoxFit.contain;
     }
     
-    _addPages(doc, options, textDir, finalBg, isFactureDoc, bgOpacity: finalOpacity, bgFit: finalBgFit, buildFooter: isFactureDoc ? (context) => _buildDocumentFooter(companyInvoiceAddress, companyIce, companyRc, companyRib, companyEmail, companyPhone, companyTaxId, companyTp) : (context) => _buildBonFooter(l10n), () {
+    _addPages(doc, options, textDir, finalBg, isFactureDoc, font, boldFont, bgOpacity: finalOpacity, bgFit: finalBgFit, buildFooter: isFactureDoc ? (context) => _buildDocumentFooter(companyInvoiceAddress, companyIce, companyRc, companyRib, companyEmail, companyPhone, companyTaxId, companyTp) : (context) => _buildBonFooter(l10n), () {
       if (isFactureDoc) {
         return [
           _buildFactureHeader(invoice, client, finalCompanyName, companyInvoiceAddress, companyPhone, companyTaxId, companyIce, companyRc, companyRib, companyEmail, finalLogo ?? watermarkBg, l10n),
@@ -304,7 +302,7 @@ class PdfGeneratorService {
       print('Could not load watermark: $e');
     }
 
-    _addPages(doc, options, textDir, watermarkBg, false, bgOpacity: 0.25, buildFooter: null, () => [
+    _addPages(doc, options, textDir, watermarkBg, false, font, boldFont, bgOpacity: 0.25, buildFooter: null, () => [
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
