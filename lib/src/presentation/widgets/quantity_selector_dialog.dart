@@ -87,34 +87,50 @@ class _QuantitySelectorDialogState extends State<QuantitySelectorDialog> {
     super.dispose();
   }
 
+  void _save() {
+    final units = Decimal.tryParse(_unitsController.text) ?? Decimal.zero;
+    Navigator.pop(context, units);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return AlertDialog(
       title: Text('${l10n?.adjustQuantity ?? "Adjust Quantity - "}${widget.product.name}'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: _boxesController,
-            decoration: InputDecoration(
-              labelText: '${l10n?.boxes ?? "Boxes"} (x${widget.product.unitsPerBox})',
-              suffixText: l10n?.boxes ?? 'boxes',
+      content: Focus(
+        onKeyEvent: (node, event) {
+          if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.enter || event.logicalKey == LogicalKeyboardKey.numpadEnter)) {
+            _save();
+            return KeyEventResult.handled;
+          }
+          return KeyEventResult.ignored;
+        },
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _boxesController,
+              decoration: InputDecoration(
+                labelText: '${l10n?.boxes ?? "Boxes"} (x${widget.product.unitsPerBox})',
+                suffixText: l10n?.boxes ?? 'boxes',
+              ),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              onChanged: _onBoxesChanged,
+              onSubmitted: (_) => _save(),
             ),
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            onChanged: _onBoxesChanged,
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _unitsController,
-            decoration: InputDecoration(
-              labelText: 'Total ${l10n?.units ?? "Units"}',
-              suffixText: l10n?.units ?? 'units',
+            const SizedBox(height: 16),
+            TextField(
+              controller: _unitsController,
+              decoration: InputDecoration(
+                labelText: 'Total ${l10n?.units ?? "Units"}',
+                suffixText: l10n?.units ?? 'units',
+              ),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              onChanged: _onUnitsChanged,
+              onSubmitted: (_) => _save(),
             ),
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            onChanged: _onUnitsChanged,
-          ),
-        ],
+          ],
+        ),
       ),
       actions: [
         TextButton(
@@ -122,10 +138,7 @@ class _QuantitySelectorDialogState extends State<QuantitySelectorDialog> {
           child: Text(l10n?.cancel ?? 'CANCEL'),
         ),
         ElevatedButton(
-          onPressed: () {
-            final units = Decimal.tryParse(_unitsController.text) ?? Decimal.zero;
-            Navigator.pop(context, units);
-          },
+          onPressed: _save,
           child: Text(l10n?.save ?? 'SAVE'),
         ),
       ],

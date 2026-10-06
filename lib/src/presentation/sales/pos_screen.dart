@@ -19,16 +19,13 @@ import '../widgets/image_picker_field.dart';
 import "../widgets/quantity_selector_dialog.dart";
 import '../widgets/autocomplete_search_field.dart';
 
-
-
-
 final List<PosSession> globalPosSessions = [];
 int globalPosActiveSessionIndex = 0;
 
 class PosScreen extends ConsumerStatefulWidget {
-
   const PosScreen({super.key});
-  @override ConsumerState<PosScreen> createState() => _PosScreenState();
+  @override
+  ConsumerState<PosScreen> createState() => _PosScreenState();
 }
 
 class _PosScreenState extends ConsumerState<PosScreen> {
@@ -47,16 +44,24 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   void initState() {
     super.initState();
     if (globalPosSessions.isEmpty) {
-      globalPosSessions.add(PosSession(id: DateTime.now().millisecondsSinceEpoch.toString(), title: 'Cart 1'));
+      globalPosSessions.add(
+        PosSession(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          title: 'Cart 1',
+        ),
+      );
     }
   }
 
   void _onDocumentTypeChanged(String val) async {
     setState(() => _activeSession.selectedDocumentType = val);
     if (val == 'FACTURE') {
-      final settings = await ref.read(settingsServiceProvider).getAllCompanySettings();
+      final settings =
+          await ref.read(settingsServiceProvider).getAllCompanySettings();
       final prefix = settings['invoiceCounterPrefix'] ?? 'MG';
-      final nextNum = await ref.read(salesServiceProvider).getNextCustomInvoiceNumber(prefix);
+      final nextNum = await ref
+          .read(salesServiceProvider)
+          .getNextCustomInvoiceNumber(prefix);
       if (mounted && _activeSession.invoiceCounterController.text.isEmpty) {
         setState(() => _activeSession.invoiceCounterController.text = nextNum);
       }
@@ -64,7 +69,11 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   }
 
   Decimal get _cartTotal {
-    return _activeSession.cart.fold(Decimal.zero, (total, line) => total + ((line.quantity * line.unitPrice) - line.discount));
+    return _activeSession.cart.fold(
+      Decimal.zero,
+      (total, line) =>
+          total + ((line.quantity * line.unitPrice) - line.discount),
+    );
   }
 
   Decimal get _totalPaid {
@@ -91,7 +100,6 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     super.dispose();
   }
 
-
   Decimal _getPriceForTier(Product p, String? tier) {
     if (tier == 'Tier 2') return p.tier2Price ?? p.sellingPrice;
     if (tier == 'Tier 3') return p.tier3Price ?? p.sellingPrice;
@@ -101,7 +109,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   void _recalculateCartPrices() {
     final products = ref.read(productsStreamProvider).valueOrNull ?? [];
     final productMap = {for (final p in products) p.id: p};
-    
+
     for (int i = 0; i < _activeSession.cart.length; i++) {
       final line = _activeSession.cart[i];
       final product = productMap[line.productId];
@@ -109,7 +117,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         _activeSession.cart[i] = SaleLineRequest(
           productId: line.productId,
           quantity: line.quantity,
-          unitPrice: _getPriceForTier(product, _activeSession.selectedClientTier),
+          unitPrice: _getPriceForTier(
+            product,
+            _activeSession.selectedClientTier,
+          ),
           discount: line.discount,
         );
       }
@@ -118,34 +129,41 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
   Future<void> _addMultiSelectedToCart(List<Product> allProducts) async {
     if (_multiSelectedProductIds.value.isEmpty) return;
-    
+
     final firstProductId = _multiSelectedProductIds.value.first;
     final firstProduct = allProducts.firstWhere((p) => p.id == firstProductId);
 
     final Decimal? qty = await showDialog<Decimal>(
       context: context,
-      builder: (context) => QuantitySelectorDialog(
-        product: firstProduct,
-        initialQuantity: Decimal.one,
-      ),
+      builder:
+          (context) => QuantitySelectorDialog(
+            product: firstProduct,
+            initialQuantity: Decimal.one,
+          ),
     );
 
     if (qty != null && qty > Decimal.zero) {
       setState(() {
         // Algebraically extract the exact number of boxes the user wanted based on the first product's ratio
-        final decimalBoxes = firstProduct.unitsPerBox > 0 
-            ? (qty / Decimal.fromInt(firstProduct.unitsPerBox)).toDecimal(scaleOnInfinitePrecision: 4)
-            : qty;
+        final decimalBoxes =
+            firstProduct.unitsPerBox > 0
+                ? (qty / Decimal.fromInt(firstProduct.unitsPerBox)).toDecimal(
+                  scaleOnInfinitePrecision: 4,
+                )
+                : qty;
 
         for (final pid in _multiSelectedProductIds.value) {
           final p = allProducts.firstWhere((prod) => prod.id == pid);
-          
+
           // Apply the box ratio to this specific product's unique packaging size
-          final finalUnits = p.unitsPerBox > 0 
-              ? (decimalBoxes * Decimal.fromInt(p.unitsPerBox))
-              : decimalBoxes;
-              
-          final existingIndex = _activeSession.cart.indexWhere((l) => l.productId == p.id);
+          final finalUnits =
+              p.unitsPerBox > 0
+                  ? (decimalBoxes * Decimal.fromInt(p.unitsPerBox))
+                  : decimalBoxes;
+
+          final existingIndex = _activeSession.cart.indexWhere(
+            (l) => l.productId == p.id,
+          );
           if (existingIndex >= 0) {
             final existing = _activeSession.cart[existingIndex];
             _activeSession.cart[existingIndex] = SaleLineRequest(
@@ -155,12 +173,17 @@ class _PosScreenState extends ConsumerState<PosScreen> {
               discount: existing.discount,
             );
           } else {
-            _activeSession.cart.add(SaleLineRequest(
-              productId: p.id,
-              quantity: finalUnits,
-              unitPrice: _getPriceForTier(p, _activeSession.selectedClientTier),
-              discount: Decimal.zero,
-            ));
+            _activeSession.cart.add(
+              SaleLineRequest(
+                productId: p.id,
+                quantity: finalUnits,
+                unitPrice: _getPriceForTier(
+                  p,
+                  _activeSession.selectedClientTier,
+                ),
+                discount: Decimal.zero,
+              ),
+            );
           }
         }
         _multiSelectedProductIds.value = {};
@@ -169,16 +192,19 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   }
 
   Future<void> _addToCart(Product p) async {
-
-    final existingIndex = _activeSession.cart.indexWhere((l) => l.productId == p.id);
-    final Decimal initialQty = existingIndex >= 0 ? _activeSession.cart[existingIndex].quantity : Decimal.one;
+    final existingIndex = _activeSession.cart.indexWhere(
+      (l) => l.productId == p.id,
+    );
+    final Decimal initialQty =
+        existingIndex >= 0
+            ? _activeSession.cart[existingIndex].quantity
+            : Decimal.one;
 
     final Decimal? newQty = await showDialog<Decimal>(
       context: context,
-      builder: (context) => QuantitySelectorDialog(
-        product: p,
-        initialQuantity: initialQty,
-      ),
+      builder:
+          (context) =>
+              QuantitySelectorDialog(product: p, initialQuantity: initialQty),
     );
 
     if (newQty != null) {
@@ -201,12 +227,14 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             discount: existing.discount,
           );
         } else {
-          _activeSession.cart.add(SaleLineRequest(
-            productId: p.id,
-            quantity: newQty,
-            unitPrice: _getPriceForTier(p, _activeSession.selectedClientTier),
-            discount: Decimal.zero,
-          ));
+          _activeSession.cart.add(
+            SaleLineRequest(
+              productId: p.id,
+              quantity: newQty,
+              unitPrice: _getPriceForTier(p, _activeSession.selectedClientTier),
+              discount: Decimal.zero,
+            ),
+          );
         }
       });
     }
@@ -215,16 +243,24 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   void _handleBarcodeScan(String code, List<Product>? products) {
     if (code.isEmpty || products == null) return;
     final codeLower = code.trim().toLowerCase();
-    
+
     final productIndex = products.indexWhere(
-      (p) => p.id.toLowerCase() == codeLower || p.reference.toLowerCase() == codeLower
+      (p) =>
+          p.id.toLowerCase() == codeLower ||
+          p.reference.toLowerCase() == codeLower,
     );
-    
+
     if (productIndex >= 0) {
       _addToCart(products[productIndex]);
     } else {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${AppLocalizations.of(context)!.productNotFound}$code')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${AppLocalizations.of(context)!.productNotFound}$code',
+            ),
+          ),
+        );
       }
     }
     _barcodeController.clear();
@@ -232,25 +268,46 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   }
 
   Future<void> _processSale() async {
-    if (_activeSession.selectedClientId == null || _activeSession.cart.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.pleaseSelectClientAndProducts)));
+    if (_activeSession.selectedClientId == null ||
+        _activeSession.cart.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)!.pleaseSelectClientAndProducts,
+          ),
+        ),
+      );
       return;
     }
 
-    final paymentRequests = _activeSession.payments.map((p) {
-      Decimal amount = Decimal.tryParse(p.amountController.text) ?? Decimal.zero;
-      return SalePaymentRequest(
-        amount: amount,
-        method: p.method,
-        checkImagePath: p.method == 'CHECK' ? p.checkImagePath : null,
-      );
-    }).toList();
+    final paymentRequests =
+        _activeSession.payments.map((p) {
+          Decimal amount =
+              Decimal.tryParse(p.amountController.text) ?? Decimal.zero;
+          return SalePaymentRequest(
+            amount: amount,
+            method: p.method,
+            checkImagePath: p.method == 'CHECK' ? p.checkImagePath : null,
+          );
+        }).toList();
 
-    final total = _activeSession.cart.fold(Decimal.zero, (sum, line) => sum + ((line.quantity * line.unitPrice) - line.discount));
-    final paidAmount = paymentRequests.fold(Decimal.zero, (sum, p) => sum + p.amount);
-    
-    if (paidAmount > total && _activeSession.selectedDocumentType != 'COMMANDE' && _activeSession.selectedDocumentType != 'FACTURE') {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.paymentExceedsTotal)));
+    final total = _activeSession.cart.fold(
+      Decimal.zero,
+      (sum, line) => sum + ((line.quantity * line.unitPrice) - line.discount),
+    );
+    final paidAmount = paymentRequests.fold(
+      Decimal.zero,
+      (sum, p) => sum + p.amount,
+    );
+
+    if (paidAmount > total &&
+        _activeSession.selectedDocumentType != 'COMMANDE' &&
+        _activeSession.selectedDocumentType != 'FACTURE') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.paymentExceedsTotal),
+        ),
+      );
       return;
     }
 
@@ -273,29 +330,55 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     final req = SaleRequest(
       documentType: _activeSession.selectedDocumentType,
       clientId: _activeSession.selectedClientId!,
-      currentUserId: 'ADMIN_01', 
+      currentUserId: 'ADMIN_01',
       lines: _activeSession.cart,
       companyBranch: _activeSession.selectedCompanyBranch,
       payments: paymentRequests,
-      customInvoiceNumber: _activeSession.selectedDocumentType == 'FACTURE' ? _activeSession.invoiceCounterController.text.trim() : null,
+      customInvoiceNumber:
+          _activeSession.selectedDocumentType == 'FACTURE'
+              ? _activeSession.invoiceCounterController.text.trim()
+              : null,
       customDate: customDate,
-      customClientName: _activeSession.selectedDocumentType == 'FACTURE' ? (_activeSession.customNameController.text.trim().isEmpty ? null : _activeSession.customNameController.text.trim()) : null,
-      customClientIce: _activeSession.selectedDocumentType == 'FACTURE' ? (_activeSession.customIceController.text.trim().isEmpty ? null : _activeSession.customIceController.text.trim()) : null,
+      customClientName:
+          _activeSession.selectedDocumentType == 'FACTURE'
+              ? (_activeSession.customNameController.text.trim().isEmpty
+                  ? null
+                  : _activeSession.customNameController.text.trim())
+              : null,
+      customClientIce:
+          _activeSession.selectedDocumentType == 'FACTURE'
+              ? (_activeSession.customIceController.text.trim().isEmpty
+                  ? null
+                  : _activeSession.customIceController.text.trim())
+              : null,
     );
 
     try {
       if (_activeSession.editingId != null) {
-        await ref.read(salesServiceProvider).updateSale(req, _activeSession.editingId!);
+        await ref
+            .read(salesServiceProvider)
+            .updateSale(req, _activeSession.editingId!);
       } else {
         await ref.read(salesServiceProvider).executeSale(req);
       }
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.saleCompletedSuccessfully)));
-        setState(() { 
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.saleCompletedSuccessfully,
+            ),
+          ),
+        );
+        setState(() {
           _activeSession.dispose();
           _sessions.removeAt(_activeSessionIndex);
           if (_sessions.isEmpty) {
-            _sessions.add(PosSession(id: DateTime.now().millisecondsSinceEpoch.toString(), title: 'Cart 1'));
+            _sessions.add(
+              PosSession(
+                id: DateTime.now().millisecondsSinceEpoch.toString(),
+                title: 'Cart 1',
+              ),
+            );
             _activeSessionIndex = 0;
           } else if (_activeSessionIndex >= _sessions.length) {
             _activeSessionIndex = _sessions.length - 1;
@@ -303,7 +386,14 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         });
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${(AppLocalizations.of(context)?.errorStr ?? 'Error: ')}$e')));
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${(AppLocalizations.of(context)?.errorStr ?? 'Error: ')}$e',
+            ),
+          ),
+        );
     }
   }
 
@@ -313,92 +403,124 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     final familiesCtrl = TextEditingController(text: '3');
     final allProducts = ref.read(productsStreamProvider).valueOrNull ?? [];
     if (allProducts.isEmpty) return;
-    
+
     targetHtCtrl.addListener(() {
       if (targetHtCtrl.text.isEmpty) return;
       if (FocusManager.instance.primaryFocus?.context?.widget is EditableText) {
-          final ht = double.tryParse(targetHtCtrl.text);
-          if (ht != null) {
-              final ttc = ht * 1.20;
-              if (targetTtcCtrl.text != ttc.toStringAsFixed(2)) {
-                  targetTtcCtrl.text = ttc.toStringAsFixed(2);
-              }
+        final ht = double.tryParse(targetHtCtrl.text);
+        if (ht != null) {
+          final ttc = ht * 1.20;
+          if (targetTtcCtrl.text != ttc.toStringAsFixed(2)) {
+            targetTtcCtrl.text = ttc.toStringAsFixed(2);
           }
+        }
       }
     });
-    
+
     targetTtcCtrl.addListener(() {
       if (targetTtcCtrl.text.isEmpty) return;
       if (FocusManager.instance.primaryFocus?.context?.widget is EditableText) {
-          final ttc = double.tryParse(targetTtcCtrl.text);
-          if (ttc != null) {
-              final ht = ttc / 1.20;
-              if (targetHtCtrl.text != ht.toStringAsFixed(2)) {
-                  targetHtCtrl.text = ht.toStringAsFixed(2);
-              }
+        final ttc = double.tryParse(targetTtcCtrl.text);
+        if (ttc != null) {
+          final ht = ttc / 1.20;
+          if (targetHtCtrl.text != ht.toStringAsFixed(2)) {
+            targetHtCtrl.text = ht.toStringAsFixed(2);
           }
+        }
       }
     });
 
     await showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Auto Invoice Generator'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: targetHtCtrl,
-              decoration: const InputDecoration(labelText: 'Target Amount (HT)'),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              onChanged: (val) {
-                 final ht = double.tryParse(val) ?? 0.0;
-                 targetTtcCtrl.text = (ht * 1.20).toStringAsFixed(2);
-              },
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: targetTtcCtrl,
-              decoration: const InputDecoration(labelText: 'Target Amount (TTC)'),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              onChanged: (val) {
-                 final ttc = double.tryParse(val) ?? 0.0;
-                 targetHtCtrl.text = (ttc / 1.20).toStringAsFixed(2);
-              },
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: familiesCtrl,
-              decoration: const InputDecoration(labelText: 'Number of Families (Categories)'),
-              keyboardType: TextInputType.number,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocalizations.of(context)!.cancel)),
-          TextButton(
-            onPressed: () {
-              final target = double.tryParse(targetHtCtrl.text) ?? 0.0;
-              final numFam = int.tryParse(familiesCtrl.text) ?? 1;
-              if (target > 0 && numFam > 0) {
-                Navigator.pop(ctx);
-                _generateAutoInvoice(target, numFam, allProducts);
+      builder: (ctx) {
+        void submit() {
+          final target = double.tryParse(targetHtCtrl.text) ?? 0.0;
+          final numFam = int.tryParse(familiesCtrl.text) ?? 1;
+          if (target > 0 && numFam > 0) {
+            Navigator.pop(ctx);
+            _generateAutoInvoice(target, numFam, allProducts);
+          }
+        }
+
+        return AlertDialog(
+          title: const Text('Auto Invoice Generator'),
+          content: Focus(
+            onKeyEvent: (node, event) {
+              if (event is KeyDownEvent &&
+                  (event.logicalKey == LogicalKeyboardKey.enter ||
+                      event.logicalKey == LogicalKeyboardKey.numpadEnter)) {
+                submit();
+                return KeyEventResult.handled;
               }
+              return KeyEventResult.ignored;
             },
-            child: const Text('Generate'),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: targetHtCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Target Amount (HT)',
+                  ),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  onChanged: (val) {
+                    final ht = double.tryParse(val) ?? 0.0;
+                    targetTtcCtrl.text = (ht * 1.20).toStringAsFixed(2);
+                  },
+                  onSubmitted: (_) => submit(),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: targetTtcCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Target Amount (TTC)',
+                  ),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  onChanged: (val) {
+                    final ttc = double.tryParse(val) ?? 0.0;
+                    targetHtCtrl.text = (ttc / 1.20).toStringAsFixed(2);
+                  },
+                  onSubmitted: (_) => submit(),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: familiesCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Number of Families (Categories)',
+                  ),
+                  keyboardType: TextInputType.number,
+                  onSubmitted: (_) => submit(),
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(AppLocalizations.of(context)!.cancel),
+            ),
+            TextButton(onPressed: submit, child: const Text('Generate')),
+          ],
+        );
+      },
     );
   }
 
-  void _generateAutoInvoice(double targetAmount, int numFamilies, List<Product> allProducts) {
+  void _generateAutoInvoice(
+    double targetAmount,
+    int numFamilies,
+    List<Product> allProducts,
+  ) {
     // TIER LOGIC:
     // Under 2500 -> allocate ~500 per product
     // Under 5000 -> allocate ~1000 per product, then cascade to 500, then remainder
     // Under 7500 -> allocate ~1500 per product, then cascade to 1000, 500, remainder
     // General: bucket scales with target amount
-    
+
     final double primaryBucket;
     if (targetAmount <= 2500) {
       primaryBucket = 500;
@@ -411,7 +533,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     } else {
       primaryBucket = (targetAmount / 5).ceilToDouble();
     }
-    
+
     // Collect active products by category
     final Map<String, List<Product>> byCategory = {};
     for (var p in allProducts) {
@@ -419,22 +541,22 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       final cat = p.category ?? 'Uncategorized';
       byCategory.putIfAbsent(cat, () => []).add(p);
     }
-    
+
     final categories = byCategory.keys.toList();
     categories.shuffle();
     final selectedCategories = categories.take(numFamilies).toList();
-    
+
     final pool = <Product>[];
     for (var c in selectedCategories) {
       pool.addAll(byCategory[c]!);
     }
     if (pool.isEmpty) return;
     pool.shuffle();
-    
+
     List<SaleLineRequest> generatedCart = [];
     double remaining = targetAmount;
     int productIndex = 0;
-    
+
     // CASCADE through tiers: primaryBucket -> half -> half -> ...
     List<double> tiers = [];
     double tier = primaryBucket;
@@ -443,52 +565,56 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       tier = (tier / 2).floorToDouble();
     }
     if (tiers.isEmpty) tiers.add(500);
-    
+
     for (double currentTier in tiers) {
       // Keep allocating products at this tier level while remaining >= currentTier * 0.88
-      while (remaining >= currentTier * 0.88 && productIndex < pool.length * 3) {
+      while (remaining >= currentTier * 0.88 &&
+          productIndex < pool.length * 3) {
         final p = pool[productIndex % pool.length];
         productIndex++;
-        
+
         final price = p.sellingPrice.toDouble();
         if (price <= 0) continue;
-        
+
         // Calculate quantity to reach ~currentTier DH from this product
         int qty = (currentTier / price).round();
         if (qty < 1) qty = 1;
-        
+
         double lineTotal = qty * price;
-        
+
         // Adjust price slightly (+-12%) so lineTotal hits the tier naturally
         // e.g., 500 could become 440-560 for a perfect number
         if (lineTotal > 0 && remaining > 0) {
-          double idealTotal = (currentTier < remaining) ? currentTier : remaining;
+          double idealTotal =
+              (currentTier < remaining) ? currentTier : remaining;
           double ratio = idealTotal / lineTotal;
-          
+
           // Clamp ratio to +-12% of base price
           if (ratio > 1.12) ratio = 1.12;
           if (ratio < 0.88) ratio = 0.88;
-          
+
           double adjustedPrice = price * ratio;
           lineTotal = qty * adjustedPrice;
-          
+
           if (lineTotal <= remaining * 1.02) {
-            generatedCart.add(SaleLineRequest(
-              productId: p.id,
-              quantity: Decimal.fromInt(qty),
-              unitPrice: Decimal.parse(adjustedPrice.toStringAsFixed(2)),
-              discount: Decimal.zero,
-            ));
+            generatedCart.add(
+              SaleLineRequest(
+                productId: p.id,
+                quantity: Decimal.fromInt(qty),
+                unitPrice: Decimal.parse(adjustedPrice.toStringAsFixed(2)),
+                discount: Decimal.zero,
+              ),
+            );
             remaining -= lineTotal;
           }
         }
-        
+
         if (remaining.abs() < 1.0) break;
       }
-      
+
       if (remaining.abs() < 1.0) break;
     }
-    
+
     // ABSORB any final remainder into 1-2 products
     if (remaining.abs() > 1.0 && pool.isNotEmpty) {
       final p = pool[productIndex % pool.length];
@@ -497,28 +623,32 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         int qty = (remaining / price).round();
         if (qty < 1) qty = 1;
         double adjustedPrice = remaining / qty;
-        
+
         // Only use adjusted price if within +-12% of base
         if (adjustedPrice >= price * 0.88 && adjustedPrice <= price * 1.12) {
-          generatedCart.add(SaleLineRequest(
-            productId: p.id,
-            quantity: Decimal.fromInt(qty),
-            unitPrice: Decimal.parse(adjustedPrice.toStringAsFixed(2)),
-            discount: Decimal.zero,
-          ));
+          generatedCart.add(
+            SaleLineRequest(
+              productId: p.id,
+              quantity: Decimal.fromInt(qty),
+              unitPrice: Decimal.parse(adjustedPrice.toStringAsFixed(2)),
+              discount: Decimal.zero,
+            ),
+          );
           remaining = 0;
         } else {
-          generatedCart.add(SaleLineRequest(
-            productId: p.id,
-            quantity: Decimal.fromInt(qty),
-            unitPrice: Decimal.parse(price.toStringAsFixed(2)),
-            discount: Decimal.zero,
-          ));
+          generatedCart.add(
+            SaleLineRequest(
+              productId: p.id,
+              quantity: Decimal.fromInt(qty),
+              unitPrice: Decimal.parse(price.toStringAsFixed(2)),
+              discount: Decimal.zero,
+            ),
+          );
           remaining -= qty * price;
         }
       }
     }
-    
+
     // FINAL MICRO-ADJUSTMENT: spread remaining pennies across all lines
     if (generatedCart.isNotEmpty && remaining.abs() > 0.01) {
       double perLine = remaining / generatedCart.length;
@@ -526,16 +656,18 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       for (var line in generatedCart) {
         double oldPrice = line.unitPrice.toDouble();
         double newPrice = oldPrice + (perLine / line.quantity.toDouble());
-        adjusted.add(SaleLineRequest(
-          productId: line.productId,
-          quantity: line.quantity,
-          unitPrice: Decimal.parse(newPrice.toStringAsFixed(2)),
-          discount: Decimal.zero,
-        ));
+        adjusted.add(
+          SaleLineRequest(
+            productId: line.productId,
+            quantity: line.quantity,
+            unitPrice: Decimal.parse(newPrice.toStringAsFixed(2)),
+            discount: Decimal.zero,
+          ),
+        );
       }
       generatedCart = adjusted;
     }
-    
+
     setState(() {
       _activeSession.cart = generatedCart;
     });
@@ -543,7 +675,6 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     final productsAsync = ref.watch(productsStreamProvider);
     final theme = Theme.of(context);
     final loc = AppLocalizations.of(context)!.localeName;
@@ -564,708 +695,1096 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         builder: (context, selectedIds, child) {
           return selectedIds.isNotEmpty
               ? InkWell(
-                  onTap: () {
-                    final allProducts = productsAsync.valueOrNull ?? [];
-                    _addMultiSelectedToCart(allProducts);
-                  },
-                  borderRadius: BorderRadius.circular(30),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(30),
-                      gradient: const LinearGradient(colors: [Colors.orange, Colors.green]),
-                      boxShadow: [
-                        BoxShadow(color: Colors.orange.withValues(alpha: 0.4), blurRadius: 8, spreadRadius: 2),
-                        BoxShadow(color: Colors.green.withValues(alpha: 0.4), blurRadius: 8, spreadRadius: 2),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.add_shopping_cart, color: Colors.white),
-                        const SizedBox(width: 8),
-                        Text('${AppLocalizations.of(context)!.addBtn} ${selectedIds.length}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
+                onTap: () {
+                  final allProducts = productsAsync.valueOrNull ?? [];
+                  _addMultiSelectedToCart(allProducts);
+                },
+                borderRadius: BorderRadius.circular(30),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
                   ),
-                )
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(30),
+                    gradient: const LinearGradient(
+                      colors: [Colors.orange, Colors.green],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.orange.withValues(alpha: 0.4),
+                        blurRadius: 8,
+                        spreadRadius: 2,
+                      ),
+                      BoxShadow(
+                        color: Colors.green.withValues(alpha: 0.4),
+                        blurRadius: 8,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.add_shopping_cart, color: Colors.white),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${AppLocalizations.of(context)!.addBtn} ${selectedIds.length}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
               : const SizedBox.shrink();
         },
       ),
       body: Focus(
         autofocus: true,
         onKeyEvent: (node, event) {
-          if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.enter || event.logicalKey == LogicalKeyboardKey.numpadEnter)) {
-             // If barcode field is focused, let it handle the enter key
-             if (_barcodeFocusNode.hasFocus) {
-                 return KeyEventResult.ignored;
-             }
-             if (_activeSession.cart.isNotEmpty) {
-                 _processSale();
-                 return KeyEventResult.handled;
-             }
+          if (event is KeyDownEvent &&
+              (event.logicalKey == LogicalKeyboardKey.enter ||
+                  event.logicalKey == LogicalKeyboardKey.numpadEnter)) {
+            // If barcode field is focused, let it handle the enter key
+            if (_barcodeFocusNode.hasFocus) {
+              return KeyEventResult.ignored;
+            }
+            if (_activeSession.cart.isNotEmpty) {
+              _processSale();
+              return KeyEventResult.handled;
+            }
           }
           return KeyEventResult.ignored;
         },
         child: LayoutBuilder(
-        builder: (context, constraints) {
-          final productsWidget = productsAsync.when(
-            data: (allProducts) {
-              final products = allProducts.where((p) => p.isActive).toList();
-              if (_localOrder.isNotEmpty) {
-                 products.sort((a, b) {
+          builder: (context, constraints) {
+            final productsWidget = productsAsync.when(
+              data: (allProducts) {
+                final products = allProducts.where((p) => p.isActive).toList();
+                if (_localOrder.isNotEmpty) {
+                  products.sort((a, b) {
                     final idxA = _localOrder.indexOf(a.id);
                     final idxB = _localOrder.indexOf(b.id);
                     if (idxA != -1 && idxB != -1) return idxA.compareTo(idxB);
                     if (idxA != -1) return -1;
                     if (idxB != -1) return 1;
                     return 0;
-                 });
-              }
-              return ReorderableGridView.builder(
-                onReorder: (oldIndex, newIndex) async {
-                  setState(() {
-                    final p = products.removeAt(oldIndex);
-                    products.insert(newIndex, p);
-                    _localOrder = products.map((p) => p.id).toList();
                   });
-                  await ref.read(productRepositoryProvider).updateProductReorder(products);
-                },
-                padding: const EdgeInsets.all(16),
-                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 200,
-                  childAspectRatio: 0.85,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                ),
-                itemCount: products.length,
-                itemBuilder: (context, index) {
-                  final p = products[index];
-                  return ValueListenableBuilder<Set<String>>(
-                    key: ValueKey(p.id),
-                    valueListenable: _multiSelectedProductIds,
-                    builder: (context, selectedIds, child) {
-                      final isSelected = selectedIds.contains(p.id);
-                      return Card(
-                        elevation: isSelected ? 8 : 2,
-                        clipBehavior: Clip.antiAlias,
-                        shape: isSelected 
-                            ? RoundedRectangleBorder(
-                                side: const BorderSide(color: Colors.orange, width: 3),
-                                borderRadius: BorderRadius.circular(12))
-                            : null,
-                        child: InkWell(
-                          onTap: () {
-                            if (_multiSelectedProductIds.value.isNotEmpty) {
-                                final newSet = Set<String>.from(_multiSelectedProductIds.value);
-                                if (isSelected) newSet.remove(p.id);
-                                else newSet.add(p.id);
+                }
+                return ReorderableGridView.builder(
+                  onReorder: (oldIndex, newIndex) async {
+                    setState(() {
+                      final p = products.removeAt(oldIndex);
+                      products.insert(newIndex, p);
+                      _localOrder = products.map((p) => p.id).toList();
+                    });
+                    await ref
+                        .read(productRepositoryProvider)
+                        .updateProductReorder(products);
+                  },
+                  padding: const EdgeInsets.all(16),
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 200,
+                    childAspectRatio: 0.85,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                  ),
+                  itemCount: products.length,
+                  itemBuilder: (context, index) {
+                    final p = products[index];
+                    return ValueListenableBuilder<Set<String>>(
+                      key: ValueKey(p.id),
+                      valueListenable: _multiSelectedProductIds,
+                      builder: (context, selectedIds, child) {
+                        final isSelected = selectedIds.contains(p.id);
+                        return Card(
+                          elevation: isSelected ? 8 : 2,
+                          clipBehavior: Clip.antiAlias,
+                          shape:
+                              isSelected
+                                  ? RoundedRectangleBorder(
+                                    side: const BorderSide(
+                                      color: Colors.orange,
+                                      width: 3,
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                  )
+                                  : null,
+                          child: InkWell(
+                            onTap: () {
+                              if (_multiSelectedProductIds.value.isNotEmpty) {
+                                final newSet = Set<String>.from(
+                                  _multiSelectedProductIds.value,
+                                );
+                                if (isSelected)
+                                  newSet.remove(p.id);
+                                else
+                                  newSet.add(p.id);
                                 _multiSelectedProductIds.value = newSet;
-                            } else {
-                              _addToCart(p);
-                            }
-                          },
-                          onDoubleTap: () => ItemNavigator.openProduct(context, p),
-                          child: Stack(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [theme.colorScheme.primaryContainer, theme.colorScheme.surface],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
+                              } else {
+                                _addToCart(p);
+                              }
+                            },
+                            onDoubleTap:
+                                () => ItemNavigator.openProduct(context, p),
+                            child: Stack(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        theme.colorScheme.primaryContainer,
+                                        theme.colorScheme.surface,
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Expanded(
+                                        child: ProductImage(
+                                          product: p,
+                                          size: double.infinity,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        p.localizedLabel(loc),
+                                        textAlign: TextAlign.center,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '${p.sellingPrice.toStringAsFixed(2)} Dhs',
+                                        style: TextStyle(
+                                          color: theme.colorScheme.primary,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Expanded(child: ProductImage(product: p, size: double.infinity)),
-                                    const SizedBox(height: 8),
-                                    Text(p.localizedLabel(loc), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold)),
-                                    const SizedBox(height: 4),
-                                    Text('${p.sellingPrice.toStringAsFixed(2)} Dhs', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 16)),
-                                  ],
+                                Positioned(
+                                  top: 0,
+                                  right: 0,
+                                  child: Checkbox(
+                                    activeColor: Colors.orange,
+                                    checkColor: Colors.green,
+                                    fillColor:
+                                        MaterialStateProperty.resolveWith((
+                                          states,
+                                        ) {
+                                          if (states.contains(
+                                            MaterialState.selected,
+                                          )) {
+                                            return Colors.orange;
+                                          }
+                                          return null;
+                                        }),
+                                    value: isSelected,
+                                    onChanged: (bool? val) {
+                                      final newSet = Set<String>.from(
+                                        _multiSelectedProductIds.value,
+                                      );
+                                      if (val == true)
+                                        newSet.add(p.id);
+                                      else
+                                        newSet.remove(p.id);
+                                      _multiSelectedProductIds.value = newSet;
+                                    },
+                                  ),
                                 ),
-                              ),
-                              Positioned(
-                                top: 0,
-                                right: 0,
-                                child: Checkbox(
-                                  activeColor: Colors.orange,
-                                  checkColor: Colors.green,
-                                  fillColor: MaterialStateProperty.resolveWith((states) {
-                                    if (states.contains(MaterialState.selected)) {
-                                      return Colors.orange;
-                                    }
-                                    return null;
-                                  }),
-                                  value: isSelected,
-                                  onChanged: (bool? val) {
-                                    final newSet = Set<String>.from(_multiSelectedProductIds.value);
-                                    if (val == true) newSet.add(p.id);
-                                    else newSet.remove(p.id);
-                                    _multiSelectedProductIds.value = newSet;
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                },
-              );
-            },
-            loading: () => const Center(child: const LogoLoader()),
-            error: (err, stack) => Center(child: Text('${(AppLocalizations.of(context)?.errorStr ?? 'Error: ')}$err')),
-          );
-
-          final productMap = productsAsync.valueOrNull != null 
-              ? {for (final p in productsAsync.valueOrNull!) p.id: p} 
-              : <String, Product>{};
-
-          final cartWidget = Material(
-            color: theme.colorScheme.surface,
-            child: Column(
-              children: [
-                // Sessions Tabs
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      ..._sessions.asMap().entries.map((entry) {
-                        final idx = entry.key;
-                        final session = entry.value;
-                        final isActive = idx == _activeSessionIndex;
-                        return InkWell(
-                          onTap: () {
-                            setState(() {
-                              _activeSessionIndex = idx;
-                            });
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            decoration: BoxDecoration(
-                              color: isActive ? theme.colorScheme.primaryContainer : theme.colorScheme.surfaceContainerHighest,
-                              border: Border(bottom: BorderSide(color: isActive ? theme.colorScheme.primary : Colors.transparent, width: 2)),
-                            ),
-                            child: Row(
-                              children: [
-                                Text(session.title, style: TextStyle(fontWeight: isActive ? FontWeight.bold : FontWeight.normal)),
-                                const SizedBox(width: 8),
-                                InkWell(
-                                  onTap: () {
-                                    setState(() {
-                                      session.dispose();
-                                      _sessions.removeAt(idx);
-                                      if (_sessions.isEmpty) {
-                                        _sessions.add(PosSession(id: DateTime.now().millisecondsSinceEpoch.toString(), title: 'Cart 1'));
-                                        _activeSessionIndex = 0;
-                                      } else if (_activeSessionIndex >= _sessions.length) {
-                                        _activeSessionIndex = _sessions.length - 1;
-                                      }
-                                    });
-                                  },
-                                  child: const Icon(Icons.close, size: 16),
-                                )
                               ],
                             ),
                           ),
-                        );
-                      }),
-                      IconButton(
-                        icon: const Icon(Icons.add),
-                        onPressed: () {
-                          setState(() {
-                            _sessions.add(PosSession(
-                              id: DateTime.now().millisecondsSinceEpoch.toString(), 
-                              title: 'Cart ${_sessions.length + 1}'
-                            ));
-                            _activeSessionIndex = _sessions.length - 1;
-                          });
-                        },
-                      )
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: DropdownButtonFormField<String>(
-                    value: _activeSession.selectedDocumentType,
-                    decoration: InputDecoration(
-                      labelText: AppLocalizations.of(context)!.documentType,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      filled: true,
-                      fillColor: theme.colorScheme.primaryContainer.withAlpha(128),
-                    ),
-                    style: TextStyle(
-                      fontSize: 20, 
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.onSurface,
-                    ),
-                    items: [
-                      DropdownMenuItem(value: 'BON', child: Text(AppLocalizations.of(context)!.bonDeLivraison)),
-                      DropdownMenuItem(value: 'COMMANDE', child: Text(AppLocalizations.of(context)!.bonDeCommande)),
-                      DropdownMenuItem(value: 'FACTURE', child: Text(AppLocalizations.of(context)!.invoice)),
-                    ],
-                    onChanged: (val) => _onDocumentTypeChanged(val!),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: DropdownButtonFormField<String>(
-                    value: _activeSession.selectedPaymentMethod,
-                    decoration: InputDecoration(
-                      labelText: AppLocalizations.of(context)!.modeDeReglement,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      filled: true,
-                    ),
-                    items: [
-                      DropdownMenuItem(value: 'CASH', child: Text(AppLocalizations.of(context)!.cash)),
-                      DropdownMenuItem(value: 'CHECK', child: Text(AppLocalizations.of(context)!.check)),
-                      DropdownMenuItem(value: 'LETTER', child: Text(AppLocalizations.of(context)!.letter)),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) setState(() => _activeSession.selectedPaymentMethod = val);
-                    },
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: DropdownButtonFormField<String>(
-                    value: _activeSession.selectedCompanyBranch,
-                    decoration: InputDecoration(
-                      labelText: 'Company Branch',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      filled: true,
-                    ),
-                    items: const [
-                      DropdownMenuItem(value: 'MARKO_GROUP', child: Text('Marko Group')),
-                      DropdownMenuItem(value: 'MARKO_PEINT', child: Text('Marko Peint')),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) setState(() => _activeSession.selectedCompanyBranch = val);
-                    },
-                  ),
-                ),
-                if (_activeSession.selectedDocumentType == 'FACTURE') ...[
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: _activeSession.invoiceCounterController,
-                            onFieldSubmitted: (_) => _processSale(),
-                            decoration: InputDecoration(
-                              labelText: AppLocalizations.of(context)!.invoiceNumber,
-                              border: const OutlineInputBorder(),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: TextFormField(
-                            controller: _activeSession.invoiceDateController,
-                            onFieldSubmitted: (_) => _processSale(),
-                            decoration: InputDecoration(
-                              labelText: AppLocalizations.of(context)!.invoiceDate,
-                              border: const OutlineInputBorder(),
-                              hintText: 'DD/MM/YYYY',
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: _activeSession.customNameController,
-                            onFieldSubmitted: (_) => _processSale(),
-                            decoration: InputDecoration(
-                              labelText: AppLocalizations.of(context)!.nameOverridePdf,
-                              border: OutlineInputBorder(),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: TextFormField(
-                            controller: _activeSession.customIceController,
-                            onFieldSubmitted: (_) => _processSale(),
-                            decoration: const InputDecoration(
-                              labelText: 'ICE',
-                              border: OutlineInputBorder(),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: TextField(
-                    controller: _barcodeController,
-                    focusNode: _barcodeFocusNode,
-                    decoration: InputDecoration(
-                      labelText: 'Scan Barcode',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      prefixIcon: const Icon(Icons.qr_code_scanner),
-                      filled: true,
-                      fillColor: theme.colorScheme.surfaceContainerHighest,
-                    ),
-                    onSubmitted: (code) => _handleBarcodeScan(code, productsAsync.valueOrNull),
-                    autofocus: true,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: AutocompleteSearchField<Client>(
-                    key: ValueKey(_activeSession.id),
-                    labelText: 'Select Client',
-                    prefixIcon: const Icon(Icons.person_search),
-                    initialText: _activeSession.selectedClientName,
-                    displayStringForOption: (client) => client.name,
-                    getSuggestions: (query) async {
-                      return ref.read(clientRepositoryProvider).searchClients(query);
-                    },
-                    onSelected: (client) {
-                      setState(() {
-                        _activeSession.selectedClientId = client.id;
-                        _activeSession.selectedClientName = client.name;
-                        _activeSession.selectedClientTier = client.tier;
-                        _recalculateCartPrices();
-                      });
-                    },
-                  ),
-                ),
-                
-                const SizedBox(height: 16),
-                
-                // Cart Items & Checkout
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 16.0),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: theme.dividerColor),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: ListView.separated(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: _activeSession.cart.length,
-                            separatorBuilder: (context, index) => const Divider(height: 1),
-                            itemBuilder: (context, index) {
-                              final line = _activeSession.cart[index];
-                              final product = productMap[line.productId] ?? productsAsync.valueOrNull!.first;
-                              final variantLabel = product.localizedLabel(loc);
-                              final lineTotal = ((line.quantity * line.unitPrice) - line.discount);
-                              
-                              return ListTile(
-                                leading: CircleAvatar(backgroundColor: const Color(0xFF93C572), child: Text('${line.quantity}', style: const TextStyle(color: Colors.black))),
-                                title: Text(variantLabel, style: const TextStyle(fontWeight: FontWeight.bold)),
-                                subtitle: Text('${line.unitPrice} ${AppLocalizations.of(context)!.each}'),
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    IconButton(
-                                      icon: const Icon(Icons.edit, color: Colors.blueGrey),
-                                      onPressed: () {
-                                        final qtyCtrl = TextEditingController(text: line.quantity.toString());
-                                        final priceCtrl = TextEditingController(text: line.unitPrice.toStringAsFixed(2));
-                                        
-                                        showDialog(
-                                          context: context,
-                                          builder: (ctx) => AlertDialog(
-                                            title: Text("${AppLocalizations.of(context)!.edit} ${product.localizedName(loc)}"),
-                                            content: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          TextFormField(
-                                            controller: qtyCtrl,
-                                            decoration: InputDecoration(labelText: AppLocalizations.of(context)!.quantity),
-                                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                          ),
-                                          TextFormField(
-                                            controller: priceCtrl,
-                                            decoration: InputDecoration(labelText: AppLocalizations.of(context)!.unitPrice),
-                                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                          ),
-                                        ],
-                                      ),
-                                      actions: [
-                                        TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocalizations.of(context)!.cancel)),
-                                        TextButton(
-                                          onPressed: () {
-                                            final newQty = Decimal.tryParse(qtyCtrl.text) ?? line.quantity;
-                                            final newPrice = Decimal.tryParse(priceCtrl.text) ?? line.unitPrice;
-                                            setState(() {
-                                              if (newQty <= Decimal.zero) {
-                                                _activeSession.cart.removeAt(index);
-                                              } else {
-                                                _activeSession.cart[index] = SaleLineRequest(
-                                                  productId: product.id,
-                                                  quantity: newQty,
-                                                  unitPrice: newPrice,
-                                                  discount: line.discount,
-                                                );
-                                              }
-                                            });
-                                            Navigator.pop(ctx);
-                                          },
-                                          child: Text(AppLocalizations.of(context)!.save),
-                                        ),
-                                      ]
-                                    )
-                                  );
-                                },
-                              ),
-                              Text('${lineTotal.toStringAsFixed(2)} Dhs', style: const TextStyle(fontSize: 16)),
-                            ],
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                          onTap: () {
-                            if (productMap.containsKey(line.productId)) {
-                              _addToCart(productMap[line.productId]!);
-                            }
-                          },
                         );
                       },
+                    );
+                  },
+                );
+              },
+              loading: () => const Center(child: const LogoLoader()),
+              error:
+                  (err, stack) => Center(
+                    child: Text(
+                      '${(AppLocalizations.of(context)?.errorStr ?? 'Error: ')}$err',
                     ),
                   ),
-                
-                // Totals & Checkout
-                Container(
-                  margin: const EdgeInsets.all(16),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text((AppLocalizations.of(context)?.totalDue ?? 'Total Due'), style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                            const SizedBox(width: 8),
-                            Text('${_cartTotal.toStringAsFixed(2)} Dhs', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text((AppLocalizations.of(context)?.totalPaid ?? 'Total Paid'), style: TextStyle(fontSize: 16)),
-                            const SizedBox(width: 8),
-                            Text('${_totalPaid.toStringAsFixed(2)} Dhs', style: const TextStyle(fontSize: 16, color: Colors.green)),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text((AppLocalizations.of(context)?.remainingBalance ?? 'Remaining Balance'), style: TextStyle(fontSize: 16)),
-                            const SizedBox(width: 8),
-                            Text('${_remainingBalance.toStringAsFixed(2)} Dhs', style: const TextStyle(fontSize: 16, color: Colors.redAccent)),
-                          ],
-                        ),
-                      ),
-                      const Divider(height: 24),
-                      
-                      // Payments List
-                      if (_activeSession.selectedDocumentType != 'COMMANDE' && _activeSession.selectedDocumentType != 'FACTURE') ...[
-                        ..._activeSession.payments.asMap().entries.map((entry) {
+            );
+
+            final productMap =
+                productsAsync.valueOrNull != null
+                    ? {for (final p in productsAsync.valueOrNull!) p.id: p}
+                    : <String, Product>{};
+
+            final cartWidget = Material(
+              color: theme.colorScheme.surface,
+              child: Column(
+                children: [
+                  // Sessions Tabs
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        ..._sessions.asMap().entries.map((entry) {
                           final idx = entry.key;
-                          final p = entry.value;
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surface,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Column(
-                              children: [
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      flex: 2,
-                                      child: DropdownButtonFormField<String>(
-                                        value: p.method,
-                                        isExpanded: true,
-                                        decoration: InputDecoration(
-                                          labelText: AppLocalizations.of(context)!.method,
-                                          border: InputBorder.none,
-                                        ),
-                                        items: [
-                                          DropdownMenuItem(value: 'CASH', child: Text(AppLocalizations.of(context)!.cash.toUpperCase())),
-                                          DropdownMenuItem(value: 'CHECK', child: Text(AppLocalizations.of(context)!.check.toUpperCase())),
-                                        ],
-                                        onChanged: (val) {
-                                          setState(() {
-                                            p.method = val!;
-                                            if (val == 'CREDIT') {
-                                              p.amountController.text = '0';
-                                            } else if (p.amountController.text.isEmpty || p.amountController.text == '0') {
-                                              p.amountController.text = _remainingBalance.toStringAsFixed(2);
-                                            }
-                                          });
-                                        },
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      flex: 3,
-                                      child: TextField(
-                                        controller: p.amountController,
-                                        onSubmitted: (_) => _processSale(),
-                                        decoration: InputDecoration(
-                                          labelText: AppLocalizations.of(context)!.amount,
-                                          prefixIcon: Icon(Icons.attach_money, size: 16),
-                                          border: InputBorder.none,
-                                        ),
-                                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                        onChanged: (val) => setState(() {}),
-                                      ),
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.delete, color: Colors.red),
-                                      onPressed: () {
-                                        setState(() {
-                                          p.amountController.dispose();
-                                          _activeSession.payments.removeAt(idx);
-                                        });
-                                      },
-                                    ),
-                                  ],
+                          final session = entry.value;
+                          final isActive = idx == _activeSessionIndex;
+                          return InkWell(
+                            onTap: () {
+                              setState(() {
+                                _activeSessionIndex = idx;
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color:
+                                    isActive
+                                        ? theme.colorScheme.primaryContainer
+                                        : theme
+                                            .colorScheme
+                                            .surfaceContainerHighest,
+                                border: Border(
+                                  bottom: BorderSide(
+                                    color:
+                                        isActive
+                                            ? theme.colorScheme.primary
+                                            : Colors.transparent,
+                                    width: 2,
+                                  ),
                                 ),
-                                if (p.method == 'CHECK') ...[
-                                  const SizedBox(height: 8),
-                                  ImagePickerField(
-                                    label: AppLocalizations.of(context)!.checkImage,
-                                    initialValue: p.checkImagePath,
-                                    onChanged: (path) => setState(() => p.checkImagePath = path),
+                              ),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    session.title,
+                                    style: TextStyle(
+                                      fontWeight:
+                                          isActive
+                                              ? FontWeight.bold
+                                              : FontWeight.normal,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  InkWell(
+                                    onTap: () {
+                                      setState(() {
+                                        session.dispose();
+                                        _sessions.removeAt(idx);
+                                        if (_sessions.isEmpty) {
+                                          _sessions.add(
+                                            PosSession(
+                                              id:
+                                                  DateTime.now()
+                                                      .millisecondsSinceEpoch
+                                                      .toString(),
+                                              title: 'Cart 1',
+                                            ),
+                                          );
+                                          _activeSessionIndex = 0;
+                                        } else if (_activeSessionIndex >=
+                                            _sessions.length) {
+                                          _activeSessionIndex =
+                                              _sessions.length - 1;
+                                        }
+                                      });
+                                    },
+                                    child: const Icon(Icons.close, size: 16),
                                   ),
                                 ],
-                              ],
+                              ),
                             ),
                           );
                         }),
-                        
-                        TextButton.icon(
+                        IconButton(
+                          icon: const Icon(Icons.add),
                           onPressed: () {
                             setState(() {
-                              _activeSession.payments.add(_PaymentEntry(
-                                method: 'CASH',
-                                initialAmount: _remainingBalance > Decimal.zero ? _remainingBalance.toStringAsFixed(2) : '',
-                              ));
+                              _sessions.add(
+                                PosSession(
+                                  id:
+                                      DateTime.now().millisecondsSinceEpoch
+                                          .toString(),
+                                  title: 'Cart ${_sessions.length + 1}',
+                                ),
+                              );
+                              _activeSessionIndex = _sessions.length - 1;
                             });
                           },
-                          icon: const Icon(Icons.add),
-                          label: Text(AppLocalizations.of(context)!.addPaymentMethod),
                         ),
-                      ],
-                      
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton(
-                          onPressed: _processSale,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: theme.colorScheme.primary,
-                            foregroundColor: theme.colorScheme.onPrimary,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                          child: Text(AppLocalizations.of(context)!.confirmSale, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
                       ],
                     ),
                   ),
-                ),
-              ],
-            ),
-          );
-
-          if (constraints.maxWidth < 600) {
-            return DefaultTabController(
-              length: 2,
-              child: Column(
-                children: [
-                  const TabBar(
-                    labelColor: Colors.blue,
-                    unselectedLabelColor: Colors.grey,
-                    tabs: [
-                      Tab(text: 'Products'),
-                      Tab(text: 'Cart'),
-                    ],
-                  ),
-                  Expanded(
-                    child: TabBarView(
-                      children: [
-                        productsWidget,
-                        cartWidget,
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: DropdownButtonFormField<String>(
+                      value: _activeSession.selectedDocumentType,
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(context)!.documentType,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        filled: true,
+                        fillColor: theme.colorScheme.primaryContainer.withAlpha(
+                          128,
+                        ),
+                      ),
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                      items: [
+                        DropdownMenuItem(
+                          value: 'BON',
+                          child: Text(
+                            AppLocalizations.of(context)!.bonDeLivraison,
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 'COMMANDE',
+                          child: Text(
+                            AppLocalizations.of(context)!.bonDeCommande,
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 'FACTURE',
+                          child: Text(AppLocalizations.of(context)!.invoice),
+                        ),
                       ],
+                      onChanged: (val) => _onDocumentTypeChanged(val!),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: DropdownButtonFormField<String>(
+                      value: _activeSession.selectedPaymentMethod,
+                      decoration: InputDecoration(
+                        labelText:
+                            AppLocalizations.of(context)!.modeDeReglement,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        filled: true,
+                      ),
+                      items: [
+                        DropdownMenuItem(
+                          value: 'CASH',
+                          child: Text(AppLocalizations.of(context)!.cash),
+                        ),
+                        DropdownMenuItem(
+                          value: 'CHECK',
+                          child: Text(AppLocalizations.of(context)!.check),
+                        ),
+                        DropdownMenuItem(
+                          value: 'LETTER',
+                          child: Text(AppLocalizations.of(context)!.letter),
+                        ),
+                      ],
+                      onChanged: (val) {
+                        if (val != null)
+                          setState(
+                            () => _activeSession.selectedPaymentMethod = val,
+                          );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: DropdownButtonFormField<String>(
+                      value: _activeSession.selectedCompanyBranch,
+                      decoration: InputDecoration(
+                        labelText: 'Company Branch',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        filled: true,
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'MARKO_GROUP',
+                          child: Text('Marko Group'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'MARKO_PEINT',
+                          child: Text('Marko Peint'),
+                        ),
+                      ],
+                      onChanged: (val) {
+                        if (val != null)
+                          setState(
+                            () => _activeSession.selectedCompanyBranch = val,
+                          );
+                      },
+                    ),
+                  ),
+                  if (_activeSession.selectedDocumentType == 'FACTURE') ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller:
+                                  _activeSession.invoiceCounterController,
+                              onFieldSubmitted: (_) => _processSale(),
+                              decoration: InputDecoration(
+                                labelText:
+                                    AppLocalizations.of(context)!.invoiceNumber,
+                                border: const OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: TextFormField(
+                              controller: _activeSession.invoiceDateController,
+                              onFieldSubmitted: (_) => _processSale(),
+                              decoration: InputDecoration(
+                                labelText:
+                                    AppLocalizations.of(context)!.invoiceDate,
+                                border: const OutlineInputBorder(),
+                                hintText: 'DD/MM/YYYY',
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: _activeSession.customNameController,
+                              onFieldSubmitted: (_) => _processSale(),
+                              decoration: InputDecoration(
+                                labelText:
+                                    AppLocalizations.of(
+                                      context,
+                                    )!.nameOverridePdf,
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: TextFormField(
+                              controller: _activeSession.customIceController,
+                              onFieldSubmitted: (_) => _processSale(),
+                              decoration: const InputDecoration(
+                                labelText: 'ICE',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: TextField(
+                      controller: _barcodeController,
+                      focusNode: _barcodeFocusNode,
+                      decoration: InputDecoration(
+                        labelText: 'Scan Barcode',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        prefixIcon: const Icon(Icons.qr_code_scanner),
+                        filled: true,
+                        fillColor: theme.colorScheme.surfaceContainerHighest,
+                      ),
+                      onSubmitted:
+                          (code) => _handleBarcodeScan(
+                            code,
+                            productsAsync.valueOrNull,
+                          ),
+                      autofocus: true,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: AutocompleteSearchField<Client>(
+                      key: ValueKey(_activeSession.id),
+                      labelText: 'Select Client',
+                      prefixIcon: const Icon(Icons.person_search),
+                      initialText: _activeSession.selectedClientName,
+                      displayStringForOption: (client) => client.name,
+                      getSuggestions: (query) async {
+                        return ref
+                            .read(clientRepositoryProvider)
+                            .searchClients(query);
+                      },
+                      onSelected: (client) {
+                        setState(() {
+                          _activeSession.selectedClientId = client.id;
+                          _activeSession.selectedClientName = client.name;
+                          _activeSession.selectedClientTier = client.tier;
+                          _recalculateCartPrices();
+                        });
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Cart Items & Checkout
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          Container(
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                            ),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: theme.dividerColor),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: ListView.separated(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: _activeSession.cart.length,
+                              separatorBuilder:
+                                  (context, index) => const Divider(height: 1),
+                              itemBuilder: (context, index) {
+                                final line = _activeSession.cart[index];
+                                final product =
+                                    productMap[line.productId] ??
+                                    productsAsync.valueOrNull!.first;
+                                final variantLabel = product.localizedLabel(
+                                  loc,
+                                );
+                                final lineTotal =
+                                    ((line.quantity * line.unitPrice) -
+                                        line.discount);
+
+                                return ListTile(
+                                  leading: CircleAvatar(
+                                    backgroundColor: const Color(0xFF93C572),
+                                    child: Text(
+                                      '${line.quantity}',
+                                      style: const TextStyle(
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ),
+                                  title: Text(
+                                    variantLabel,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  subtitle: Text(
+                                    '${line.unitPrice} ${AppLocalizations.of(context)!.each}',
+                                  ),
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.edit,
+                                          color: Colors.blueGrey,
+                                        ),
+                                        onPressed: () {
+                                          final qtyCtrl = TextEditingController(
+                                            text: line.quantity.toString(),
+                                          );
+                                          final priceCtrl =
+                                              TextEditingController(
+                                                text: line.unitPrice
+                                                    .toStringAsFixed(2),
+                                              );
+
+                                          showDialog(
+                                            context: context,
+                                            builder: (ctx) {
+                                              void saveEdit() {
+                                                final newQty =
+                                                    Decimal.tryParse(
+                                                      qtyCtrl.text,
+                                                    ) ??
+                                                    line.quantity;
+                                                final newPrice =
+                                                    Decimal.tryParse(
+                                                      priceCtrl.text,
+                                                    ) ??
+                                                    line.unitPrice;
+                                                setState(() {
+                                                  if (newQty <= Decimal.zero) {
+                                                    _activeSession.cart
+                                                        .removeAt(index);
+                                                  } else {
+                                                    _activeSession.cart[index] =
+                                                        SaleLineRequest(
+                                                          productId: product.id,
+                                                          quantity: newQty,
+                                                          unitPrice: newPrice,
+                                                          discount:
+                                                              line.discount,
+                                                        );
+                                                  }
+                                                });
+                                                Navigator.pop(ctx);
+                                              }
+
+                                              return AlertDialog(
+                                                title: Text(
+                                                  "${AppLocalizations.of(context)!.edit} ${product.localizedName(loc)}",
+                                                ),
+                                                content: Focus(
+                                                  onKeyEvent: (node, event) {
+                                                    if (event is KeyDownEvent &&
+                                                        (event.logicalKey ==
+                                                                LogicalKeyboardKey
+                                                                    .enter ||
+                                                            event.logicalKey ==
+                                                                LogicalKeyboardKey
+                                                                    .numpadEnter)) {
+                                                      saveEdit();
+                                                      return KeyEventResult
+                                                          .handled;
+                                                    }
+                                                    return KeyEventResult
+                                                        .ignored;
+                                                  },
+                                                  child: Column(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      TextFormField(
+                                                        controller: qtyCtrl,
+                                                        decoration: InputDecoration(
+                                                          labelText:
+                                                              AppLocalizations.of(
+                                                                context,
+                                                              )!.quantity,
+                                                        ),
+                                                        keyboardType:
+                                                            const TextInputType.numberWithOptions(
+                                                              decimal: true,
+                                                            ),
+                                                        onFieldSubmitted:
+                                                            (_) => saveEdit(),
+                                                      ),
+                                                      TextFormField(
+                                                        controller: priceCtrl,
+                                                        decoration: InputDecoration(
+                                                          labelText:
+                                                              AppLocalizations.of(
+                                                                context,
+                                                              )!.unitPrice,
+                                                        ),
+                                                        keyboardType:
+                                                            const TextInputType.numberWithOptions(
+                                                              decimal: true,
+                                                            ),
+                                                        onFieldSubmitted:
+                                                            (_) => saveEdit(),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed:
+                                                        () =>
+                                                            Navigator.pop(ctx),
+                                                    child: Text(
+                                                      AppLocalizations.of(
+                                                        context,
+                                                      )!.cancel,
+                                                    ),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed: saveEdit,
+                                                    child: Text(
+                                                      AppLocalizations.of(
+                                                        context,
+                                                      )!.save,
+                                                    ),
+                                                  ),
+                                                ],
+                                              );
+                                            },
+                                          );
+                                        },
+                                      ),
+                                      Text(
+                                        '${lineTotal.toStringAsFixed(2)} Dhs',
+                                        style: const TextStyle(fontSize: 16),
+                                      ),
+                                    ],
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 4,
+                                  ),
+                                  onTap: () {
+                                    if (productMap.containsKey(
+                                      line.productId,
+                                    )) {
+                                      _addToCart(productMap[line.productId]!);
+                                    }
+                                  },
+                                );
+                              },
+                            ),
+                          ),
+
+                          // Totals & Checkout
+                          Container(
+                            margin: const EdgeInsets.all(16),
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primaryContainer,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        (AppLocalizations.of(
+                                              context,
+                                            )?.totalDue ??
+                                            'Total Due'),
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        '${_cartTotal.toStringAsFixed(2)} Dhs',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: theme.colorScheme.primary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        (AppLocalizations.of(
+                                              context,
+                                            )?.totalPaid ??
+                                            'Total Paid'),
+                                        style: TextStyle(fontSize: 16),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        '${_totalPaid.toStringAsFixed(2)} Dhs',
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.green,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        (AppLocalizations.of(
+                                              context,
+                                            )?.remainingBalance ??
+                                            'Remaining Balance'),
+                                        style: TextStyle(fontSize: 16),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        '${_remainingBalance.toStringAsFixed(2)} Dhs',
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.redAccent,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const Divider(height: 24),
+
+                                // Payments List
+                                if (_activeSession.selectedDocumentType !=
+                                        'COMMANDE' &&
+                                    _activeSession.selectedDocumentType !=
+                                        'FACTURE') ...[
+                                  ..._activeSession.payments.asMap().entries.map((
+                                    entry,
+                                  ) {
+                                    final idx = entry.key;
+                                    final p = entry.value;
+                                    return Container(
+                                      margin: const EdgeInsets.only(bottom: 12),
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: theme.colorScheme.surface,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Column(
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                flex: 2,
+                                                child: DropdownButtonFormField<
+                                                  String
+                                                >(
+                                                  value: p.method,
+                                                  isExpanded: true,
+                                                  decoration: InputDecoration(
+                                                    labelText:
+                                                        AppLocalizations.of(
+                                                          context,
+                                                        )!.method,
+                                                    border: InputBorder.none,
+                                                  ),
+                                                  items: [
+                                                    DropdownMenuItem(
+                                                      value: 'CASH',
+                                                      child: Text(
+                                                        AppLocalizations.of(
+                                                          context,
+                                                        )!.cash.toUpperCase(),
+                                                      ),
+                                                    ),
+                                                    DropdownMenuItem(
+                                                      value: 'CHECK',
+                                                      child: Text(
+                                                        AppLocalizations.of(
+                                                          context,
+                                                        )!.check.toUpperCase(),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                  onChanged: (val) {
+                                                    setState(() {
+                                                      p.method = val!;
+                                                      if (val == 'CREDIT') {
+                                                        p
+                                                            .amountController
+                                                            .text = '0';
+                                                      } else if (p
+                                                              .amountController
+                                                              .text
+                                                              .isEmpty ||
+                                                          p
+                                                                  .amountController
+                                                                  .text ==
+                                                              '0') {
+                                                        p.amountController.text =
+                                                            _remainingBalance
+                                                                .toStringAsFixed(
+                                                                  2,
+                                                                );
+                                                      }
+                                                    });
+                                                  },
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Expanded(
+                                                flex: 3,
+                                                child: TextField(
+                                                  controller:
+                                                      p.amountController,
+                                                  onSubmitted:
+                                                      (_) => _processSale(),
+                                                  decoration: InputDecoration(
+                                                    labelText:
+                                                        AppLocalizations.of(
+                                                          context,
+                                                        )!.amount,
+                                                    prefixIcon: Icon(
+                                                      Icons.attach_money,
+                                                      size: 16,
+                                                    ),
+                                                    border: InputBorder.none,
+                                                  ),
+                                                  keyboardType:
+                                                      const TextInputType.numberWithOptions(
+                                                        decimal: true,
+                                                      ),
+                                                  onChanged:
+                                                      (val) => setState(() {}),
+                                                ),
+                                              ),
+                                              IconButton(
+                                                icon: const Icon(
+                                                  Icons.delete,
+                                                  color: Colors.red,
+                                                ),
+                                                onPressed: () {
+                                                  setState(() {
+                                                    p.amountController
+                                                        .dispose();
+                                                    _activeSession.payments
+                                                        .removeAt(idx);
+                                                  });
+                                                },
+                                              ),
+                                            ],
+                                          ),
+                                          if (p.method == 'CHECK') ...[
+                                            const SizedBox(height: 8),
+                                            ImagePickerField(
+                                              label:
+                                                  AppLocalizations.of(
+                                                    context,
+                                                  )!.checkImage,
+                                              initialValue: p.checkImagePath,
+                                              onChanged:
+                                                  (path) => setState(
+                                                    () =>
+                                                        p.checkImagePath = path,
+                                                  ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    );
+                                  }),
+
+                                  TextButton.icon(
+                                    onPressed: () {
+                                      setState(() {
+                                        _activeSession.payments.add(
+                                          _PaymentEntry(
+                                            method: 'CASH',
+                                            initialAmount:
+                                                _remainingBalance > Decimal.zero
+                                                    ? _remainingBalance
+                                                        .toStringAsFixed(2)
+                                                    : '',
+                                          ),
+                                        );
+                                      });
+                                    },
+                                    icon: const Icon(Icons.add),
+                                    label: Text(
+                                      AppLocalizations.of(
+                                        context,
+                                      )!.addPaymentMethod,
+                                    ),
+                                  ),
+                                ],
+
+                                const SizedBox(height: 16),
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 56,
+                                  child: ElevatedButton(
+                                    onPressed: _processSale,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor:
+                                          theme.colorScheme.primary,
+                                      foregroundColor:
+                                          theme.colorScheme.onPrimary,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      AppLocalizations.of(context)!.confirmSale,
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 1.5,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ),
             );
-          }
 
-          return Row(
-            children: [
-              Expanded(flex: 2, child: productsWidget),
-              const VerticalDivider(width: 1),
-              Expanded(flex: 1, child: cartWidget),
-            ],
-          );
-        },
-      ),
+            if (constraints.maxWidth < 600) {
+              return DefaultTabController(
+                length: 2,
+                child: Column(
+                  children: [
+                    const TabBar(
+                      labelColor: Colors.blue,
+                      unselectedLabelColor: Colors.grey,
+                      tabs: [Tab(text: 'Products'), Tab(text: 'Cart')],
+                    ),
+                    Expanded(
+                      child: TabBarView(children: [productsWidget, cartWidget]),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            return Row(
+              children: [
+                Expanded(flex: 2, child: productsWidget),
+                const VerticalDivider(width: 1),
+                Expanded(flex: 1, child: cartWidget),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
 }
-
 
 class _PaymentEntry {
   late final TextEditingController amountController;
   String method;
   String? checkImagePath;
 
-  _PaymentEntry({
-    String initialAmount = '',
-    this.method = 'CASH',
-  }) {
+  _PaymentEntry({String initialAmount = '', this.method = 'CASH'}) {
     amountController = TextEditingController(text: initialAmount);
   }
 }
@@ -1278,12 +1797,14 @@ class PosSession {
   String? selectedClientTier;
   String selectedDocumentType = 'BON';
   String selectedPaymentMethod = 'CASH'; // 'CASH', 'CHECK', 'LETTER'
-  String selectedCompanyBranch = 'MARKO_GROUP'; // 'MARKO_GROUP' or 'MARKO_PEINT'
+  String selectedCompanyBranch =
+      'MARKO_GROUP'; // 'MARKO_GROUP' or 'MARKO_PEINT'
   List<SaleLineRequest> cart = [];
   List<_PaymentEntry> payments = [];
   String? editingId;
 
-  final TextEditingController invoiceCounterController = TextEditingController();
+  final TextEditingController invoiceCounterController =
+      TextEditingController();
   final TextEditingController invoiceDateController = TextEditingController();
   final TextEditingController customNameController = TextEditingController();
   final TextEditingController customIceController = TextEditingController();
@@ -1291,7 +1812,8 @@ class PosSession {
   PosSession({required this.id, required this.title}) {
     payments.add(_PaymentEntry(method: 'CASH'));
     final now = DateTime.now();
-    invoiceDateController.text = '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
+    invoiceDateController.text =
+        '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
   }
 
   void dispose() {
