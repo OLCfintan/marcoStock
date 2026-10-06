@@ -595,7 +595,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       body: Focus(
         autofocus: true,
         onKeyEvent: (node, event) {
-          if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.enter) {
+          if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.enter || event.logicalKey == LogicalKeyboardKey.numpadEnter)) {
              // If barcode field is focused, let it handle the enter key
              if (_barcodeFocusNode.hasFocus) {
                  return KeyEventResult.ignored;
@@ -859,6 +859,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                         Expanded(
                           child: TextFormField(
                             controller: _activeSession.invoiceCounterController,
+                            onFieldSubmitted: (_) => _processSale(),
                             decoration: InputDecoration(
                               labelText: AppLocalizations.of(context)!.invoiceNumber,
                               border: const OutlineInputBorder(),
@@ -869,6 +870,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                         Expanded(
                           child: TextFormField(
                             controller: _activeSession.invoiceDateController,
+                            onFieldSubmitted: (_) => _processSale(),
                             decoration: InputDecoration(
                               labelText: AppLocalizations.of(context)!.invoiceDate,
                               border: const OutlineInputBorder(),
@@ -887,6 +889,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                         Expanded(
                           child: TextFormField(
                             controller: _activeSession.customNameController,
+                            onFieldSubmitted: (_) => _processSale(),
                             decoration: InputDecoration(
                               labelText: AppLocalizations.of(context)!.nameOverridePdf,
                               border: OutlineInputBorder(),
@@ -897,6 +900,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                         Expanded(
                           child: TextFormField(
                             controller: _activeSession.customIceController,
+                            onFieldSubmitted: (_) => _processSale(),
                             decoration: const InputDecoration(
                               labelText: 'ICE',
                               border: OutlineInputBorder(),
@@ -1139,6 +1143,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                       flex: 3,
                                       child: TextField(
                                         controller: p.amountController,
+                                        onSubmitted: (_) => _processSale(),
                                         decoration: InputDecoration(
                                           labelText: AppLocalizations.of(context)!.amount,
                                           prefixIcon: Icon(Icons.attach_money, size: 16),

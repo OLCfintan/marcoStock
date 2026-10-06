@@ -275,8 +275,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       body: Focus(
         autofocus: true,
         onKeyEvent: (node, event) {
-          if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.enter) {
-             final focused = FocusManager.instance.primaryFocus;
+          if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.enter || event.logicalKey == LogicalKeyboardKey.numpadEnter)) {
              // If they are in a text field, let them press enter to go next or submit
              // But usually enter in textfield shouldn't submit immediately unless we want it to.
              // The user said "i should also be able to confirme with <Enter> Key like with clicking the mouse"
@@ -324,6 +323,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                             },
                             fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
                               return TextFormField(
+  onFieldSubmitted: (_) => _submit(),
                                 controller: textEditingController,
                                 focusNode: focusNode,
                                 decoration: _inputDecoration('Product Name (Family/Base)'),
@@ -363,6 +363,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                         Expanded(
                           flex: 1,
                           child: TextFormField(
+  onFieldSubmitted: (_) => _submit(),
                             controller: _referenceController,
                             decoration: _inputDecoration('Reference'),
                             
@@ -376,17 +377,20 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                       childrenPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                       children: [
                         TextFormField(
+  onFieldSubmitted: (_) => _submit(),
                           controller: _nameArController,
                           decoration: _inputDecoration('Name (Arabic)'),
                           textDirection: TextDirection.rtl,
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
+  onFieldSubmitted: (_) => _submit(),
                           controller: _nameFrController,
                           decoration: _inputDecoration('Name (French)'),
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
+  onFieldSubmitted: (_) => _submit(),
                           controller: _nameEsController,
                           decoration: _inputDecoration('Name (Spanish)'),
                         ),
@@ -399,6 +403,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                         final isMobile = constraints.maxWidth < 600;
                         final fields = [
                           TextFormField(
+  onFieldSubmitted: (_) => _submit(),
                             controller: _unitSizeController,
                             decoration: _inputDecoration('Unit Size (e.g. 7 for 7L)'),
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -439,6 +444,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
+  onFieldSubmitted: (_) => _submit(),
                       controller: _unitsPerBoxController,
                       decoration: _inputDecoration('Units Per Box (For Inventory Math)'),
                       keyboardType: TextInputType.number,
@@ -472,30 +478,35 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                         final isMobile = constraints.maxWidth < 600;
                         final fields = [
                           TextFormField(
+  onFieldSubmitted: (_) => _submit(),
                             controller: _sellingPriceController,
                             decoration: _inputDecoration('Tier 1 Price (Base)'),
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
                             validator: _validateOptionalNumber,
                           ),
                           TextFormField(
+  onFieldSubmitted: (_) => _submit(),
                             controller: _tier2PriceController,
                             decoration: _inputDecoration('Tier 2 Price (Opt)'),
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
                             validator: _validateOptionalNumber,
                           ),
                           TextFormField(
+  onFieldSubmitted: (_) => _submit(),
                             controller: _tier3PriceController,
                             decoration: _inputDecoration('Tier 3 Price (Opt)'),
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
                             validator: _validateOptionalNumber,
                           ),
                           TextFormField(
+  onFieldSubmitted: (_) => _submit(),
                             controller: _baseMinimumStockController,
                             decoration: _inputDecoration('Base Min Stock'),
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
                             validator: _validateOptionalNumber,
                           ),
                           TextFormField(
+  onFieldSubmitted: (_) => _submit(),
                             controller: _magazinMinimumStockController,
                             decoration: _inputDecoration('Magazin Min Stock'),
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -571,6 +582,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                                         controller.text = item['consumableName'] as String;
                                       }
                                       return TextFormField(
+  onFieldSubmitted: (_) => _submit(),
                                         controller: controller,
                                         focusNode: focusNode,
                                         onEditingComplete: onEditingComplete,
@@ -588,6 +600,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                             Expanded(
                               flex: 1,
                               child: TextFormField(
+  onFieldSubmitted: (_) => _submit(),
                                 controller: item['quantityRequired'] as TextEditingController,
                                 decoration: _inputDecoration('Qty'),
                                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
