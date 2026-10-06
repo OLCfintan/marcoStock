@@ -77,7 +77,7 @@ class PdfGeneratorService {
                 ? pw.ThemeData.withFont(
                     base: font,
                     bold: boldFont,
-                  ).copyWith(defaultTextStyle: pw.TextStyle(fontSize: 8, font: font, fontBold: boldFont)) // reduce default font size for a5
+                  ).copyWith(defaultTextStyle: pw.TextStyle(fontSize: 8, font: font, fontBold: boldFont, fontFallback: [font]))
                 : null,
           ),
           footer: buildFooter,
@@ -143,8 +143,8 @@ class PdfGeneratorService {
       invoice = invoice.copyWith(taxes: dynamicTaxes, total: dynamicTotal);
     }
 
-    final font = await PdfGoogleFonts.amiriRegular();
-    final boldFont = await PdfGoogleFonts.amiriBold();
+    final font = await PdfGoogleFonts.cairoRegular();
+    final boldFont = await PdfGoogleFonts.cairoBold();
     
     final doc = pw.Document(
       theme: pw.ThemeData.withFont(
@@ -248,8 +248,8 @@ class PdfGeneratorService {
     final productMap = {for (var p in products) p.id: p};
 
     final companySettings = await _settings.getAllCompanySettings();
-    final font = await PdfGoogleFonts.amiriRegular();
-    final boldFont = await PdfGoogleFonts.amiriBold();
+    final font = await PdfGoogleFonts.cairoRegular();
+    final boldFont = await PdfGoogleFonts.cairoBold();
     
     final doc = pw.Document(
       theme: pw.ThemeData.withFont(

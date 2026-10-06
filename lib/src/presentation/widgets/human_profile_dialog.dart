@@ -1,3 +1,5 @@
+import "../../infrastructure/repositories/client_repository.dart";
+import "../../infrastructure/repositories/supplier_repository.dart";
 import '../../application/payments/payment_service.dart';
 import '../../application/auth/auth_service.dart';
 import '../../application/purchases/purchase_service.dart';
@@ -9,6 +11,7 @@ import "../documents/pdf_preview_screen.dart";
 import 'package:marko_group/src/localization/arb/app_localizations.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../../utils/arabic_transliterator.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'print_dialog.dart';
@@ -334,7 +337,7 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
           padding: const EdgeInsets.all(8.0),
           child: TextField(
             decoration: InputDecoration(
-              hintText: AppLocalizations.of(context)?.search ?? 'Search...',
+              hintText: 'Search...',
               prefixIcon: const Icon(Icons.search),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
             ),
@@ -360,11 +363,14 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
           if (!snapshot.hasData) return const Center(child: const LogoLoader());
           var items = snapshot.data!;
           if (_searchQuery.isNotEmpty) {
-            items = items.where((inv) =>
-              inv.invoiceNumber.toLowerCase().contains(_searchQuery) ||
-              (inv.clientNameOverride?.toLowerCase().contains(_searchQuery) ?? false) ||
-              inv.documentType.toLowerCase().contains(_searchQuery)
-            ).toList();
+            final q = ArabicTransliterator.transliterate(_searchQuery.toLowerCase());
+            items = items.where((inv) {
+              final num = ArabicTransliterator.transliterate(inv.invoiceNumber.toLowerCase());
+              final cName = ArabicTransliterator.transliterate(inv.clientNameOverride?.toLowerCase() ?? '');
+              final dType = ArabicTransliterator.transliterate(inv.documentType.toLowerCase());
+              final dDate = '${inv.date.day.toString().padLeft(2,'0')}/${inv.date.month.toString().padLeft(2,'0')}/${inv.date.year}';
+              return num.contains(q) || cName.contains(q) || dType.contains(q) || dDate.contains(q);
+            }).toList();
           }
           return ListView.builder(
             itemCount: items.length,
@@ -427,9 +433,12 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
           if (!snapshot.hasData) return const Center(child: const LogoLoader());
           var items = snapshot.data!;
           if (_searchQuery.isNotEmpty) {
-            items = items.where((pur) =>
-              pur.purchaseNumber.toLowerCase().contains(_searchQuery)
-            ).toList();
+            final q = ArabicTransliterator.transliterate(_searchQuery.toLowerCase());
+            items = items.where((pur) {
+              final num = ArabicTransliterator.transliterate(pur.purchaseNumber.toLowerCase());
+              final dDate = '${pur.date.day.toString().padLeft(2,'0')}/${pur.date.month.toString().padLeft(2,'0')}/${pur.date.year}';
+              return num.contains(q) || dDate.contains(q);
+            }).toList();
           }
           return ListView.builder(
             itemCount: items.length,

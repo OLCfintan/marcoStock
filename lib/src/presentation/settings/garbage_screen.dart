@@ -69,7 +69,7 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
                       await (db.select(db.products)
                         ..where((t) => t.id.equals(id))).getSingleOrNull();
                   if (isProduct != null) {
-                    await (db.update(db.products)..where((t) => t.id.equals(id))).write(const drift.ProductsCompanion(isActive: drift.Value(true)));
+                    await (db.update(db.products)..where((t) => t.id.equals(id))).write(const ProductsCompanion(isActive: drift.Value(true)));
                     continue;
                   }
                 }
@@ -184,7 +184,7 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
               children: [
                 _buildSection<ProductEntity>(
                   context,
-                  AppLocalizations.of(context)!.productsStr ?? 'Deleted Products',
+                  'Deleted Products',
                   (db.select(db.products)
                         ..where((t) => t.isActive.equals(false))
                         ..limit(50))
@@ -192,7 +192,7 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
                   (product) => product.id,
                   (product) => product.name,
                   (product) async {
-                    await (db.update(db.products)..where((t) => t.id.equals(product.id))).write(const drift.ProductsCompanion(isActive: drift.Value(true)));
+                    await (db.update(db.products)..where((t) => t.id.equals(product.id))).write(const ProductsCompanion(isActive: drift.Value(true)));
                   },
                   (product) async {
                     await db.transaction(() async {

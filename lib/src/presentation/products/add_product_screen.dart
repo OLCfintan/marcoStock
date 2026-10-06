@@ -34,7 +34,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
   final _referenceController = TextEditingController();
   final _sellingPriceController = TextEditingController();
 
-      final _tier2PriceController = TextEditingController();
+  final _tier2PriceController = TextEditingController();
   final _tier3PriceController = TextEditingController();
   final _minimumStockController = TextEditingController();
   final _baseMinimumStockController = TextEditingController();
@@ -66,16 +66,22 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       _tier3PriceController.text = source.tier3Price?.toStringAsFixed(2) ?? '';
       _minimumStockController.text = source.minimumStock.toString();
       _baseMinimumStockController.text = source.baseMinimumStock.toString();
-      _magazinMinimumStockController.text = source.magazinMinimumStock.toString();
+      _magazinMinimumStockController.text =
+          source.magazinMinimumStock.toString();
       _imagePath = source.imagePath;
       _unitSizeController.text = source.unitSize.toString();
       _unitsPerBoxController.text = source.unitsPerBox.toString();
       final u = source.unit;
-      _unit = UnitConversionService.allUnits.contains(u) ? u : 
-               (UnitConversionService.allUnits.contains(u.toLowerCase()) ? u.toLowerCase() : 
-               (UnitConversionService.allUnits.contains(u.toUpperCase()) ? u.toUpperCase() : 'Unit'));
+      _unit =
+          UnitConversionService.allUnits.contains(u)
+              ? u
+              : (UnitConversionService.allUnits.contains(u.toLowerCase())
+                  ? u.toLowerCase()
+                  : (UnitConversionService.allUnits.contains(u.toUpperCase())
+                      ? u.toUpperCase()
+                      : 'Unit'));
       if (_packagingOptions.contains(source.packagingType)) {
-          _packagingType = source.packagingType!;
+        _packagingType = source.packagingType!;
       }
     }
   }
@@ -84,15 +90,20 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     final repo = ref.read(productRepositoryProvider);
     final consumables = await repo.getConsumables(widget.productToEdit!.id);
     final allProducts = await repo.getAllProducts();
-    
+
     if (consumables.isNotEmpty && mounted) {
       setState(() {
         for (final c in consumables) {
-          final p = allProducts.firstWhere((prod) => prod.id == c.consumableId, orElse: () => widget.productToEdit!);
+          final p = allProducts.firstWhere(
+            (prod) => prod.id == c.consumableId,
+            orElse: () => widget.productToEdit!,
+          );
           _linkedProducts.add({
             'consumableId': c.consumableId,
             'consumableName': p.name,
-            'quantityRequired': TextEditingController(text: c.quantityRequired.toString()),
+            'quantityRequired': TextEditingController(
+              text: c.quantityRequired.toString(),
+            ),
           });
         }
       });
@@ -135,7 +146,8 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
 
   void _removeLinkedProduct(int index) {
     setState(() {
-      (_linkedProducts[index]['quantityRequired'] as TextEditingController).dispose();
+      (_linkedProducts[index]['quantityRequired'] as TextEditingController)
+          .dispose();
       _linkedProducts.removeAt(index);
     });
   }
@@ -143,105 +155,180 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
   Future<void> _submit() async {
     final db = ref.read(databaseProvider);
     final refToCheck = _referenceController.text.trim();
-    final existingRefList = await (db.select(db.products)..where((t) => t.reference.equals(refToCheck) & t.isActive.equals(true))).get();
-    if (existingRefList.isNotEmpty && existingRefList.first.id != widget.productToEdit?.id) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Product with this Reference already exists!')));
+    final existingRefList =
+        await (db.select(db.products)
+          ..where((t) => t.reference.equals(refToCheck))).get();
+    if (existingRefList.isNotEmpty &&
+        existingRefList.first.id != widget.productToEdit?.id) {
+      if (!existingRefList.first.isActive) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'A deleted product with this Reference exists in the Recycle Bin. Restore it or permanently delete it first.',
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Product with this Reference already exists!'),
+          ),
+        );
+      }
       return;
     }
-    
+
     if (!_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.fillRequiredFields)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.fillRequiredFields),
+        ),
+      );
       return;
     }
     try {
+      for (final linked in _linkedProducts) {
+        if (linked['consumableId'] == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(context)!.selectValidProductForLinked,
+              ),
+            ),
+          );
+          return;
+        }
+      }
 
-    for (final linked in _linkedProducts) {
-      if (linked['consumableId'] == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.selectValidProductForLinked)),
+      final repo = ref.read(productRepositoryProvider);
+      final id = const Uuid().v4();
+
+      Decimal? tryParseDecimal(String text) {
+        if (text.trim().isEmpty) return null;
+        try {
+          return Decimal.parse(text.trim());
+        } catch (_) {
+          return null;
+        }
+      }
+
+      if (widget.productToEdit != null) {
+        final product = widget.productToEdit!.copyWith(
+          name: _nameController.text.trim(),
+          nameAr:
+              _nameArController.text.trim().isEmpty
+                  ? null
+                  : _nameArController.text.trim(),
+          nameFr:
+              _nameFrController.text.trim().isEmpty
+                  ? null
+                  : _nameFrController.text.trim(),
+          nameEs:
+              _nameEsController.text.trim().isEmpty
+                  ? null
+                  : _nameEsController.text.trim(),
+          reference:
+              _referenceController.text.trim().isEmpty
+                  ? widget.productToEdit!.id.substring(0, 8).toUpperCase()
+                  : _referenceController.text.trim(),
+          unit: _unit,
+          unitSize: tryParseDecimal(_unitSizeController.text) ?? Decimal.one,
+          unitsPerBox: int.tryParse(_unitsPerBoxController.text) ?? 1,
+          sellingPrice:
+              tryParseDecimal(_sellingPriceController.text) ?? Decimal.zero,
+          tier2Price: tryParseDecimal(_tier2PriceController.text),
+          tier3Price: tryParseDecimal(_tier3PriceController.text),
+          minimumStock:
+              tryParseDecimal(_minimumStockController.text) ?? Decimal.zero,
+          baseMinimumStock:
+              tryParseDecimal(_baseMinimumStockController.text) ?? Decimal.zero,
+          magazinMinimumStock:
+              tryParseDecimal(_magazinMinimumStockController.text) ??
+              Decimal.zero,
+          packagingType: _packagingType,
+          imagePath: _imagePath,
+          updatedAt: DateTime.now(),
         );
-        return;
+        await repo.updateProduct(product);
+        final mappedConsumables =
+            _linkedProducts
+                .map(
+                  (e) => {
+                    'consumableId': e['consumableId'],
+                    'quantityRequired': Decimal.parse(
+                      (e['quantityRequired'] as TextEditingController).text,
+                    ),
+                  },
+                )
+                .toList();
+        await repo.replaceConsumables(product.id, mappedConsumables);
+      } else {
+        final product = Product(
+          id: id,
+          name: _nameController.text.trim(),
+          nameAr:
+              _nameArController.text.trim().isEmpty
+                  ? null
+                  : _nameArController.text.trim(),
+          nameFr:
+              _nameFrController.text.trim().isEmpty
+                  ? null
+                  : _nameFrController.text.trim(),
+          nameEs:
+              _nameEsController.text.trim().isEmpty
+                  ? null
+                  : _nameEsController.text.trim(),
+          reference:
+              _referenceController.text.trim().isEmpty
+                  ? id.substring(0, 8).toUpperCase()
+                  : _referenceController.text.trim(),
+          unit: _unit,
+          unitSize: tryParseDecimal(_unitSizeController.text) ?? Decimal.one,
+          unitsPerBox: int.tryParse(_unitsPerBoxController.text) ?? 1,
+          purchasePrice:
+              Decimal.zero, // Auto-calculated via PurchaseService WAC
+          sellingPrice:
+              tryParseDecimal(_sellingPriceController.text) ?? Decimal.zero,
+          tier2Price: tryParseDecimal(_tier2PriceController.text),
+          tier3Price: tryParseDecimal(_tier3PriceController.text),
+          minimumStock:
+              tryParseDecimal(_minimumStockController.text) ?? Decimal.zero,
+          baseMinimumStock:
+              tryParseDecimal(_baseMinimumStockController.text) ?? Decimal.zero,
+          magazinMinimumStock:
+              tryParseDecimal(_magazinMinimumStockController.text) ??
+              Decimal.zero,
+          packagingType: _packagingType,
+          imagePath: _imagePath,
+          isActive: true,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
+        await repo.createProduct(product);
+        final mappedConsumables =
+            _linkedProducts
+                .map(
+                  (e) => {
+                    'consumableId': e['consumableId'],
+                    'quantityRequired': Decimal.parse(
+                      (e['quantityRequired'] as TextEditingController).text,
+                    ),
+                  },
+                )
+                .toList();
+        await repo.replaceConsumables(product.id, mappedConsumables);
       }
-    }
 
-    final repo = ref.read(productRepositoryProvider);
-    final id = const Uuid().v4();
-
-    Decimal? tryParseDecimal(String text) {
-      if (text.trim().isEmpty) return null;
-      try {
-        return Decimal.parse(text.trim());
-      } catch (_) {
-        return null;
+      if (mounted) {
+        Navigator.of(context).pop();
       }
-    }
-
-    if (widget.productToEdit != null) {
-      final product = widget.productToEdit!.copyWith(
-        name: _nameController.text.trim(),
-        nameAr: _nameArController.text.trim().isEmpty ? null : _nameArController.text.trim(),
-        nameFr: _nameFrController.text.trim().isEmpty ? null : _nameFrController.text.trim(),
-        nameEs: _nameEsController.text.trim().isEmpty ? null : _nameEsController.text.trim(),
-        reference: _referenceController.text.trim().isEmpty ? widget.productToEdit!.id.substring(0, 8).toUpperCase() : _referenceController.text.trim(),
-        unit: _unit,
-        unitSize: tryParseDecimal(_unitSizeController.text) ?? Decimal.one,
-        unitsPerBox: int.tryParse(_unitsPerBoxController.text) ?? 1,
-        sellingPrice: tryParseDecimal(_sellingPriceController.text) ?? Decimal.zero,
-        tier2Price: tryParseDecimal(_tier2PriceController.text),
-        tier3Price: tryParseDecimal(_tier3PriceController.text),
-        minimumStock: tryParseDecimal(_minimumStockController.text) ?? Decimal.zero,
-        baseMinimumStock: tryParseDecimal(_baseMinimumStockController.text) ?? Decimal.zero,
-        magazinMinimumStock: tryParseDecimal(_magazinMinimumStockController.text) ?? Decimal.zero,
-        packagingType: _packagingType,
-        imagePath: _imagePath,
-        updatedAt: DateTime.now(),
-      );
-      await repo.updateProduct(product);
-      final mappedConsumables = _linkedProducts.map((e) => {
-        'consumableId': e['consumableId'],
-        'quantityRequired': Decimal.parse((e['quantityRequired'] as TextEditingController).text),
-      }).toList();
-      await repo.replaceConsumables(product.id, mappedConsumables);
-    } else {
-      final product = Product(
-        id: id,
-        name: _nameController.text.trim(),
-        nameAr: _nameArController.text.trim().isEmpty ? null : _nameArController.text.trim(),
-        nameFr: _nameFrController.text.trim().isEmpty ? null : _nameFrController.text.trim(),
-        nameEs: _nameEsController.text.trim().isEmpty ? null : _nameEsController.text.trim(),
-        reference: _referenceController.text.trim().isEmpty ? id.substring(0, 8).toUpperCase() : _referenceController.text.trim(),
-        unit: _unit,
-        unitSize: tryParseDecimal(_unitSizeController.text) ?? Decimal.one,
-        unitsPerBox: int.tryParse(_unitsPerBoxController.text) ?? 1,
-        purchasePrice: Decimal.zero, // Auto-calculated via PurchaseService WAC
-        sellingPrice: tryParseDecimal(_sellingPriceController.text) ?? Decimal.zero,
-        tier2Price: tryParseDecimal(_tier2PriceController.text),
-        tier3Price: tryParseDecimal(_tier3PriceController.text),
-        minimumStock: tryParseDecimal(_minimumStockController.text) ?? Decimal.zero,
-        baseMinimumStock: tryParseDecimal(_baseMinimumStockController.text) ?? Decimal.zero,
-        magazinMinimumStock: tryParseDecimal(_magazinMinimumStockController.text) ?? Decimal.zero,
-        packagingType: _packagingType,
-        imagePath: _imagePath,
-        isActive: true,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      );
-      await repo.createProduct(product);
-      final mappedConsumables = _linkedProducts.map((e) => {
-        'consumableId': e['consumableId'],
-        'quantityRequired': Decimal.parse((e['quantityRequired'] as TextEditingController).text),
-      }).toList();
-      await repo.replaceConsumables(product.id, mappedConsumables);
-    }
-
-
-
-    if (mounted) {
-      Navigator.of(context).pop();
-    }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${AppLocalizations.of(context)!.errorSaving}$e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${AppLocalizations.of(context)!.errorSaving}$e'),
+          ),
+        );
       }
     }
   }
@@ -259,379 +346,621 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
   Widget build(BuildContext context) {
     final productsAsync = ref.watch(productsStreamProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.productToEdit != null ? 'Edit Product' : (widget.templateProduct != null ? 'Add Family Member' : AppLocalizations.of(context)!.addNewProduct)),
-        
-        actions: [
-          TextButton.icon(
-            onPressed: _submit,
-            icon: const Icon(Icons.check),
-            label: const Text('SAVE', style: TextStyle(fontWeight: FontWeight.bold)),
-            style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.primary),
-          ),
-        ],
-      ),
-      body: Focus(
+    return CallbackShortcuts(
+      bindings: {
+        SingleActivator(LogicalKeyboardKey.enter): _submit,
+        SingleActivator(LogicalKeyboardKey.numpadEnter): _submit,
+      },
+      child: Focus(
         autofocus: true,
-        onKeyEvent: (node, event) {
-          if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.enter || event.logicalKey == LogicalKeyboardKey.numpadEnter)) {
-             // If they are in a text field, let them press enter to go next or submit
-             // But usually enter in textfield shouldn't submit immediately unless we want it to.
-             // The user said "i should also be able to confirme with <Enter> Key like with clicking the mouse"
-             // If we ignore it when EditableText is focused, they can't submit while typing.
-             // If we don't ignore it, typing Enter in a single-line field will submit the form! Which is what they want!
-             // BUT what if it's a multiline field? Description is probably multiline.
-             _submit();
-             return KeyEventResult.handled;
-          }
-          return KeyEventResult.ignored;
-        },
-        child: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16.0),
-          children: [
-            _buildSectionHeader('Basic Information', Icons.info_outline),
-            Card(
-              
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: Padding(
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text(
+              widget.productToEdit != null
+                  ? 'Edit Product'
+                  : (widget.templateProduct != null
+                      ? 'Add Family Member'
+                      : AppLocalizations.of(context)!.addNewProduct),
+            ),
+
+            actions: [
+              TextButton.icon(
+                onPressed: _submit,
+                icon: const Icon(Icons.check),
+                label: const Text(
+                  'SAVE',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                style: TextButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ],
+          ),
+          body: Focus(
+            autofocus: true,
+            onKeyEvent: (node, event) {
+              if (event is KeyDownEvent &&
+                  (event.logicalKey == LogicalKeyboardKey.enter ||
+                      event.logicalKey == LogicalKeyboardKey.numpadEnter)) {
+                // If they are in a text field, let them press enter to go next or submit
+                // But usually enter in textfield shouldn't submit immediately unless we want it to.
+                // The user said "i should also be able to confirme with <Enter> Key like with clicking the mouse"
+                // If we ignore it when EditableText is focused, they can't submit while typing.
+                // If we don't ignore it, typing Enter in a single-line field will submit the form! Which is what they want!
+                // BUT what if it's a multiline field? Description is probably multiline.
+                _submit();
+                return KeyEventResult.handled;
+              }
+              return KeyEventResult.ignored;
+            },
+            child: Form(
+              key: _formKey,
+              child: ListView(
                 padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          flex: 2,
-                          child: RawAutocomplete<String>(
-                            textEditingController: _nameController,
-                            focusNode: FocusNode(),
-                            optionsBuilder: (TextEditingValue textEditingValue) async {
-                              if (textEditingValue.text.isEmpty) {
-                                return const Iterable<String>.empty();
-                              }
-                              final repo = ref.read(productRepositoryProvider);
-                              final products = await repo.getAllProducts();
-                              final q = textEditingValue.text.toLowerCase();
-                              final aq = ArabicTransliterator.transliterate(textEditingValue.text);
-                              return products
-                                  .where((p) => p.packagingType == 'Unit' && (p.name.toLowerCase().contains(q) || p.name.contains(aq)))
-                                  .map((p) => p.name)
-                                  .toSet();
-                            },
-                            fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
-                              return TextFormField(
-  onFieldSubmitted: (_) => _submit(),
-                                controller: textEditingController,
-                                focusNode: focusNode,
-                                decoration: _inputDecoration('Product Name (Family/Base)'),
-                              );
-                            },
-                            optionsViewBuilder: (context, onSelected, options) {
-                              return Align(
-                                alignment: Alignment.topLeft,
-                                child: Material(
-                                  
-                                  child: SizedBox(
-                                    width: 300,
-                                    child: ListView.builder(
-                                      padding: EdgeInsets.zero,
-                                      shrinkWrap: true,
-                                      itemCount: options.length,
-                                      itemBuilder: (BuildContext context, int index) {
-                                        final String option = options.elementAt(index);
-                                        return InkWell(
-                                          onTap: () {
-                                            onSelected(option);
-                                          },
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(16.0),
-                                            child: Text(option),
+                children: [
+                  _buildSectionHeader('Basic Information', Icons.info_outline),
+                  Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                flex: 2,
+                                child: RawAutocomplete<String>(
+                                  textEditingController: _nameController,
+                                  focusNode: FocusNode(),
+                                  optionsBuilder: (
+                                    TextEditingValue textEditingValue,
+                                  ) async {
+                                    if (textEditingValue.text.isEmpty) {
+                                      return const Iterable<String>.empty();
+                                    }
+                                    final repo = ref.read(
+                                      productRepositoryProvider,
+                                    );
+                                    final products =
+                                        await repo.getAllProducts();
+                                    final q =
+                                        textEditingValue.text.toLowerCase();
+                                    final aq =
+                                        ArabicTransliterator.transliterate(
+                                          textEditingValue.text,
+                                        );
+                                    return products
+                                        .where(
+                                          (p) =>
+                                              p.packagingType == 'Unit' &&
+                                              (p.name.toLowerCase().contains(
+                                                    q,
+                                                  ) ||
+                                                  p.name.contains(aq)),
+                                        )
+                                        .map((p) => p.name)
+                                        .toSet();
+                                  },
+                                  fieldViewBuilder: (
+                                    context,
+                                    textEditingController,
+                                    focusNode,
+                                    onFieldSubmitted,
+                                  ) {
+                                    return TextFormField(
+                                      onFieldSubmitted: (_) => _submit(),
+                                      controller: textEditingController,
+                                      focusNode: focusNode,
+                                      decoration: _inputDecoration(
+                                        'Product Name (Family/Base)',
+                                      ),
+                                    );
+                                  },
+                                  optionsViewBuilder: (
+                                    context,
+                                    onSelected,
+                                    options,
+                                  ) {
+                                    return Align(
+                                      alignment: Alignment.topLeft,
+                                      child: Material(
+                                        child: SizedBox(
+                                          width: 300,
+                                          child: ListView.builder(
+                                            padding: EdgeInsets.zero,
+                                            shrinkWrap: true,
+                                            itemCount: options.length,
+                                            itemBuilder: (
+                                              BuildContext context,
+                                              int index,
+                                            ) {
+                                              final String option = options
+                                                  .elementAt(index);
+                                              return InkWell(
+                                                onTap: () {
+                                                  onSelected(option);
+                                                },
+                                                child: Padding(
+                                                  padding: const EdgeInsets.all(
+                                                    16.0,
+                                                  ),
+                                                  child: Text(option),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                flex: 1,
+                                child: TextFormField(
+                                  onFieldSubmitted: (_) => _submit(),
+                                  controller: _referenceController,
+                                  decoration: _inputDecoration('Reference'),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          ExpansionTile(
+                            title: const Text(
+                              'Add Translations / Local Names (Optional)',
+                              style: TextStyle(color: Colors.blueGrey),
+                            ),
+                            childrenPadding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 8,
+                            ),
+                            children: [
+                              TextFormField(
+                                onFieldSubmitted: (_) => _submit(),
+                                controller: _nameArController,
+                                decoration: _inputDecoration('Name (Arabic)'),
+                                textDirection: TextDirection.rtl,
+                              ),
+                              const SizedBox(height: 12),
+                              TextFormField(
+                                onFieldSubmitted: (_) => _submit(),
+                                controller: _nameFrController,
+                                decoration: _inputDecoration('Name (French)'),
+                              ),
+                              const SizedBox(height: 12),
+                              TextFormField(
+                                onFieldSubmitted: (_) => _submit(),
+                                controller: _nameEsController,
+                                decoration: _inputDecoration('Name (Spanish)'),
+                              ),
+                              const SizedBox(height: 8),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          LayoutBuilder(
+                            builder: (context, constraints) {
+                              final isMobile = constraints.maxWidth < 600;
+                              final fields = [
+                                TextFormField(
+                                  onFieldSubmitted: (_) => _submit(),
+                                  controller: _unitSizeController,
+                                  decoration: _inputDecoration(
+                                    'Unit Size (e.g. 7 for 7L)',
+                                  ),
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                        decimal: true,
+                                      ),
+                                  validator: _validateOptionalNumber,
+                                ),
+                                DropdownButtonFormField<String>(
+                                  value: _unit,
+                                  decoration: _inputDecoration(
+                                    AppLocalizations.of(context)!.unit,
+                                  ),
+                                  items:
+                                      UnitConversionService.allUnits.map((
+                                        String type,
+                                      ) {
+                                        return DropdownMenuItem<String>(
+                                          value: type,
+                                          child: Text(
+                                            type == 'Unit'
+                                                ? AppLocalizations.of(
+                                                  context,
+                                                )!.unit
+                                                : (type == 'Box'
+                                                    ? AppLocalizations.of(
+                                                      context,
+                                                    )!.box
+                                                    : type),
                                           ),
                                         );
+                                      }).toList(),
+                                  onChanged: (String? newValue) {
+                                    if (newValue != null)
+                                      setState(() => _unit = newValue);
+                                  },
+                                ),
+                                DropdownButtonFormField<String>(
+                                  value: _packagingType,
+                                  decoration: _inputDecoration(
+                                    'Packaging Type',
+                                  ),
+                                  items:
+                                      _packagingOptions.map((String type) {
+                                        return DropdownMenuItem<String>(
+                                          value: type,
+                                          child: Text(
+                                            type == 'Unit'
+                                                ? AppLocalizations.of(
+                                                  context,
+                                                )!.unit
+                                                : (type == 'Box'
+                                                    ? AppLocalizations.of(
+                                                      context,
+                                                    )!.box
+                                                    : type),
+                                          ),
+                                        );
+                                      }).toList(),
+                                  onChanged: (String? newValue) {
+                                    if (newValue != null)
+                                      setState(() => _packagingType = newValue);
+                                  },
+                                ),
+                              ];
+
+                              if (isMobile) {
+                                return Column(
+                                  children:
+                                      fields
+                                          .map(
+                                            (f) => Padding(
+                                              padding: const EdgeInsets.only(
+                                                bottom: 16,
+                                              ),
+                                              child: f,
+                                            ),
+                                          )
+                                          .toList(),
+                                );
+                              } else {
+                                return Row(
+                                  children:
+                                      fields
+                                          .map(
+                                            (f) => Expanded(
+                                              child: Padding(
+                                                padding: const EdgeInsets.only(
+                                                  right: 8,
+                                                ),
+                                                child: f,
+                                              ),
+                                            ),
+                                          )
+                                          .toList(),
+                                );
+                              }
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            onFieldSubmitted: (_) => _submit(),
+                            controller: _unitsPerBoxController,
+                            decoration: _inputDecoration(
+                              'Units Per Box (For Inventory Math)',
+                            ),
+                            keyboardType: TextInputType.number,
+                            validator: (value) {
+                              if (value == null || value.isEmpty)
+                                return 'Required';
+                              if (int.tryParse(value) == null)
+                                return 'Must be integer';
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          ImagePickerField(
+                            label: 'Product Image',
+                            onChanged:
+                                (val) => setState(() => _imagePath = val),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  _buildSectionHeader(
+                    'Pricing & Inventory',
+                    Icons.attach_money,
+                  ),
+                  Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        children: [
+                          LayoutBuilder(
+                            builder: (context, constraints) {
+                              final isMobile = constraints.maxWidth < 600;
+                              final fields = [
+                                TextFormField(
+                                  onFieldSubmitted: (_) => _submit(),
+                                  controller: _sellingPriceController,
+                                  decoration: _inputDecoration(
+                                    'Tier 1 Price (Base)',
+                                  ),
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                        decimal: true,
+                                      ),
+                                  validator: _validateOptionalNumber,
+                                ),
+                                TextFormField(
+                                  onFieldSubmitted: (_) => _submit(),
+                                  controller: _tier2PriceController,
+                                  decoration: _inputDecoration(
+                                    'Tier 2 Price (Opt)',
+                                  ),
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                        decimal: true,
+                                      ),
+                                  validator: _validateOptionalNumber,
+                                ),
+                                TextFormField(
+                                  onFieldSubmitted: (_) => _submit(),
+                                  controller: _tier3PriceController,
+                                  decoration: _inputDecoration(
+                                    'Tier 3 Price (Opt)',
+                                  ),
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                        decimal: true,
+                                      ),
+                                  validator: _validateOptionalNumber,
+                                ),
+                                TextFormField(
+                                  onFieldSubmitted: (_) => _submit(),
+                                  controller: _baseMinimumStockController,
+                                  decoration: _inputDecoration(
+                                    'Base Min Stock',
+                                  ),
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                        decimal: true,
+                                      ),
+                                  validator: _validateOptionalNumber,
+                                ),
+                                TextFormField(
+                                  onFieldSubmitted: (_) => _submit(),
+                                  controller: _magazinMinimumStockController,
+                                  decoration: _inputDecoration(
+                                    'Magazin Min Stock',
+                                  ),
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                        decimal: true,
+                                      ),
+                                  validator: _validateOptionalNumber,
+                                ),
+                              ];
+
+                              if (isMobile) {
+                                return Column(
+                                  children:
+                                      fields
+                                          .map(
+                                            (f) => Padding(
+                                              padding: const EdgeInsets.only(
+                                                bottom: 16,
+                                              ),
+                                              child: f,
+                                            ),
+                                          )
+                                          .toList(),
+                                );
+                              } else {
+                                return Row(
+                                  children:
+                                      fields
+                                          .map(
+                                            (f) => Expanded(
+                                              child: Padding(
+                                                padding: const EdgeInsets.only(
+                                                  right: 16,
+                                                ),
+                                                child: f,
+                                              ),
+                                            ),
+                                          )
+                                          .toList(),
+                                );
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  _buildSectionHeader(
+                    'Linked / Composite Products (BOM)',
+                    Icons.link,
+                  ),
+                  Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            AppLocalizations.of(context)!.addConsumablesDesc,
+                          ),
+                          const SizedBox(height: 16),
+                          if (_linkedProducts.isEmpty)
+                            const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(16.0),
+                                child: Text(
+                                  'No linked products added.',
+                                  style: TextStyle(color: Colors.grey),
+                                ),
+                              ),
+                            ),
+                          ...List.generate(_linkedProducts.length, (index) {
+                            final item = _linkedProducts[index];
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12.0),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    flex: 3,
+                                    child: productsAsync.when(
+                                      data: (products) {
+                                        return Autocomplete<Product>(
+                                          displayStringForOption:
+                                              (p) =>
+                                                  '${p.name} (${p.reference})',
+                                          optionsBuilder: (textEditingValue) {
+                                            if (textEditingValue.text.isEmpty) {
+                                              return const Iterable<
+                                                Product
+                                              >.empty();
+                                            }
+                                            final q =
+                                                textEditingValue.text
+                                                    .toLowerCase();
+                                            final aq =
+                                                ArabicTransliterator.transliterate(
+                                                  textEditingValue.text,
+                                                );
+                                            return products.where(
+                                              (p) =>
+                                                  p.name.toLowerCase().contains(
+                                                    q,
+                                                  ) ||
+                                                  (p.name.contains(aq)) ||
+                                                  p.reference
+                                                      .toLowerCase()
+                                                      .contains(q),
+                                            );
+                                          },
+                                          onSelected: (Product selection) {
+                                            setState(() {
+                                              _linkedProducts[index]['consumableId'] =
+                                                  selection.id;
+                                              _linkedProducts[index]['consumableName'] =
+                                                  selection.name;
+                                            });
+                                          },
+                                          fieldViewBuilder: (
+                                            context,
+                                            controller,
+                                            focusNode,
+                                            onEditingComplete,
+                                          ) {
+                                            if (item['consumableName'] !=
+                                                    null &&
+                                                controller.text.isEmpty) {
+                                              controller.text =
+                                                  item['consumableName']
+                                                      as String;
+                                            }
+                                            return TextFormField(
+                                              onFieldSubmitted:
+                                                  (_) => _submit(),
+                                              controller: controller,
+                                              focusNode: focusNode,
+                                              onEditingComplete:
+                                                  onEditingComplete,
+                                              decoration: _inputDecoration(
+                                                'Search Product...',
+                                              ),
+                                              validator:
+                                                  (val) =>
+                                                      item['consumableId'] ==
+                                                              null
+                                                          ? 'Select product'
+                                                          : null,
+                                            );
+                                          },
+                                        );
                                       },
+                                      loading:
+                                          () => const Center(
+                                            child: const LogoLoader(),
+                                          ),
+                                      error:
+                                          (e, s) => Text(
+                                            '${AppLocalizations.of(context)!.errorLoadingProducts}$e',
+                                          ),
                                     ),
                                   ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          flex: 1,
-                          child: TextFormField(
-  onFieldSubmitted: (_) => _submit(),
-                            controller: _referenceController,
-                            decoration: _inputDecoration('Reference'),
-                            
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    ExpansionTile(
-                      title: const Text('Add Translations / Local Names (Optional)', style: TextStyle(color: Colors.blueGrey)),
-                      childrenPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                      children: [
-                        TextFormField(
-  onFieldSubmitted: (_) => _submit(),
-                          controller: _nameArController,
-                          decoration: _inputDecoration('Name (Arabic)'),
-                          textDirection: TextDirection.rtl,
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-  onFieldSubmitted: (_) => _submit(),
-                          controller: _nameFrController,
-                          decoration: _inputDecoration('Name (French)'),
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-  onFieldSubmitted: (_) => _submit(),
-                          controller: _nameEsController,
-                          decoration: _inputDecoration('Name (Spanish)'),
-                        ),
-                        const SizedBox(height: 8),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final isMobile = constraints.maxWidth < 600;
-                        final fields = [
-                          TextFormField(
-  onFieldSubmitted: (_) => _submit(),
-                            controller: _unitSizeController,
-                            decoration: _inputDecoration('Unit Size (e.g. 7 for 7L)'),
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            validator: _validateOptionalNumber,
-                          ),
-                          DropdownButtonFormField<String>(
-                            value: _unit,
-                            decoration: _inputDecoration(AppLocalizations.of(context)!.unit),
-                            items: UnitConversionService.allUnits.map((String type) {
-                              return DropdownMenuItem<String>(value: type, child: Text(type == 'Unit' ? AppLocalizations.of(context)!.unit : (type == 'Box' ? AppLocalizations.of(context)!.box : type)));
-                            }).toList(),
-                            onChanged: (String? newValue) {
-                              if (newValue != null) setState(() => _unit = newValue);
-                            },
-                          ),
-                          DropdownButtonFormField<String>(
-                            value: _packagingType,
-                            decoration: _inputDecoration('Packaging Type'),
-                            items: _packagingOptions.map((String type) {
-                              return DropdownMenuItem<String>(value: type, child: Text(type == 'Unit' ? AppLocalizations.of(context)!.unit : (type == 'Box' ? AppLocalizations.of(context)!.box : type)));
-                            }).toList(),
-                            onChanged: (String? newValue) {
-                              if (newValue != null) setState(() => _packagingType = newValue);
-                            },
-                          ),
-                        ];
-
-                        if (isMobile) {
-                          return Column(
-                            children: fields.map((f) => Padding(padding: const EdgeInsets.only(bottom: 16), child: f)).toList(),
-                          );
-                        } else {
-                          return Row(
-                            children: fields.map((f) => Expanded(child: Padding(padding: const EdgeInsets.only(right: 8), child: f))).toList(),
-                          );
-                        }
-                      }
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-  onFieldSubmitted: (_) => _submit(),
-                      controller: _unitsPerBoxController,
-                      decoration: _inputDecoration('Units Per Box (For Inventory Math)'),
-                      keyboardType: TextInputType.number,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) return 'Required';
-                        if (int.tryParse(value) == null) return 'Must be integer';
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    ImagePickerField(
-                      label: 'Product Image',
-                      onChanged: (val) => setState(() => _imagePath = val),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            _buildSectionHeader('Pricing & Inventory', Icons.attach_money),
-            Card(
-              
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final isMobile = constraints.maxWidth < 600;
-                        final fields = [
-                          TextFormField(
-  onFieldSubmitted: (_) => _submit(),
-                            controller: _sellingPriceController,
-                            decoration: _inputDecoration('Tier 1 Price (Base)'),
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            validator: _validateOptionalNumber,
-                          ),
-                          TextFormField(
-  onFieldSubmitted: (_) => _submit(),
-                            controller: _tier2PriceController,
-                            decoration: _inputDecoration('Tier 2 Price (Opt)'),
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            validator: _validateOptionalNumber,
-                          ),
-                          TextFormField(
-  onFieldSubmitted: (_) => _submit(),
-                            controller: _tier3PriceController,
-                            decoration: _inputDecoration('Tier 3 Price (Opt)'),
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            validator: _validateOptionalNumber,
-                          ),
-                          TextFormField(
-  onFieldSubmitted: (_) => _submit(),
-                            controller: _baseMinimumStockController,
-                            decoration: _inputDecoration('Base Min Stock'),
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            validator: _validateOptionalNumber,
-                          ),
-                          TextFormField(
-  onFieldSubmitted: (_) => _submit(),
-                            controller: _magazinMinimumStockController,
-                            decoration: _inputDecoration('Magazin Min Stock'),
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            validator: _validateOptionalNumber,
-                          ),
-                        ];
-
-                        if (isMobile) {
-                          return Column(
-                            children: fields.map((f) => Padding(padding: const EdgeInsets.only(bottom: 16), child: f)).toList(),
-                          );
-                        } else {
-                          return Row(
-                            children: fields.map((f) => Expanded(child: Padding(padding: const EdgeInsets.only(right: 16), child: f))).toList(),
-                          );
-                        }
-                      }
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            _buildSectionHeader('Linked / Composite Products (BOM)', Icons.link),
-            Card(
-              
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(AppLocalizations.of(context)!.addConsumablesDesc),
-                    const SizedBox(height: 16),
-                    if (_linkedProducts.isEmpty)
-                      const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(16.0),
-                          child: Text('No linked products added.', style: TextStyle(color: Colors.grey)),
-                        ),
-                      ),
-                    ...List.generate(_linkedProducts.length, (index) {
-                      final item = _linkedProducts[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12.0),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              flex: 3,
-                              child: productsAsync.when(
-                                data: (products) {
-                                  return Autocomplete<Product>(
-                                    displayStringForOption: (p) => '${p.name} (${p.reference})',
-                                    optionsBuilder: (textEditingValue) {
-                                      if (textEditingValue.text.isEmpty) {
-                                        return const Iterable<Product>.empty();
-                                      }
-                                      final q = textEditingValue.text.toLowerCase();
-                                      final aq = ArabicTransliterator.transliterate(textEditingValue.text);
-                                      return products.where((p) =>
-                                          p.name.toLowerCase().contains(q) || (p.name.contains(aq)) ||
-                                          p.reference.toLowerCase().contains(q));
-                                    },
-                                    onSelected: (Product selection) {
-                                      setState(() {
-                                        _linkedProducts[index]['consumableId'] = selection.id;
-                                        _linkedProducts[index]['consumableName'] = selection.name;
-                                      });
-                                    },
-                                    fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
-                                      if (item['consumableName'] != null && controller.text.isEmpty) {
-                                        controller.text = item['consumableName'] as String;
-                                      }
-                                      return TextFormField(
-  onFieldSubmitted: (_) => _submit(),
-                                        controller: controller,
-                                        focusNode: focusNode,
-                                        onEditingComplete: onEditingComplete,
-                                        decoration: _inputDecoration('Search Product...'),
-                                        validator: (val) => item['consumableId'] == null ? 'Select product' : null,
-                                      );
-                                    },
-                                  );
-                                },
-                                loading: () => const Center(child: const LogoLoader()),
-                                error: (e, s) => Text('${AppLocalizations.of(context)!.errorLoadingProducts}$e'),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    flex: 1,
+                                    child: TextFormField(
+                                      onFieldSubmitted: (_) => _submit(),
+                                      controller:
+                                          item['quantityRequired']
+                                              as TextEditingController,
+                                      decoration: _inputDecoration('Qty'),
+                                      keyboardType:
+                                          const TextInputType.numberWithOptions(
+                                            decimal: true,
+                                          ),
+                                      validator: _validateOptionalNumber,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.remove_circle,
+                                      color: Colors.red,
+                                    ),
+                                    onPressed:
+                                        () => _removeLinkedProduct(index),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }),
+                          const SizedBox(height: 8),
+                          ElevatedButton.icon(
+                            onPressed: _addLinkedProduct,
+                            icon: const Icon(Icons.add),
+                            label: Text(
+                              AppLocalizations.of(context)!.addConsumable,
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              flex: 1,
-                              child: TextFormField(
-  onFieldSubmitted: (_) => _submit(),
-                                controller: item['quantityRequired'] as TextEditingController,
-                                decoration: _inputDecoration('Qty'),
-                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                validator: _validateOptionalNumber,
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.remove_circle, color: Colors.red),
-                              onPressed: () => _removeLinkedProduct(index),
-                            ),
-                          ],
-                        ),
-                      );
-                    }),
-                    const SizedBox(height: 8),
-                    ElevatedButton.icon(
-                      onPressed: _addLinkedProduct,
-                      icon: const Icon(Icons.add),
-                      label: Text(AppLocalizations.of(context)!.addConsumable),
-                      style: ElevatedButton.styleFrom(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 32),
+                ],
               ),
             ),
-            const SizedBox(height: 32),
-          ],
+          ),
         ),
-      ),
       ),
     );
   }
@@ -653,7 +982,9 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
   }
 
   String? _validateOptionalNumber(String? value) {
-    if (value != null && value.trim().isNotEmpty && Decimal.tryParse(value.trim()) == null) {
+    if (value != null &&
+        value.trim().isNotEmpty &&
+        Decimal.tryParse(value.trim()) == null) {
       return 'Invalid number';
     }
     return null;

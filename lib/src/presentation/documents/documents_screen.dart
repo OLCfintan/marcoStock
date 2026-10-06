@@ -141,8 +141,8 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
                     final confirm = await showDialog<bool>(
                       context: context,
                       builder: (context) => AlertDialog(
-                        title: Text(AppLocalizations.of(context)!.confirmStr ?? 'Confirm'),
-                        content: Text(AppLocalizations.of(context)!.areYouSureYouWantToDeleteStr ?? 'Are you sure you want to delete this?'),
+                        title: Text('Confirm'),
+                        content: Text('Are you sure you want to delete this?'),
                         actions: [
                           TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocalizations.of(context)!.cancelStr ?? 'Cancel')),
                           ElevatedButton(
@@ -443,8 +443,8 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
                                           final confirm = await showDialog<bool>(
                                             context: context,
                                             builder: (context) => AlertDialog(
-                                              title: Text(AppLocalizations.of(context)!.confirmStr ?? 'Confirm'),
-                                              content: Text(AppLocalizations.of(context)!.areYouSureYouWantToDeleteStr ?? 'Are you sure you want to delete this?'),
+                                              title: Text('Confirm'),
+                                              content: Text('Are you sure you want to delete this?'),
                                               actions: [
                                                 TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocalizations.of(context)!.cancelStr ?? 'Cancel')),
                                                 ElevatedButton(
@@ -726,8 +726,8 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
                                         final confirm = await showDialog<bool>(
                                           context: context,
                                           builder: (context) => AlertDialog(
-                                            title: Text(AppLocalizations.of(context)!.confirmStr ?? 'Confirm'),
-                                            content: Text(AppLocalizations.of(context)!.areYouSureYouWantToDeleteStr ?? 'Are you sure you want to delete this?'),
+                                            title: Text('Confirm'),
+                                            content: Text('Are you sure you want to delete this?'),
                                             actions: [
                                               TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocalizations.of(context)!.cancelStr ?? 'Cancel')),
                                               ElevatedButton(

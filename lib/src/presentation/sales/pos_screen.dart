@@ -466,7 +466,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Target Amount (HT)',
                   ),
-                  keyboardType: const TextInputType.numberWithOptions(
+                  textInputAction: TextInputAction.done,
+                                                  keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
                   onChanged: (val) {
@@ -481,7 +482,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Target Amount (TTC)',
                   ),
-                  keyboardType: const TextInputType.numberWithOptions(
+                  textInputAction: TextInputAction.done,
+                                                  keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
                   onChanged: (val) {
@@ -496,7 +498,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Number of Families (Categories)',
                   ),
-                  keyboardType: TextInputType.number,
+                  textInputAction: TextInputAction.done,
+                                                  keyboardType: TextInputType.number,
                   onSubmitted: (_) => submit(),
                 ),
               ],
@@ -1416,7 +1419,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                                                 context,
                                                               )!.quantity,
                                                         ),
-                                                        keyboardType:
+                                                        textInputAction: TextInputAction.done,
+                                                  keyboardType:
                                                             const TextInputType.numberWithOptions(
                                                               decimal: true,
                                                             ),
@@ -1431,7 +1435,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                                                 context,
                                                               )!.unitPrice,
                                                         ),
-                                                        keyboardType:
+                                                        textInputAction: TextInputAction.done,
+                                                  keyboardType:
                                                             const TextInputType.numberWithOptions(
                                                               decimal: true,
                                                             ),
@@ -1677,6 +1682,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                                     ),
                                                     border: InputBorder.none,
                                                   ),
+                                                  textInputAction: TextInputAction.done,
                                                   keyboardType:
                                                       const TextInputType.numberWithOptions(
                                                         decimal: true,
@@ -1809,6 +1815,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           },
         ),
       ),
+      ),
+    ),
     );
   }
 }
