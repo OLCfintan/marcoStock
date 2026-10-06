@@ -7,6 +7,7 @@ import '../../infrastructure/database/providers.dart';
 import 'package:drift/drift.dart' as drift;
 import 'package:marko_group/src/localization/arb/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/auth/auth_service.dart';
 import 'package:uuid/uuid.dart';
@@ -29,6 +30,13 @@ class ProductsScreen extends ConsumerStatefulWidget {
 class _ProductsScreenState extends ConsumerState<ProductsScreen> {
   final Set<String> _selectedProductIds = {};
   String _searchQuery = '';
+  final FocusNode _searchFocusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _searchFocusNode.dispose();
+    super.dispose();
+  }
 
   void _showConsumableDialog(BuildContext context, Product product) {
     bool createBox = false;
@@ -206,10 +214,18 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
   Widget build(BuildContext context) {
     final productsAsync = ref.watch(productsStreamProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.productsCatalog),
-        actions: [
+    return CallbackShortcuts(
+      bindings: {
+        SingleActivator(LogicalKeyboardKey.keyF, control: true): () {
+          _searchFocusNode.requestFocus();
+        },
+      },
+      child: Focus(
+        autofocus: true,
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text(AppLocalizations.of(context)!.productsCatalog),
+            actions: [
           IconButton(
             icon: const Icon(Icons.qr_code_scanner),
             tooltip: AppLocalizations.of(context)!.scanBarcode,
@@ -232,6 +248,23 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
               icon: const Icon(Icons.delete),
               tooltip: AppLocalizations.of(context)!.deleteStr,
               onPressed: () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text(AppLocalizations.of(context)!.confirmStr ?? 'Confirm'),
+                    content: Text(AppLocalizations.of(context)!.areYouSureYouWantToDeleteStr ?? 'Are you sure you want to delete this?'),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocalizations.of(context)!.cancelStr ?? 'Cancel')),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                        onPressed: () => Navigator.pop(context, true),
+                        child: Text(AppLocalizations.of(context)!.deleteStr ?? 'Delete'),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirm != true) return;
+                
                 final repo = ref.read(productRepositoryProvider);
                 for (final id in _selectedProductIds) {
                   await repo.deleteProduct(id);
@@ -260,6 +293,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
               width: double.infinity,
               child: PaginatedDataTable(
                 header: TextField(
+                  focusNode: _searchFocusNode,
                   decoration: InputDecoration(
                     labelText: AppLocalizations.of(context)!.searchProducts,
                     prefixIcon: const Icon(Icons.search),
@@ -310,6 +344,22 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                   onEdit: (p) => Navigator.push(context, MaterialPageRoute(builder: (_) => AddProductScreen(productToEdit: p))),
                   onAddFamilyMember: (p) => Navigator.push(context, MaterialPageRoute(builder: (_) => AddProductScreen(templateProduct: p))),
                   onDelete: (p) async {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: Text(AppLocalizations.of(context)!.confirmStr ?? 'Confirm'),
+                        content: Text(AppLocalizations.of(context)!.areYouSureYouWantToDeleteStr ?? 'Are you sure you want to delete this?'),
+                        actions: [
+                          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocalizations.of(context)!.cancelStr ?? 'Cancel')),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                            onPressed: () => Navigator.pop(context, true),
+                            child: Text(AppLocalizations.of(context)!.deleteStr ?? 'Delete'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirm != true) return;
                     final db = ref.read(databaseProvider);
                     await (db.update(db.products)..where((t) => t.id.equals(p.id))).write(const ProductsCompanion(isActive: drift.Value(false)));
                   },
@@ -337,6 +387,8 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
         child: const Icon(Icons.add),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
+        ),
+      ),
     );
   }
 }

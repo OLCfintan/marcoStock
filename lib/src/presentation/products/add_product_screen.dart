@@ -143,7 +143,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
   Future<void> _submit() async {
     final db = ref.read(databaseProvider);
     final refToCheck = _referenceController.text.trim();
-    final existingRefList = await (db.select(db.products)..where((t) => t.reference.equals(refToCheck))).get();
+    final existingRefList = await (db.select(db.products)..where((t) => t.reference.equals(refToCheck) & t.isActive.equals(true))).get();
     if (existingRefList.isNotEmpty && existingRefList.first.id != widget.productToEdit?.id) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Product with this Reference already exists!')));
       return;

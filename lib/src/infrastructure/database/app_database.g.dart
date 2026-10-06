@@ -1816,6 +1816,21 @@ class $ClientsTable extends Clients
     ),
     defaultValue: const Constant(true),
   );
+  static const VerificationMeta _showInDashboardMeta = const VerificationMeta(
+    'showInDashboard',
+  );
+  @override
+  late final GeneratedColumn<bool> showInDashboard = GeneratedColumn<bool>(
+    'show_in_dashboard',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("show_in_dashboard" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -1854,6 +1869,7 @@ class $ClientsTable extends Clients
     email,
     imagePath,
     isActive,
+    showInDashboard,
     createdAt,
     updatedAt,
   ];
@@ -1942,6 +1958,15 @@ class $ClientsTable extends Clients
         isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta),
       );
     }
+    if (data.containsKey('show_in_dashboard')) {
+      context.handle(
+        _showInDashboardMeta,
+        showInDashboard.isAcceptableOrUnknown(
+          data['show_in_dashboard']!,
+          _showInDashboardMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -2018,6 +2043,11 @@ class $ClientsTable extends Clients
             DriftSqlType.bool,
             data['${effectivePrefix}is_active'],
           )!,
+      showInDashboard:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.bool,
+            data['${effectivePrefix}show_in_dashboard'],
+          )!,
       createdAt:
           attachedDatabase.typeMapping.read(
             DriftSqlType.dateTime,
@@ -2053,6 +2083,7 @@ class ClientEntity extends DataClass implements Insertable<ClientEntity> {
   final String? email;
   final String? imagePath;
   final bool isActive;
+  final bool showInDashboard;
   final DateTime createdAt;
   final DateTime updatedAt;
   const ClientEntity({
@@ -2068,6 +2099,7 @@ class ClientEntity extends DataClass implements Insertable<ClientEntity> {
     this.email,
     this.imagePath,
     required this.isActive,
+    required this.showInDashboard,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -2102,6 +2134,7 @@ class ClientEntity extends DataClass implements Insertable<ClientEntity> {
       map['image_path'] = Variable<String>(imagePath);
     }
     map['is_active'] = Variable<bool>(isActive);
+    map['show_in_dashboard'] = Variable<bool>(showInDashboard);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -2135,6 +2168,7 @@ class ClientEntity extends DataClass implements Insertable<ClientEntity> {
               ? const Value.absent()
               : Value(imagePath),
       isActive: Value(isActive),
+      showInDashboard: Value(showInDashboard),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -2160,6 +2194,7 @@ class ClientEntity extends DataClass implements Insertable<ClientEntity> {
       email: serializer.fromJson<String?>(json['email']),
       imagePath: serializer.fromJson<String?>(json['imagePath']),
       isActive: serializer.fromJson<bool>(json['isActive']),
+      showInDashboard: serializer.fromJson<bool>(json['showInDashboard']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -2180,6 +2215,7 @@ class ClientEntity extends DataClass implements Insertable<ClientEntity> {
       'email': serializer.toJson<String?>(email),
       'imagePath': serializer.toJson<String?>(imagePath),
       'isActive': serializer.toJson<bool>(isActive),
+      'showInDashboard': serializer.toJson<bool>(showInDashboard),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -2198,6 +2234,7 @@ class ClientEntity extends DataClass implements Insertable<ClientEntity> {
     Value<String?> email = const Value.absent(),
     Value<String?> imagePath = const Value.absent(),
     bool? isActive,
+    bool? showInDashboard,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => ClientEntity(
@@ -2217,6 +2254,7 @@ class ClientEntity extends DataClass implements Insertable<ClientEntity> {
     email: email.present ? email.value : this.email,
     imagePath: imagePath.present ? imagePath.value : this.imagePath,
     isActive: isActive ?? this.isActive,
+    showInDashboard: showInDashboard ?? this.showInDashboard,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -2240,6 +2278,10 @@ class ClientEntity extends DataClass implements Insertable<ClientEntity> {
       email: data.email.present ? data.email.value : this.email,
       imagePath: data.imagePath.present ? data.imagePath.value : this.imagePath,
       isActive: data.isActive.present ? data.isActive.value : this.isActive,
+      showInDashboard:
+          data.showInDashboard.present
+              ? data.showInDashboard.value
+              : this.showInDashboard,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -2260,6 +2302,7 @@ class ClientEntity extends DataClass implements Insertable<ClientEntity> {
           ..write('email: $email, ')
           ..write('imagePath: $imagePath, ')
           ..write('isActive: $isActive, ')
+          ..write('showInDashboard: $showInDashboard, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -2280,6 +2323,7 @@ class ClientEntity extends DataClass implements Insertable<ClientEntity> {
     email,
     imagePath,
     isActive,
+    showInDashboard,
     createdAt,
     updatedAt,
   );
@@ -2299,6 +2343,7 @@ class ClientEntity extends DataClass implements Insertable<ClientEntity> {
           other.email == this.email &&
           other.imagePath == this.imagePath &&
           other.isActive == this.isActive &&
+          other.showInDashboard == this.showInDashboard &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -2316,6 +2361,7 @@ class ClientsCompanion extends UpdateCompanion<ClientEntity> {
   final Value<String?> email;
   final Value<String?> imagePath;
   final Value<bool> isActive;
+  final Value<bool> showInDashboard;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
@@ -2332,6 +2378,7 @@ class ClientsCompanion extends UpdateCompanion<ClientEntity> {
     this.email = const Value.absent(),
     this.imagePath = const Value.absent(),
     this.isActive = const Value.absent(),
+    this.showInDashboard = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -2349,6 +2396,7 @@ class ClientsCompanion extends UpdateCompanion<ClientEntity> {
     this.email = const Value.absent(),
     this.imagePath = const Value.absent(),
     this.isActive = const Value.absent(),
+    this.showInDashboard = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -2367,6 +2415,7 @@ class ClientsCompanion extends UpdateCompanion<ClientEntity> {
     Expression<String>? email,
     Expression<String>? imagePath,
     Expression<bool>? isActive,
+    Expression<bool>? showInDashboard,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
@@ -2385,6 +2434,7 @@ class ClientsCompanion extends UpdateCompanion<ClientEntity> {
       if (email != null) 'email': email,
       if (imagePath != null) 'image_path': imagePath,
       if (isActive != null) 'is_active': isActive,
+      if (showInDashboard != null) 'show_in_dashboard': showInDashboard,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -2404,6 +2454,7 @@ class ClientsCompanion extends UpdateCompanion<ClientEntity> {
     Value<String?>? email,
     Value<String?>? imagePath,
     Value<bool>? isActive,
+    Value<bool>? showInDashboard,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
     Value<int>? rowid,
@@ -2421,6 +2472,7 @@ class ClientsCompanion extends UpdateCompanion<ClientEntity> {
       email: email ?? this.email,
       imagePath: imagePath ?? this.imagePath,
       isActive: isActive ?? this.isActive,
+      showInDashboard: showInDashboard ?? this.showInDashboard,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -2468,6 +2520,9 @@ class ClientsCompanion extends UpdateCompanion<ClientEntity> {
     if (isActive.present) {
       map['is_active'] = Variable<bool>(isActive.value);
     }
+    if (showInDashboard.present) {
+      map['show_in_dashboard'] = Variable<bool>(showInDashboard.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -2495,6 +2550,7 @@ class ClientsCompanion extends UpdateCompanion<ClientEntity> {
           ..write('email: $email, ')
           ..write('imagePath: $imagePath, ')
           ..write('isActive: $isActive, ')
+          ..write('showInDashboard: $showInDashboard, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -8223,6 +8279,21 @@ class $SuppliersTable extends Suppliers
     ),
     defaultValue: const Constant(true),
   );
+  static const VerificationMeta _showInDashboardMeta = const VerificationMeta(
+    'showInDashboard',
+  );
+  @override
+  late final GeneratedColumn<bool> showInDashboard = GeneratedColumn<bool>(
+    'show_in_dashboard',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("show_in_dashboard" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -8258,6 +8329,7 @@ class $SuppliersTable extends Suppliers
     email,
     imagePath,
     isActive,
+    showInDashboard,
     createdAt,
     updatedAt,
   ];
@@ -8325,6 +8397,15 @@ class $SuppliersTable extends Suppliers
         isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta),
       );
     }
+    if (data.containsKey('show_in_dashboard')) {
+      context.handle(
+        _showInDashboardMeta,
+        showInDashboard.isAcceptableOrUnknown(
+          data['show_in_dashboard']!,
+          _showInDashboardMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -8388,6 +8469,11 @@ class $SuppliersTable extends Suppliers
             DriftSqlType.bool,
             data['${effectivePrefix}is_active'],
           )!,
+      showInDashboard:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.bool,
+            data['${effectivePrefix}show_in_dashboard'],
+          )!,
       createdAt:
           attachedDatabase.typeMapping.read(
             DriftSqlType.dateTime,
@@ -8420,6 +8506,7 @@ class SupplierEntity extends DataClass implements Insertable<SupplierEntity> {
   final String? email;
   final String? imagePath;
   final bool isActive;
+  final bool showInDashboard;
   final DateTime createdAt;
   final DateTime updatedAt;
   const SupplierEntity({
@@ -8432,6 +8519,7 @@ class SupplierEntity extends DataClass implements Insertable<SupplierEntity> {
     this.email,
     this.imagePath,
     required this.isActive,
+    required this.showInDashboard,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -8459,6 +8547,7 @@ class SupplierEntity extends DataClass implements Insertable<SupplierEntity> {
       map['image_path'] = Variable<String>(imagePath);
     }
     map['is_active'] = Variable<bool>(isActive);
+    map['show_in_dashboard'] = Variable<bool>(showInDashboard);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -8483,6 +8572,7 @@ class SupplierEntity extends DataClass implements Insertable<SupplierEntity> {
               ? const Value.absent()
               : Value(imagePath),
       isActive: Value(isActive),
+      showInDashboard: Value(showInDashboard),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -8503,6 +8593,7 @@ class SupplierEntity extends DataClass implements Insertable<SupplierEntity> {
       email: serializer.fromJson<String?>(json['email']),
       imagePath: serializer.fromJson<String?>(json['imagePath']),
       isActive: serializer.fromJson<bool>(json['isActive']),
+      showInDashboard: serializer.fromJson<bool>(json['showInDashboard']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -8520,6 +8611,7 @@ class SupplierEntity extends DataClass implements Insertable<SupplierEntity> {
       'email': serializer.toJson<String?>(email),
       'imagePath': serializer.toJson<String?>(imagePath),
       'isActive': serializer.toJson<bool>(isActive),
+      'showInDashboard': serializer.toJson<bool>(showInDashboard),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -8535,6 +8627,7 @@ class SupplierEntity extends DataClass implements Insertable<SupplierEntity> {
     Value<String?> email = const Value.absent(),
     Value<String?> imagePath = const Value.absent(),
     bool? isActive,
+    bool? showInDashboard,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => SupplierEntity(
@@ -8548,6 +8641,7 @@ class SupplierEntity extends DataClass implements Insertable<SupplierEntity> {
     email: email.present ? email.value : this.email,
     imagePath: imagePath.present ? imagePath.value : this.imagePath,
     isActive: isActive ?? this.isActive,
+    showInDashboard: showInDashboard ?? this.showInDashboard,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -8565,6 +8659,10 @@ class SupplierEntity extends DataClass implements Insertable<SupplierEntity> {
       email: data.email.present ? data.email.value : this.email,
       imagePath: data.imagePath.present ? data.imagePath.value : this.imagePath,
       isActive: data.isActive.present ? data.isActive.value : this.isActive,
+      showInDashboard:
+          data.showInDashboard.present
+              ? data.showInDashboard.value
+              : this.showInDashboard,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -8582,6 +8680,7 @@ class SupplierEntity extends DataClass implements Insertable<SupplierEntity> {
           ..write('email: $email, ')
           ..write('imagePath: $imagePath, ')
           ..write('isActive: $isActive, ')
+          ..write('showInDashboard: $showInDashboard, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -8599,6 +8698,7 @@ class SupplierEntity extends DataClass implements Insertable<SupplierEntity> {
     email,
     imagePath,
     isActive,
+    showInDashboard,
     createdAt,
     updatedAt,
   );
@@ -8615,6 +8715,7 @@ class SupplierEntity extends DataClass implements Insertable<SupplierEntity> {
           other.email == this.email &&
           other.imagePath == this.imagePath &&
           other.isActive == this.isActive &&
+          other.showInDashboard == this.showInDashboard &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -8629,6 +8730,7 @@ class SuppliersCompanion extends UpdateCompanion<SupplierEntity> {
   final Value<String?> email;
   final Value<String?> imagePath;
   final Value<bool> isActive;
+  final Value<bool> showInDashboard;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
@@ -8642,6 +8744,7 @@ class SuppliersCompanion extends UpdateCompanion<SupplierEntity> {
     this.email = const Value.absent(),
     this.imagePath = const Value.absent(),
     this.isActive = const Value.absent(),
+    this.showInDashboard = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -8656,6 +8759,7 @@ class SuppliersCompanion extends UpdateCompanion<SupplierEntity> {
     this.email = const Value.absent(),
     this.imagePath = const Value.absent(),
     this.isActive = const Value.absent(),
+    this.showInDashboard = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -8671,6 +8775,7 @@ class SuppliersCompanion extends UpdateCompanion<SupplierEntity> {
     Expression<String>? email,
     Expression<String>? imagePath,
     Expression<bool>? isActive,
+    Expression<bool>? showInDashboard,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
@@ -8685,6 +8790,7 @@ class SuppliersCompanion extends UpdateCompanion<SupplierEntity> {
       if (email != null) 'email': email,
       if (imagePath != null) 'image_path': imagePath,
       if (isActive != null) 'is_active': isActive,
+      if (showInDashboard != null) 'show_in_dashboard': showInDashboard,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -8701,6 +8807,7 @@ class SuppliersCompanion extends UpdateCompanion<SupplierEntity> {
     Value<String?>? email,
     Value<String?>? imagePath,
     Value<bool>? isActive,
+    Value<bool>? showInDashboard,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
     Value<int>? rowid,
@@ -8715,6 +8822,7 @@ class SuppliersCompanion extends UpdateCompanion<SupplierEntity> {
       email: email ?? this.email,
       imagePath: imagePath ?? this.imagePath,
       isActive: isActive ?? this.isActive,
+      showInDashboard: showInDashboard ?? this.showInDashboard,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -8753,6 +8861,9 @@ class SuppliersCompanion extends UpdateCompanion<SupplierEntity> {
     if (isActive.present) {
       map['is_active'] = Variable<bool>(isActive.value);
     }
+    if (showInDashboard.present) {
+      map['show_in_dashboard'] = Variable<bool>(showInDashboard.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -8777,6 +8888,7 @@ class SuppliersCompanion extends UpdateCompanion<SupplierEntity> {
           ..write('email: $email, ')
           ..write('imagePath: $imagePath, ')
           ..write('isActive: $isActive, ')
+          ..write('showInDashboard: $showInDashboard, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -12865,6 +12977,7 @@ typedef $$ClientsTableCreateCompanionBuilder =
       Value<String?> email,
       Value<String?> imagePath,
       Value<bool> isActive,
+      Value<bool> showInDashboard,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<int> rowid,
@@ -12883,6 +12996,7 @@ typedef $$ClientsTableUpdateCompanionBuilder =
       Value<String?> email,
       Value<String?> imagePath,
       Value<bool> isActive,
+      Value<bool> showInDashboard,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<int> rowid,
@@ -12955,6 +13069,11 @@ class $$ClientsTableFilterComposer
 
   ColumnFilters<bool> get isActive => $composableBuilder(
     column: $table.isActive,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showInDashboard => $composableBuilder(
+    column: $table.showInDashboard,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -13038,6 +13157,11 @@ class $$ClientsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get showInDashboard => $composableBuilder(
+    column: $table.showInDashboard,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -13098,6 +13222,11 @@ class $$ClientsTableAnnotationComposer
   GeneratedColumn<bool> get isActive =>
       $composableBuilder(column: $table.isActive, builder: (column) => column);
 
+  GeneratedColumn<bool> get showInDashboard => $composableBuilder(
+    column: $table.showInDashboard,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -13148,6 +13277,7 @@ class $$ClientsTableTableManager
                 Value<String?> email = const Value.absent(),
                 Value<String?> imagePath = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
+                Value<bool> showInDashboard = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -13164,6 +13294,7 @@ class $$ClientsTableTableManager
                 email: email,
                 imagePath: imagePath,
                 isActive: isActive,
+                showInDashboard: showInDashboard,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -13182,6 +13313,7 @@ class $$ClientsTableTableManager
                 Value<String?> email = const Value.absent(),
                 Value<String?> imagePath = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
+                Value<bool> showInDashboard = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -13198,6 +13330,7 @@ class $$ClientsTableTableManager
                 email: email,
                 imagePath: imagePath,
                 isActive: isActive,
+                showInDashboard: showInDashboard,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -16271,6 +16404,7 @@ typedef $$SuppliersTableCreateCompanionBuilder =
       Value<String?> email,
       Value<String?> imagePath,
       Value<bool> isActive,
+      Value<bool> showInDashboard,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<int> rowid,
@@ -16286,6 +16420,7 @@ typedef $$SuppliersTableUpdateCompanionBuilder =
       Value<String?> email,
       Value<String?> imagePath,
       Value<bool> isActive,
+      Value<bool> showInDashboard,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<int> rowid,
@@ -16343,6 +16478,11 @@ class $$SuppliersTableFilterComposer
 
   ColumnFilters<bool> get isActive => $composableBuilder(
     column: $table.isActive,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showInDashboard => $composableBuilder(
+    column: $table.showInDashboard,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -16411,6 +16551,11 @@ class $$SuppliersTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get showInDashboard => $composableBuilder(
+    column: $table.showInDashboard,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -16460,6 +16605,11 @@ class $$SuppliersTableAnnotationComposer
   GeneratedColumn<bool> get isActive =>
       $composableBuilder(column: $table.isActive, builder: (column) => column);
 
+  GeneratedColumn<bool> get showInDashboard => $composableBuilder(
+    column: $table.showInDashboard,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -16507,6 +16657,7 @@ class $$SuppliersTableTableManager
                 Value<String?> email = const Value.absent(),
                 Value<String?> imagePath = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
+                Value<bool> showInDashboard = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -16520,6 +16671,7 @@ class $$SuppliersTableTableManager
                 email: email,
                 imagePath: imagePath,
                 isActive: isActive,
+                showInDashboard: showInDashboard,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -16535,6 +16687,7 @@ class $$SuppliersTableTableManager
                 Value<String?> email = const Value.absent(),
                 Value<String?> imagePath = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
+                Value<bool> showInDashboard = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -16548,6 +16701,7 @@ class $$SuppliersTableTableManager
                 email: email,
                 imagePath: imagePath,
                 isActive: isActive,
+                showInDashboard: showInDashboard,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,

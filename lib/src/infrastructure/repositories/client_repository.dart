@@ -23,6 +23,7 @@ class Client {
   final String? imagePath;
   final String tier;
   final String type;
+  final bool showInDashboard;
 
   Client({
     required this.id,
@@ -36,6 +37,7 @@ class Client {
     this.imagePath,
     this.tier = 'Tier 1',
     this.type = 'NORMAL',
+    this.showInDashboard = true,
   });
 }
 
@@ -59,6 +61,7 @@ class ClientRepository {
         imagePath: e.imagePath,
         tier: e.tier,
         type: e.type,
+        showInDashboard: e.showInDashboard,
       )).toList();
     });
   }
@@ -96,6 +99,7 @@ class ClientRepository {
     String? imagePath,
     String tier = 'Tier 1',
     String type = 'NORMAL',
+    bool? showInDashboard,
   }) async {
     await (_db.update(_db.clients)..where((t) => t.id.equals(id))).write(
       ClientsCompanion(
@@ -107,6 +111,7 @@ class ClientRepository {
         imagePath: drift.Value(imagePath),
         tier: drift.Value(tier),
         type: drift.Value(type),
+        showInDashboard: showInDashboard != null ? drift.Value(showInDashboard) : const drift.Value.absent(),
         updatedAt: drift.Value(DateTime.now()),
       ),
     );
@@ -140,6 +145,7 @@ class ClientRepository {
       imagePath: e.imagePath,
       tier: e.tier,
       type: e.type,
+      showInDashboard: e.showInDashboard,
     )).toList();
   }
 }

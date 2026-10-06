@@ -65,6 +65,13 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
                     await paySvc.restorePayment(id);
                     continue;
                   }
+                  final isProduct =
+                      await (db.select(db.products)
+                        ..where((t) => t.id.equals(id))).getSingleOrNull();
+                  if (isProduct != null) {
+                    await (db.update(db.products)..where((t) => t.id.equals(id))).write(const drift.ProductsCompanion(isActive: drift.Value(true)));
+                    continue;
+                  }
                 }
                 setState(() => _selectedIds.clear());
                 if (context.mounted) {
@@ -129,6 +136,15 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
                         ..where((t) => t.id.equals(id))).go();
                       continue;
                     }
+                    final isProduct =
+                        await (db.select(db.products)
+                          ..where((t) => t.id.equals(id))).getSingleOrNull();
+                    if (isProduct != null) {
+                      await (db.delete(db.productConsumables)..where((t) => t.productId.equals(id) | t.consumableId.equals(id))).go();
+                      await (db.delete(db.stockBalances)..where((t) => t.productId.equals(id))).go();
+                      await (db.delete(db.products)..where((t) => t.id.equals(id))).go();
+                      continue;
+                    }
                   }
                 });
                 setState(() => _selectedIds.clear());
@@ -166,6 +182,27 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
           Expanded(
             child: ListView(
               children: [
+                _buildSection<ProductEntity>(
+                  context,
+                  AppLocalizations.of(context)!.productsStr ?? 'Deleted Products',
+                  (db.select(db.products)
+                        ..where((t) => t.isActive.equals(false))
+                        ..limit(50))
+                      .watch(),
+                  (product) => product.id,
+                  (product) => product.name,
+                  (product) async {
+                    await (db.update(db.products)..where((t) => t.id.equals(product.id))).write(const drift.ProductsCompanion(isActive: drift.Value(true)));
+                  },
+                  (product) async {
+                    await db.transaction(() async {
+                      await (db.delete(db.productConsumables)..where((t) => t.productId.equals(product.id) | t.consumableId.equals(product.id))).go();
+                      await (db.delete(db.stockBalances)..where((t) => t.productId.equals(product.id))).go();
+                      await (db.delete(db.products)..where((t) => t.id.equals(product.id))).go();
+                    });
+                  },
+                  buildSubtitle: (product) => Text('Ref: ${product.reference} | Price: ${product.sellingPrice}'),
+                ),
                 _buildSection<InvoiceEntity>(
                   context,
                   AppLocalizations.of(context)!.deletedInvoicesBons,

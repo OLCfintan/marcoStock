@@ -234,38 +234,43 @@ class PurchaseService {
 
       final lines = await (_db.select(_db.purchaseLines)..where((t) => t.purchaseId.equals(purchaseId))).get();
 
-      // Reverse Stock
-      for (final line in lines) {
-        final product = await (_db.select(_db.products)..where((t) => t.id.equals(line.productId))).getSingleOrNull();
-        if (product == null) continue;
+      final settingsResult = await _db.customSelect("SELECT value FROM settings WHERE key = 'stockEngineEnabled'").getSingleOrNull();
+      final stockEngineEnabled = settingsResult == null || settingsResult.read<String>('value') == 'true';
 
-        final baseProduct = await getDeterministicBaseProduct(_db, product);
-        final totalBaseUnits = convertQuantityToBase(line.quantity, product, baseProduct);
-        final targetProductId = baseProduct.id;
-        final locationId = AppLocations.baseWarehouse;
-
-        final balanceQuery = _db.select(_db.stockBalances)..where((t) => t.productId.equals(targetProductId) & t.locationId.equals(locationId));
-        final balance = await balanceQuery.getSingleOrNull();
-        final currentQty = balance?.quantity ?? Decimal.zero;
-        // Mathematically preserve exact balances even if they go negative
-        final newQty = currentQty - totalBaseUnits;
-
-        if (balance != null) {
-          await _db.update(_db.stockBalances).replace(balance.copyWith(quantity: newQty, updatedAt: DateTime.now()));
-        } else {
-          await _db.into(_db.stockBalances).insert(StockBalancesCompanion.insert(productId: targetProductId, locationId: locationId, quantity: newQty));
+      if (stockEngineEnabled) {
+        // Reverse Stock
+        for (final line in lines) {
+          final product = await (_db.select(_db.products)..where((t) => t.id.equals(line.productId))).getSingleOrNull();
+          if (product == null) continue;
+  
+          final baseProduct = await getDeterministicBaseProduct(_db, product);
+          final totalBaseUnits = convertQuantityToBase(line.quantity, product, baseProduct);
+          final targetProductId = baseProduct.id;
+          final locationId = AppLocations.baseWarehouse;
+  
+          final balanceQuery = _db.select(_db.stockBalances)..where((t) => t.productId.equals(targetProductId) & t.locationId.equals(locationId));
+          final balance = await balanceQuery.getSingleOrNull();
+          final currentQty = balance?.quantity ?? Decimal.zero;
+          // Mathematically preserve exact balances even if they go negative
+          final newQty = currentQty - totalBaseUnits;
+  
+          if (balance != null) {
+            await _db.update(_db.stockBalances).replace(balance.copyWith(quantity: newQty, updatedAt: DateTime.now()));
+          } else {
+            await _db.into(_db.stockBalances).insert(StockBalancesCompanion.insert(productId: targetProductId, locationId: locationId, quantity: newQty));
+          }
+  
+          await _db.into(_db.stockMovements).insert(StockMovementsCompanion.insert(
+            id: _uuid.v4(),
+            productId: targetProductId,
+            sourceLocationId: drift.Value(locationId),
+            targetLocationId: const drift.Value.absent(),
+            quantity: -totalBaseUnits,
+            reason: 'PURCHASE_DELETED',
+            referenceOperationId: drift.Value(purchaseId),
+            createdBy: userId,
+          ));
         }
-
-        await _db.into(_db.stockMovements).insert(StockMovementsCompanion.insert(
-          id: _uuid.v4(),
-          productId: targetProductId,
-          sourceLocationId: drift.Value(locationId),
-          targetLocationId: const drift.Value.absent(),
-          quantity: -totalBaseUnits,
-          reason: 'PURCHASE_DELETED',
-          referenceOperationId: drift.Value(purchaseId),
-          createdBy: userId,
-        ));
       }
 
       // Reverse Supplier Debt
@@ -293,37 +298,42 @@ class PurchaseService {
 
       final lines = await (_db.select(_db.purchaseLines)..where((t) => t.purchaseId.equals(purchaseId))).get();
 
-      // Re-apply Stock
-      for (final line in lines) {
-        final product = await (_db.select(_db.products)..where((t) => t.id.equals(line.productId))).getSingleOrNull();
-        if (product == null) continue;
+      final settingsResult = await _db.customSelect("SELECT value FROM settings WHERE key = 'stockEngineEnabled'").getSingleOrNull();
+      final stockEngineEnabled = settingsResult == null || settingsResult.read<String>('value') == 'true';
 
-        final baseProduct = await getDeterministicBaseProduct(_db, product);
-        final totalBaseUnits = convertQuantityToBase(line.quantity, product, baseProduct);
-        final targetProductId = baseProduct.id;
-        final locationId = AppLocations.baseWarehouse;
-
-        final balanceQuery = _db.select(_db.stockBalances)..where((t) => t.productId.equals(targetProductId) & t.locationId.equals(locationId));
-        final balance = await balanceQuery.getSingleOrNull();
-        final currentQty = balance?.quantity ?? Decimal.zero;
-        final newQty = currentQty + totalBaseUnits;
-
-        if (balance != null) {
-          await _db.update(_db.stockBalances).replace(balance.copyWith(quantity: newQty, updatedAt: DateTime.now()));
-        } else {
-          await _db.into(_db.stockBalances).insert(StockBalancesCompanion.insert(productId: targetProductId, locationId: locationId, quantity: newQty));
+      if (stockEngineEnabled) {
+        // Re-apply Stock
+        for (final line in lines) {
+          final product = await (_db.select(_db.products)..where((t) => t.id.equals(line.productId))).getSingleOrNull();
+          if (product == null) continue;
+  
+          final baseProduct = await getDeterministicBaseProduct(_db, product);
+          final totalBaseUnits = convertQuantityToBase(line.quantity, product, baseProduct);
+          final targetProductId = baseProduct.id;
+          final locationId = AppLocations.baseWarehouse;
+  
+          final balanceQuery = _db.select(_db.stockBalances)..where((t) => t.productId.equals(targetProductId) & t.locationId.equals(locationId));
+          final balance = await balanceQuery.getSingleOrNull();
+          final currentQty = balance?.quantity ?? Decimal.zero;
+          final newQty = currentQty + totalBaseUnits;
+  
+          if (balance != null) {
+            await _db.update(_db.stockBalances).replace(balance.copyWith(quantity: newQty, updatedAt: DateTime.now()));
+          } else {
+            await _db.into(_db.stockBalances).insert(StockBalancesCompanion.insert(productId: targetProductId, locationId: locationId, quantity: newQty));
+          }
+  
+          await _db.into(_db.stockMovements).insert(StockMovementsCompanion.insert(
+            id: _uuid.v4(),
+            productId: targetProductId,
+            sourceLocationId: const drift.Value.absent(),
+            targetLocationId: drift.Value(locationId),
+            quantity: totalBaseUnits,
+            reason: 'PURCHASE_RESTORED',
+            referenceOperationId: drift.Value(purchaseId),
+            createdBy: userId,
+          ));
         }
-
-        await _db.into(_db.stockMovements).insert(StockMovementsCompanion.insert(
-          id: _uuid.v4(),
-          productId: targetProductId,
-          sourceLocationId: const drift.Value.absent(),
-          targetLocationId: drift.Value(locationId),
-          quantity: totalBaseUnits,
-          reason: 'PURCHASE_RESTORED',
-          referenceOperationId: drift.Value(purchaseId),
-          createdBy: userId,
-        ));
       }
 
       // Re-apply Supplier Debt
@@ -351,6 +361,10 @@ class PurchaseService {
     required String referenceOperationId,
     required String userId,
   }) async {
+    final settingsResult = await _db.customSelect("SELECT value FROM settings WHERE key = 'stockEngineEnabled'").getSingleOrNull();
+    final stockEngineEnabled = settingsResult == null || settingsResult.read<String>('value') == 'true';
+    if (!stockEngineEnabled) return;
+
     final locationId = AppLocations.baseWarehouse;
     final product = await (_db.select(_db.products)..where((t) => t.id.equals(productId))).getSingleOrNull();
     if (product == null) return;
@@ -388,37 +402,42 @@ class PurchaseService {
 
       final oldLines = await (_db.select(_db.purchaseLines)..where((t) => t.purchaseId.equals(existingPurchaseId))).get();
 
-      // Reverse Stock
-      for (final line in oldLines) {
-        final product = await (_db.select(_db.products)..where((t) => t.id.equals(line.productId))).getSingleOrNull();
-        if (product == null) continue;
+      final settingsResult = await _db.customSelect("SELECT value FROM settings WHERE key = 'stockEngineEnabled'").getSingleOrNull();
+      final stockEngineEnabled = settingsResult == null || settingsResult.read<String>('value') == 'true';
 
-        final baseProduct = await getDeterministicBaseProduct(_db, product);
-        final totalBaseUnits = convertQuantityToBase(line.quantity, product, baseProduct);
-        final targetProductId = baseProduct.id;
-        final locationId = AppLocations.baseWarehouse;
-
-        final balanceQuery = _db.select(_db.stockBalances)..where((t) => t.productId.equals(targetProductId) & t.locationId.equals(locationId));
-        final balance = await balanceQuery.getSingleOrNull();
-        final currentQty = balance?.quantity ?? Decimal.zero;
-        final newQty = currentQty - totalBaseUnits;
-
-        if (balance != null) {
-          await _db.update(_db.stockBalances).replace(balance.copyWith(quantity: newQty, updatedAt: DateTime.now()));
-        } else {
-          await _db.into(_db.stockBalances).insert(StockBalancesCompanion.insert(productId: targetProductId, locationId: locationId, quantity: newQty));
+      if (stockEngineEnabled) {
+        // Reverse Stock
+        for (final line in oldLines) {
+          final product = await (_db.select(_db.products)..where((t) => t.id.equals(line.productId))).getSingleOrNull();
+          if (product == null) continue;
+  
+          final baseProduct = await getDeterministicBaseProduct(_db, product);
+          final totalBaseUnits = convertQuantityToBase(line.quantity, product, baseProduct);
+          final targetProductId = baseProduct.id;
+          final locationId = AppLocations.baseWarehouse;
+  
+          final balanceQuery = _db.select(_db.stockBalances)..where((t) => t.productId.equals(targetProductId) & t.locationId.equals(locationId));
+          final balance = await balanceQuery.getSingleOrNull();
+          final currentQty = balance?.quantity ?? Decimal.zero;
+          final newQty = currentQty - totalBaseUnits;
+  
+          if (balance != null) {
+            await _db.update(_db.stockBalances).replace(balance.copyWith(quantity: newQty, updatedAt: DateTime.now()));
+          } else {
+            await _db.into(_db.stockBalances).insert(StockBalancesCompanion.insert(productId: targetProductId, locationId: locationId, quantity: newQty));
+          }
+  
+          await _db.into(_db.stockMovements).insert(StockMovementsCompanion.insert(
+            id: _uuid.v4(),
+            productId: targetProductId,
+            sourceLocationId: drift.Value(locationId),
+            targetLocationId: const drift.Value.absent(),
+            quantity: -totalBaseUnits,
+            reason: 'PURCHASE_UPDATED_REVERSE',
+            referenceOperationId: drift.Value(existingPurchaseId),
+            createdBy: request.currentUserId,
+          ));
         }
-
-        await _db.into(_db.stockMovements).insert(StockMovementsCompanion.insert(
-          id: _uuid.v4(),
-          productId: targetProductId,
-          sourceLocationId: drift.Value(locationId),
-          targetLocationId: const drift.Value.absent(),
-          quantity: -totalBaseUnits,
-          reason: 'PURCHASE_UPDATED_REVERSE',
-          referenceOperationId: drift.Value(existingPurchaseId),
-          createdBy: request.currentUserId,
-        ));
       }
 
       // Reverse Supplier Debt

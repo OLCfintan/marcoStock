@@ -74,6 +74,14 @@ class SettingsService {
     await _prefs.setInt('sleepDelay', minutes);
   }
 
+  bool getStockEngineEnabled() {
+    return _prefs.getBool('stockEngineEnabled') ?? true;
+  }
+
+  Future<void> setStockEngineEnabled(bool enabled) async {
+    await _prefs.setBool('stockEngineEnabled', enabled);
+  }
+
   Future<String?> getSetting(String key) async {
     final query = _db.select(_db.settings)..where((tbl) => tbl.key.equals(key));
     final result = await query.getSingleOrNull();
@@ -131,5 +139,19 @@ class SleepDelayNotifier extends StateNotifier<int> {
   void setDelay(int minutes) {
     state = minutes;
     _service.setSleepDelay(minutes);
+  }
+}
+
+final stockEngineProvider = StateNotifierProvider<StockEngineNotifier, bool>((ref) {
+  return StockEngineNotifier(ref.watch(settingsServiceProvider));
+});
+
+class StockEngineNotifier extends StateNotifier<bool> {
+  final SettingsService _service;
+  StockEngineNotifier(this._service) : super(_service.getStockEngineEnabled());
+
+  void setEnabled(bool enabled) {
+    state = enabled;
+    _service.setStockEngineEnabled(enabled);
   }
 }

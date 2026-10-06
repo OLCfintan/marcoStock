@@ -3,6 +3,7 @@ import 'package:marko_group/src/localization/arb/app_localizations.dart';
 import 'dart:io';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/logo_loader.dart';
 
@@ -23,63 +24,96 @@ class ClientsScreen extends ConsumerStatefulWidget {
 class _ClientsScreenState extends ConsumerState<ClientsScreen> {
   final Set<String> _selectedIds = {};
   String _searchQuery = '';
+  final FocusNode _searchFocusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _searchFocusNode.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final clientsAsync = ref.watch(clientsStreamProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.clientsManagement),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.delete),
-            onPressed: () async {
-              if (_selectedIds.isNotEmpty) {
-                final repo = ref.read(clientRepositoryProvider);
-                for (final id in _selectedIds) {
-                  await repo.deleteClient(id);
-                }
-                setState(() {
-                  _selectedIds.clear();
-                });
-              }
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.person_add),
-            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AddClientScreen())),
-          ),
-        ],
-      ),
-      body: clientsAsync.when(
-        data: (allClients) {
-          final clients = allClients.where((c) {
-            if (_searchQuery.isEmpty) return true;
-            final q = _searchQuery.toLowerCase();
-            final aq = ArabicTransliterator.transliterate(_searchQuery);
-            return c.name.toLowerCase().contains(q) || (c.name.contains(aq)) ||
-                   (c.phone != null && c.phone!.toLowerCase().contains(q)) ||
-                   (c.email != null && c.email!.toLowerCase().contains(q));
-          }).toList();
+    return CallbackShortcuts(
+      bindings: {
+        SingleActivator(LogicalKeyboardKey.keyF, control: true): () {
+          _searchFocusNode.requestFocus();
+        },
+      },
+      child: Focus(
+        autofocus: true,
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text(AppLocalizations.of(context)!.clientsManagement),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.delete),
+                onPressed: () async {
+                  if (_selectedIds.isNotEmpty) {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: Text(AppLocalizations.of(context)!.confirmStr ?? 'Confirm'),
+                        content: Text(AppLocalizations.of(context)!.areYouSureYouWantToDeleteStr ?? 'Are you sure you want to delete this?'),
+                        actions: [
+                          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocalizations.of(context)!.cancelStr ?? 'Cancel')),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                            onPressed: () => Navigator.pop(context, true),
+                            child: Text(AppLocalizations.of(context)!.deleteStr ?? 'Delete'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirm != true) return;
 
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextField(
-                  decoration: InputDecoration(
-                    labelText: AppLocalizations.of(context)!.searchClients,
-                    prefixIcon: Icon(Icons.search),
-                    border: OutlineInputBorder(),
-                  ),
-                  onChanged: (val) {
+                    final repo = ref.read(clientRepositoryProvider);
+                    for (final id in _selectedIds) {
+                      await repo.deleteClient(id);
+                    }
                     setState(() {
-                      _searchQuery = val;
+                      _selectedIds.clear();
                     });
-                  },
-                ),
+                  }
+                },
               ),
+              IconButton(
+                icon: const Icon(Icons.person_add),
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AddClientScreen())),
+              ),
+            ],
+          ),
+          body: clientsAsync.when(
+            data: (allClients) {
+              final clients = allClients.where((c) {
+                if (_searchQuery.isEmpty) return true;
+                final q = _searchQuery.toLowerCase();
+                final aq = ArabicTransliterator.transliterate(_searchQuery);
+                return c.name.toLowerCase().contains(q) || (c.name.contains(aq)) ||
+                       (c.phone != null && c.phone!.toLowerCase().contains(q)) ||
+                       (c.email != null && c.email!.toLowerCase().contains(q));
+              }).toList();
+
+              return Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextField(
+                      focusNode: _searchFocusNode,
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(context)!.searchClients,
+                        prefixIcon: Icon(Icons.search),
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (val) {
+                        setState(() {
+                          _searchQuery = val;
+                        });
+                      },
+                    ),
+                  ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Row(
@@ -161,7 +195,25 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                                     Navigator.push(context, MaterialPageRoute(builder: (_) => AddClientScreen(clientToEdit: client)));
                                   } else if (value == 'delete') {
                                     if (ref.read(currentUserProvider)?.role == 'ADMIN') {
-                                      ref.read(clientRepositoryProvider).deleteClient(client.id);
+                                      showDialog<bool>(
+                                        context: context,
+                                        builder: (context) => AlertDialog(
+                                          title: Text(AppLocalizations.of(context)!.confirmStr ?? 'Confirm'),
+                                          content: Text(AppLocalizations.of(context)!.areYouSureYouWantToDeleteStr ?? 'Are you sure you want to delete this?'),
+                                          actions: [
+                                            TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocalizations.of(context)!.cancelStr ?? 'Cancel')),
+                                            ElevatedButton(
+                                              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                                              onPressed: () => Navigator.pop(context, true),
+                                              child: Text(AppLocalizations.of(context)!.deleteStr ?? 'Delete'),
+                                            ),
+                                          ],
+                                        ),
+                                      ).then((confirm) {
+                                        if (confirm == true) {
+                                          ref.read(clientRepositoryProvider).deleteClient(client.id);
+                                        }
+                                      });
                                     } else {
                                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.adminAccessRequired)));
                                     }
@@ -202,6 +254,8 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
           loading: () => const Center(child: const LogoLoader()),
           error: (e, st) => Center(child: Text('${(AppLocalizations.of(context)?.errorStr ?? 'Error: ')}$e')),
         ),
-      );
-    }
+      ),
+      ),
+    );
+  }
 }

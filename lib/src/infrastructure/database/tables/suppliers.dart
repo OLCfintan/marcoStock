@@ -15,6 +15,7 @@ class Suppliers extends Table {
   TextColumn get email => text().nullable()();
   TextColumn get imagePath => text().nullable()();
   BoolColumn get isActive => boolean().withDefault(const Constant(true))();
+  BoolColumn get showInDashboard => boolean().withDefault(const Constant(true))();
   
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();

@@ -155,7 +155,7 @@ class SalesService {
       }
       
       Decimal subtotal = Decimal.zero;
-      
+
       // 2. Create Invoice Lines & Compute Totals
       bool isDummyDoc = request.documentType == 'COMMANDE' || request.documentType == 'FACTURE' || request.documentType == 'FACTURE_DUMMY';
 
@@ -485,6 +485,10 @@ class SalesService {
     required String locationId,
     bool allowNegative = false,
   }) async {
+    final settingsResult = await _db.customSelect("SELECT value FROM settings WHERE key = 'stockEngineEnabled'").getSingleOrNull();
+    final stockEngineEnabled = settingsResult == null || settingsResult.read<String>('value') == 'true';
+    if (!stockEngineEnabled) return;
+
     final product = await (_db.select(_db.products)..where((t) => t.id.equals(productId))).getSingleOrNull();
     if (product == null) return;
     
@@ -688,6 +692,10 @@ class SalesService {
     required String userId,
     required String locationId,
   }) async {
+    final settingsResult = await _db.customSelect("SELECT value FROM settings WHERE key = 'stockEngineEnabled'").getSingleOrNull();
+    final stockEngineEnabled = settingsResult == null || settingsResult.read<String>('value') == 'true';
+    if (!stockEngineEnabled) return;
+
     final product = await (_db.select(_db.products)..where((t) => t.id.equals(productId))).getSingleOrNull();
     if (product == null) return;
     

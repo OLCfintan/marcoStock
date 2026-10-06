@@ -9,6 +9,7 @@ class AutocompleteSearchField<T extends Object> extends StatelessWidget {
   final Widget? prefixIcon;
   final T? initialValue;
   final String? initialText;
+  final FocusNode? focusNode;
 
   const AutocompleteSearchField({
     super.key,
@@ -19,6 +20,7 @@ class AutocompleteSearchField<T extends Object> extends StatelessWidget {
     this.prefixIcon,
     this.initialValue,
     this.initialText,
+    this.focusNode,
   });
 
   @override
@@ -38,12 +40,12 @@ class AutocompleteSearchField<T extends Object> extends StatelessWidget {
         fieldViewBuilder: (
           BuildContext context,
           TextEditingController textEditingController,
-          FocusNode focusNode,
+          FocusNode defaultFocusNode,
           VoidCallback onFieldSubmitted,
         ) {
           return TextFormField(
             controller: textEditingController,
-            focusNode: focusNode,
+            focusNode: focusNode ?? defaultFocusNode,
             onFieldSubmitted: (String value) {
               onFieldSubmitted();
             },

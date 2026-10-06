@@ -4,9 +4,11 @@ import '../../application/purchases/purchase_service.dart';
 import "package:marko_group/src/presentation/widgets/status_badge.dart";
 import '../../application/sales/sales_service.dart';
 import '../../application/settings/settings_service.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/print_dialog.dart';
+
 import '../../application/auth/auth_service.dart';
 import 'package:drift/drift.dart' as drift;
 import 'package:intl/intl.dart';
@@ -99,6 +101,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
   late TabController _tabController;
   final Set<String> _selectedIds = {};
   String _searchQuery = '';
+  final FocusNode _searchFocusNode = FocusNode();
 
   @override
   void initState() {
@@ -107,66 +110,99 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
   }
 
   @override
+  void dispose() {
+    _searchFocusNode.dispose();
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final invoicesAsync = ref.watch(invoicesStreamProvider);
     final purchasesAsync = ref.watch(purchasesStreamProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.archiveDocs),
-        actions: [
-          if (_selectedIds.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.delete),
-              tooltip: AppLocalizations.of(context)!.deleteSelectedDocs,
-              onPressed: () async {
-                final db = ref.read(databaseProvider);
-                final userId = ref.read(currentUserProvider)?.id ?? '';
-                final salesSvc = ref.read(salesServiceProvider);
-                final purchSvc = ref.read(purchaseServiceProvider);
-
-                for (final id in _selectedIds.toList()) {
-                  final isInvoice =
-                      await (db.select(db.invoices)
-                        ..where((t) => t.id.equals(id))).getSingleOrNull();
-                  if (isInvoice != null) {
-                    await salesSvc.deleteInvoice(id, userId);
-                    continue;
-                  }
-                  final isPurchase =
-                      await (db.select(db.purchases)
-                        ..where((t) => t.id.equals(id))).getSingleOrNull();
-                  if (isPurchase != null) {
-                    await purchSvc.deletePurchase(id, userId);
-                    continue;
-                  }
-                }
-                setState(() => _selectedIds.clear());
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        AppLocalizations.of(context)!.selectedDocsDeleted,
+    return CallbackShortcuts(
+      bindings: {
+        SingleActivator(LogicalKeyboardKey.keyF, control: true): () {
+          _searchFocusNode.requestFocus();
+        },
+      },
+      child: Focus(
+        autofocus: true,
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text(AppLocalizations.of(context)!.archiveDocs),
+            actions: [
+              if (_selectedIds.isNotEmpty)
+                IconButton(
+                  icon: const Icon(Icons.delete),
+                  tooltip: AppLocalizations.of(context)!.deleteSelectedDocs,
+                  onPressed: () async {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: Text(AppLocalizations.of(context)!.confirmStr ?? 'Confirm'),
+                        content: Text(AppLocalizations.of(context)!.areYouSureYouWantToDeleteStr ?? 'Are you sure you want to delete this?'),
+                        actions: [
+                          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocalizations.of(context)!.cancelStr ?? 'Cancel')),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                            onPressed: () => Navigator.pop(context, true),
+                            child: Text(AppLocalizations.of(context)!.deleteStr ?? 'Delete'),
+                          ),
+                        ],
                       ),
-                    ),
-                  );
-                }
-              },
+                    );
+                    if (confirm != true) return;
+
+                    final db = ref.read(databaseProvider);
+                    final userId = ref.read(currentUserProvider)?.id ?? '';
+                    final salesSvc = ref.read(salesServiceProvider);
+                    final purchSvc = ref.read(purchaseServiceProvider);
+
+                    for (final id in _selectedIds.toList()) {
+                      final isInvoice =
+                          await (db.select(db.invoices)
+                            ..where((t) => t.id.equals(id))).getSingleOrNull();
+                      if (isInvoice != null) {
+                        await salesSvc.deleteInvoice(id, userId);
+                        continue;
+                      }
+                      final isPurchase =
+                          await (db.select(db.purchases)
+                            ..where((t) => t.id.equals(id))).getSingleOrNull();
+                      if (isPurchase != null) {
+                        await purchSvc.deletePurchase(id, userId);
+                        continue;
+                      }
+                    }
+                    setState(() => _selectedIds.clear());
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            AppLocalizations.of(context)!.selectedDocsDeleted,
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                ),
+            ],
+            bottom: TabBar(
+              controller: _tabController,
+              tabs: [
+                Tab(text: AppLocalizations.of(context)!.salesAndReturns),
+                Tab(text: AppLocalizations.of(context)!.purchases),
+              ],
             ),
-        ],
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: [
-            Tab(text: AppLocalizations.of(context)!.salesAndReturns),
-            Tab(text: AppLocalizations.of(context)!.purchases),
-          ],
-        ),
-      ),
+          ),
       body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
+              focusNode: _searchFocusNode,
               decoration: InputDecoration(
                 labelText: AppLocalizations.of(context)!.searchDocuments,
                 prefixIcon: const Icon(Icons.search),
@@ -404,6 +440,22 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
                                             }
                                           }
                                         } else if (value == 'delete') {
+                                          final confirm = await showDialog<bool>(
+                                            context: context,
+                                            builder: (context) => AlertDialog(
+                                              title: Text(AppLocalizations.of(context)!.confirmStr ?? 'Confirm'),
+                                              content: Text(AppLocalizations.of(context)!.areYouSureYouWantToDeleteStr ?? 'Are you sure you want to delete this?'),
+                                              actions: [
+                                                TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocalizations.of(context)!.cancelStr ?? 'Cancel')),
+                                                ElevatedButton(
+                                                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                                                  onPressed: () => Navigator.pop(context, true),
+                                                  child: Text(AppLocalizations.of(context)!.deleteStr ?? 'Delete'),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                          if (confirm != true) return;
                                           final userId =
                                               ref
                                                   .read(currentUserProvider)
@@ -671,6 +723,22 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
                                           entityType: 'PURCHASE',
                                         );
                                       } else if (value == 'delete') {
+                                        final confirm = await showDialog<bool>(
+                                          context: context,
+                                          builder: (context) => AlertDialog(
+                                            title: Text(AppLocalizations.of(context)!.confirmStr ?? 'Confirm'),
+                                            content: Text(AppLocalizations.of(context)!.areYouSureYouWantToDeleteStr ?? 'Are you sure you want to delete this?'),
+                                            actions: [
+                                              TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocalizations.of(context)!.cancelStr ?? 'Cancel')),
+                                              ElevatedButton(
+                                                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                                                onPressed: () => Navigator.pop(context, true),
+                                                child: Text(AppLocalizations.of(context)!.deleteStr ?? 'Delete'),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                        if (confirm != true) return;
                                         final userId =
                                             ref.read(currentUserProvider)?.id ??
                                             '';
@@ -783,6 +851,8 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
             ),
           ),
         ],
+      ),
+        ),
       ),
     );
   }

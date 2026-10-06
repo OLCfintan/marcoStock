@@ -37,6 +37,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
   final TextEditingController _barcodeController = TextEditingController();
   final FocusNode _barcodeFocusNode = FocusNode();
+  final FocusNode _clientFocusNode = FocusNode();
+  final FocusNode _paymentFocusNode = FocusNode();
   final ValueNotifier<Set<String>> _multiSelectedProductIds = ValueNotifier({});
   List<String> _localOrder = [];
 
@@ -96,6 +98,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   void dispose() {
     _barcodeController.dispose();
     _barcodeFocusNode.dispose();
+    _clientFocusNode.dispose();
+    _paymentFocusNode.dispose();
     // Do NOT dispose _sessions so they survive screen transitions!
     super.dispose();
   }
@@ -679,17 +683,42 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     final theme = Theme.of(context);
     final loc = AppLocalizations.of(context)!.localeName;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.newSalePos),
-        actions: [
-          IconButton(
-            tooltip: 'Auto Invoice',
-            icon: const Icon(Icons.auto_awesome),
-            onPressed: _showAutoInvoiceDialog,
+    return CallbackShortcuts(
+      bindings: {
+        SingleActivator(LogicalKeyboardKey.keyF, control: true): () {
+          _barcodeFocusNode.requestFocus();
+        },
+        SingleActivator(LogicalKeyboardKey.keyN, control: true): () {
+          setState(() {
+            _sessions.add(
+              PosSession(
+                id: DateTime.now().millisecondsSinceEpoch.toString(),
+                title: 'Cart ${_sessions.length + 1}',
+              ),
+            );
+            _activeSessionIndex = _sessions.length - 1;
+          });
+          Future.delayed(const Duration(milliseconds: 100), () {
+            _clientFocusNode.requestFocus();
+          });
+        },
+        SingleActivator(LogicalKeyboardKey.keyP, control: true): () {
+          _paymentFocusNode.requestFocus();
+        },
+      },
+      child: Focus(
+        autofocus: true,
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text(AppLocalizations.of(context)!.newSalePos),
+            actions: [
+              IconButton(
+                tooltip: 'Auto Invoice',
+                icon: const Icon(Icons.auto_awesome),
+                onPressed: _showAutoInvoiceDialog,
+              ),
+            ],
           ),
-        ],
-      ),
       floatingActionButton: ValueListenableBuilder<Set<String>>(
         valueListenable: _multiSelectedProductIds,
         builder: (context, selectedIds, child) {
@@ -774,62 +803,64 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                     return 0;
                   });
                 }
-                return ReorderableGridView.builder(
-                  onReorder: (oldIndex, newIndex) async {
-                    setState(() {
-                      final p = products.removeAt(oldIndex);
-                      products.insert(newIndex, p);
-                      _localOrder = products.map((p) => p.id).toList();
-                    });
-                    await ref
-                        .read(productRepositoryProvider)
-                        .updateProductReorder(products);
-                  },
-                  padding: const EdgeInsets.all(16),
-                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 200,
-                    childAspectRatio: 0.85,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                  ),
-                  itemCount: products.length,
-                  itemBuilder: (context, index) {
-                    final p = products[index];
-                    return ValueListenableBuilder<Set<String>>(
-                      key: ValueKey(p.id),
-                      valueListenable: _multiSelectedProductIds,
-                      builder: (context, selectedIds, child) {
-                        final isSelected = selectedIds.contains(p.id);
-                        return Card(
-                          elevation: isSelected ? 8 : 2,
-                          clipBehavior: Clip.antiAlias,
-                          shape:
-                              isSelected
-                                  ? RoundedRectangleBorder(
-                                    side: const BorderSide(
-                                      color: Colors.orange,
-                                      width: 3,
-                                    ),
-                                    borderRadius: BorderRadius.circular(12),
-                                  )
-                                  : null,
-                          child: InkWell(
-                            onTap: () {
-                              if (_multiSelectedProductIds.value.isNotEmpty) {
-                                final newSet = Set<String>.from(
-                                  _multiSelectedProductIds.value,
-                                );
-                                if (isSelected)
-                                  newSet.remove(p.id);
-                                else
-                                  newSet.add(p.id);
-                                _multiSelectedProductIds.value = newSet;
-                              } else {
-                                _addToCart(p);
-                              }
-                            },
-                            onDoubleTap:
-                                () => ItemNavigator.openProduct(context, p),
+                return FocusTraversalGroup(
+                  child: ReorderableGridView.builder(
+                    onReorder: (oldIndex, newIndex) async {
+                      setState(() {
+                        final p = products.removeAt(oldIndex);
+                        products.insert(newIndex, p);
+                        _localOrder = products.map((p) => p.id).toList();
+                      });
+                      await ref
+                          .read(productRepositoryProvider)
+                          .updateProductReorder(products);
+                    },
+                    padding: const EdgeInsets.all(16),
+                    gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                      maxCrossAxisExtent: 200,
+                      childAspectRatio: 0.85,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                    ),
+                    itemCount: products.length,
+                    itemBuilder: (context, index) {
+                      final p = products[index];
+                      return ValueListenableBuilder<Set<String>>(
+                        key: ValueKey(p.id),
+                        valueListenable: _multiSelectedProductIds,
+                        builder: (context, selectedIds, child) {
+                          final isSelected = selectedIds.contains(p.id);
+                          return Card(
+                            elevation: isSelected ? 8 : 2,
+                            clipBehavior: Clip.antiAlias,
+                            shape:
+                                isSelected
+                                    ? RoundedRectangleBorder(
+                                      side: const BorderSide(
+                                        color: Colors.orange,
+                                        width: 3,
+                                      ),
+                                      borderRadius: BorderRadius.circular(12),
+                                    )
+                                    : null,
+                            child: InkWell(
+                              focusColor: Colors.blue.withOpacity(0.3),
+                              onTap: () {
+                                if (_multiSelectedProductIds.value.isNotEmpty) {
+                                  final newSet = Set<String>.from(
+                                    _multiSelectedProductIds.value,
+                                  );
+                                  if (isSelected)
+                                    newSet.remove(p.id);
+                                  else
+                                    newSet.add(p.id);
+                                  _multiSelectedProductIds.value = newSet;
+                                } else {
+                                  _addToCart(p);
+                                }
+                              },
+                              onDoubleTap:
+                                  () => ItemNavigator.openProduct(context, p),
                             child: Stack(
                               children: [
                                 Container(
@@ -912,6 +943,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                       },
                     );
                   },
+                ),
                 );
               },
               loading: () => const Center(child: const LogoLoader()),
@@ -1229,6 +1261,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: AutocompleteSearchField<Client>(
                       key: ValueKey(_activeSession.id),
+                      focusNode: _clientFocusNode,
                       labelText: 'Select Client',
                       prefixIcon: const Icon(Icons.person_search),
                       initialText: _activeSession.selectedClientName,
@@ -1628,6 +1661,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                               Expanded(
                                                 flex: 3,
                                                 child: TextField(
+                                                  focusNode: idx == 0 ? _paymentFocusNode : null,
                                                   controller:
                                                       p.amountController,
                                                   onSubmitted:

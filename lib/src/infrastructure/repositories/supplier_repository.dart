@@ -20,6 +20,7 @@ class Supplier {
   final String? phone;
   final String? email;
   final String? imagePath;
+  final bool showInDashboard;
 
   Supplier({
     required this.id,
@@ -31,6 +32,7 @@ class Supplier {
     this.phone,
     this.email,
     this.imagePath,
+    this.showInDashboard = true,
   });
 }
 
@@ -52,6 +54,7 @@ class SupplierRepository {
         phone: e.phone,
         email: e.email,
         imagePath: e.imagePath,
+        showInDashboard: e.showInDashboard,
       )).toList();
     });
   }
@@ -82,6 +85,7 @@ class SupplierRepository {
     String? phone,
     String? email,
     String? imagePath,
+    bool? showInDashboard,
   }) async {
     await (_db.update(_db.suppliers)..where((t) => t.id.equals(id))).write(
       SuppliersCompanion(
@@ -90,6 +94,7 @@ class SupplierRepository {
         phone: drift.Value(phone),
         email: drift.Value(email),
         imagePath: drift.Value(imagePath),
+        showInDashboard: showInDashboard != null ? drift.Value(showInDashboard) : const drift.Value.absent(),
         updatedAt: drift.Value(DateTime.now()),
       ),
     );

@@ -165,6 +165,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ],
             ),
           ),
+          SwitchListTile(
+            secondary: const Icon(Icons.inventory),
+            title: Text('Stock Engine'),
+            subtitle: Text('Enable or disable stock tracking & deduction'),
+            value: ref.watch(stockEngineProvider),
+            onChanged: (val) {
+              ref.read(stockEngineProvider.notifier).setEnabled(val);
+            },
+          ),
           ListTile(
             leading: const Icon(Icons.language),
             title: Text(AppLocalizations.of(context)!.language),
@@ -380,6 +389,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 }
               }
             },
+          ),
+          const Divider(),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text('Keyboard Shortcuts', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+          ),
+          ListTile(
+            leading: const Icon(Icons.keyboard),
+            title: const Text('App Shortcuts'),
+            subtitle: const Text('• Tab: Navigation\n• Ctrl+F: Search\n• Ctrl+N: New Cart\n• Ctrl+P: Payment\n• Ctrl+Z: Undo\n• Arabic Search: Type in French to search Arabic'),
           ),
 
         ],

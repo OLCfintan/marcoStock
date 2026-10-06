@@ -54,16 +54,27 @@ final todaySalesProvider = StreamProvider<Decimal>((ref) {
   final now = DateTime.now();
   final startOfDay = DateTime(now.year, now.month, now.day);
   
-  // Watch invoices table directly for instant reactivity
-  return (db.select(db.invoices)..where((t) => t.date.isBiggerOrEqualValue(startOfDay) & t.isActive.equals(true) & t.documentType.isNotIn(['COMMANDE', 'FACTURE', 'FACTURE_DUMMY']))).watch().map((invoices) {
-    return invoices.fold<Decimal>(Decimal.zero, (sum, inv) => sum + inv.total);
+  final query = db.select(db.invoices).join([
+    leftOuterJoin(db.clients, db.clients.id.equalsExp(db.invoices.clientId)),
+  ])..where(
+      db.invoices.date.isBiggerOrEqualValue(startOfDay) &
+      db.invoices.isActive.equals(true) &
+      db.invoices.documentType.isNotIn(['COMMANDE', 'FACTURE', 'FACTURE_DUMMY']) &
+      (db.clients.type.isNull() | db.clients.type.isIn(['NORMAL', 'TEMP']))
+  );
+  
+  return query.watch().map((rows) {
+    return rows.fold<Decimal>(Decimal.zero, (sum, row) {
+      final inv = row.readTable(db.invoices);
+      return sum + inv.total;
+    });
   });
 });
 
 // --- Outstanding Debt ---
 final outstandingDebtProvider = StreamProvider<Decimal>((ref) {
   final db = ref.watch(databaseProvider);
-  return (db.select(db.clients)..where((t) => t.isActive.equals(true) & t.type.equals('NORMAL'))).watch().map((clients) => 
+  return (db.select(db.clients)..where((t) => t.isActive.equals(true) & t.type.equals('NORMAL') & t.showInDashboard.equals(true))).watch().map((clients) => 
     clients.fold<Decimal>(Decimal.zero, (sum, c) => sum + (c.balance > Decimal.zero ? c.balance : Decimal.zero))
   );
 });
@@ -74,9 +85,20 @@ final todaysCreditProvider = StreamProvider<Decimal>((ref) {
   final now = DateTime.now();
   final startOfDay = DateTime(now.year, now.month, now.day);
   
-  // Watch invoices table directly for instant reactivity
-  return (db.select(db.invoices)..where((t) => t.date.isBiggerOrEqualValue(startOfDay) & t.isActive.equals(true) & t.documentType.isNotIn(['COMMANDE', 'FACTURE', 'FACTURE_DUMMY']))).watch().map((invoices) {
-    return invoices.fold<Decimal>(Decimal.zero, (sum, inv) => sum + (inv.total - inv.paidAmount));
+  final query = db.select(db.invoices).join([
+    leftOuterJoin(db.clients, db.clients.id.equalsExp(db.invoices.clientId)),
+  ])..where(
+      db.invoices.date.isBiggerOrEqualValue(startOfDay) &
+      db.invoices.isActive.equals(true) &
+      db.invoices.documentType.isNotIn(['COMMANDE', 'FACTURE', 'FACTURE_DUMMY']) &
+      (db.clients.type.isNull() | db.clients.type.isIn(['NORMAL', 'TEMP']))
+  );
+  
+  return query.watch().map((rows) {
+    return rows.fold<Decimal>(Decimal.zero, (sum, row) {
+      final inv = row.readTable(db.invoices);
+      return sum + (inv.total - inv.paidAmount);
+    });
   });
 });
 
@@ -289,7 +311,7 @@ final salesChartDataProvider = StreamProvider<List<ChartDataPoint>>((ref) {
 // --- Top Clients ---
 final topClientsProvider = StreamProvider<List<TopHuman>>((ref) {
   final db = ref.watch(databaseProvider);
-  return (db.select(db.clients)..where((t) => t.isActive.equals(true) & t.type.equals('NORMAL'))).watch().map((clients) {
+  return (db.select(db.clients)..where((t) => t.isActive.equals(true) & t.type.equals('NORMAL') & t.showInDashboard.equals(true))).watch().map((clients) {
     final list = clients.map((c) => TopHuman(c.name, c.balance)).toList();
     list.sort((a, b) => b.balance.compareTo(a.balance));
     return list.take(5).toList();
@@ -299,7 +321,7 @@ final topClientsProvider = StreamProvider<List<TopHuman>>((ref) {
 // --- Top Suppliers ---
 final topSuppliersProvider = StreamProvider<List<TopHuman>>((ref) {
   final db = ref.watch(databaseProvider);
-  return (db.select(db.suppliers)..where((t) => t.isActive.equals(true))).watch().map((suppliers) {
+  return (db.select(db.suppliers)..where((t) => t.isActive.equals(true) & t.showInDashboard.equals(true))).watch().map((suppliers) {
     final list = suppliers.map((c) => TopHuman(c.name, c.balance)).toList();
     list.sort((a, b) => b.balance.compareTo(a.balance));
     return list.take(5).toList();
