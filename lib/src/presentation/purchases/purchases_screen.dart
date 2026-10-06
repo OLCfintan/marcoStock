@@ -1,3 +1,4 @@
+import "package:flutter/services.dart";
 import '../../utils/arabic_transliterator.dart';
 import '../../domain/extensions/invoice_line_extensions.dart';
 import 'package:marko_group/src/localization/arb/app_localizations.dart';
@@ -790,7 +791,7 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
                                       decimal: true,
                                     ),
                                 onChanged: (val) => setState(() {}),
-                                onSubmitted: (_) => _confirmPurchase(),
+                                onSubmitted: (_) => _processPurchase(),
                               ),
                             ),
                             if (_activeSession.payments.length > 1)
@@ -885,7 +886,7 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
               (event.logicalKey == LogicalKeyboardKey.enter ||
                   event.logicalKey == LogicalKeyboardKey.numpadEnter)) {
             if (_activeSession.cart.isNotEmpty) {
-              _confirmPurchase();
+              _processPurchase();
               return KeyEventResult.handled;
             }
           }
