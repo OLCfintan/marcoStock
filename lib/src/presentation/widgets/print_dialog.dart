@@ -4,7 +4,7 @@ import 'package:marko_group/src/localization/arb/app_localizations.dart';
 enum PrintLayout {
   a4,
   a5,
-  a4_2up, // 2-up A5 on A4 landscape
+
 }
 
 enum ExportFormat {
@@ -90,14 +90,7 @@ class _PrintDialogState extends State<PrintDialog> {
             onChanged: (v) { if(v!=null) setState(() => _selectedLayout = v); },
             contentPadding: EdgeInsets.zero,
           ),
-          RadioListTile<PrintLayout>(
-            title: const Text('A4 Landscape (2-up A5)'),
-            subtitle: const Text('Prints 2 copies side-by-side on A4'),
-            value: PrintLayout.a4_2up,
-            groupValue: _selectedLayout,
-            onChanged: (v) { if(v!=null) setState(() => _selectedLayout = v); },
-            contentPadding: EdgeInsets.zero,
-          ),
+
           const SizedBox(height: 16),
           const Text('Export Format:', style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),

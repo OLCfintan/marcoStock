@@ -64,48 +64,28 @@ class PdfGeneratorService {
       );
     }
 
-    if (options.layout == PrintLayout.a4_2up) {
-      doc.addPage(
-        pw.Page(
-          pageTheme: pw.PageTheme(
-            pageFormat: PdfPageFormat.a4.landscape,
-            textDirection: textDir,
-            margin: isFacture ? const pw.EdgeInsets.only(left: 24, right: 24, top: 12, bottom: 24) : const pw.EdgeInsets.all(24),
-            buildBackground: backgroundBuilder,
-          ),
-          build: (context) {
-            return pw.Column(
-              children: [
-                pw.Expanded(
-                  child: pw.Row(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Expanded(child: pw.Column(children: buildContent())),
-                      pw.SizedBox(width: 48),
-                      pw.Expanded(child: pw.Column(children: buildContent())),
-                    ],
-                  ),
-                ),
-                if (buildFooter != null) buildFooter(context)
-              ]
-            );
-          },
-        ),
-      );
-    } else {
-      doc.addPage(
+    doc.addPage(
         pw.MultiPage(
           pageTheme: pw.PageTheme(
             pageFormat: options.layout == PrintLayout.a5 ? PdfPageFormat.a5 : PdfPageFormat.a4,
             textDirection: textDir,
-            margin: isFacture ? const pw.EdgeInsets.only(left: 32, right: 32, top: 16, bottom: 32) : const pw.EdgeInsets.all(32),
+            margin: options.layout == PrintLayout.a5 
+                ? (isFacture ? const pw.EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 16) : const pw.EdgeInsets.all(16))
+                : (isFacture ? const pw.EdgeInsets.only(left: 32, right: 32, top: 16, bottom: 32) : const pw.EdgeInsets.all(32)),
             buildBackground: backgroundBuilder,
+            theme: options.layout == PrintLayout.a5 
+                ? pw.ThemeData.withFont(
+                    base: pw.Font.helvetica(),
+                    bold: pw.Font.helveticaBold(),
+                    italic: pw.Font.helveticaOblique(),
+                    boldItalic: pw.Font.helveticaBoldOblique(),
+                  ).copyWith(defaultTextStyle: pw.TextStyle(fontSize: 8)) // reduce default font size for a5
+                : pw.ThemeData.withFont(),
           ),
           footer: buildFooter,
           build: (context) => buildContent(),
         ),
       );
-    }
   }
 
 

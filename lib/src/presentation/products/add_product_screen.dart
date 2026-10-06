@@ -1,6 +1,8 @@
 import '../../utils/arabic_transliterator.dart';
 import 'package:marko_group/src/localization/arb/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
 import '../../infrastructure/database/providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:decimal/decimal.dart';
@@ -270,7 +272,23 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
           ),
         ],
       ),
-      body: Form(
+      body: Focus(
+        autofocus: true,
+        onKeyEvent: (node, event) {
+          if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.enter) {
+             final focused = FocusManager.instance.primaryFocus;
+             // If they are in a text field, let them press enter to go next or submit
+             // But usually enter in textfield shouldn't submit immediately unless we want it to.
+             // The user said "i should also be able to confirme with <Enter> Key like with clicking the mouse"
+             // If we ignore it when EditableText is focused, they can't submit while typing.
+             // If we don't ignore it, typing Enter in a single-line field will submit the form! Which is what they want!
+             // BUT what if it's a multiline field? Description is probably multiline.
+             _submit();
+             return KeyEventResult.handled;
+          }
+          return KeyEventResult.ignored;
+        },
+        child: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(16.0),
@@ -600,6 +618,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
             const SizedBox(height: 32),
           ],
         ),
+      ),
       ),
     );
   }

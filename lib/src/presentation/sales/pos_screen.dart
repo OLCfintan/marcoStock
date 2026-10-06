@@ -2,6 +2,8 @@ import '../../application/products/product_providers.dart';
 import '../../infrastructure/repositories/product_repository.dart';
 import 'package:marko_group/src/localization/arb/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:decimal/decimal.dart';
@@ -387,6 +389,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           ),
         ],
       ),
+      ),
     );
   }
 
@@ -590,7 +593,22 @@ class _PosScreenState extends ConsumerState<PosScreen> {
               : const SizedBox.shrink();
         },
       ),
-      body: LayoutBuilder(
+      body: Focus(
+        autofocus: true,
+        onKeyEvent: (node, event) {
+          if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.enter) {
+             // If barcode field is focused, let it handle the enter key
+             if (_barcodeFocusNode.hasFocus) {
+                 return KeyEventResult.ignored;
+             }
+             if (_activeSession.cart.isNotEmpty) {
+                 _processSale();
+                 return KeyEventResult.handled;
+             }
+          }
+          return KeyEventResult.ignored;
+        },
+        child: LayoutBuilder(
         builder: (context, constraints) {
           final productsWidget = productsAsync.when(
             data: (allProducts) {
@@ -1228,6 +1246,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             ],
           );
         },
+      ),
+      ),
       ),
     );
   }
