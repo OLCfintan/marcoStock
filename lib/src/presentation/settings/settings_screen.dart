@@ -7,7 +7,6 @@ import 'package:marko_group/src/localization/arb/app_localizations.dart';
 
 import '../../application/settings/settings_service.dart';
 import '../../application/system/sync_service.dart';
-import '../../application/system/update_service.dart';
 
 import 'company_profile_screen.dart';
 import '../../application/backup/backup_service.dart';
@@ -30,8 +29,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       children: items.map((e) => Padding(padding: const EdgeInsets.all(4.0), child: Text(e))).toList()
     );
   }
-
-  bool _isCheckingUpdate = false;
 
   void _showChangePinDialog(BuildContext context, WidgetRef ref) {
     final newPinController = TextEditingController();
@@ -215,38 +212,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               await ref.read(syncServiceProvider).processOutbox();
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.syncComplete)));
-              }
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.download),
-            title: Text(AppLocalizations.of(context)!.checkForUpdates),
-            subtitle: Text(AppLocalizations.of(context)!.connectsToGithub),
-            trailing: _isCheckingUpdate ? const LogoLoader() : null,
-            onTap: () async {
-              setState(() => _isCheckingUpdate = true);
-              final hasUpdate = await ref.read(updateServiceProvider).checkForUpdates();
-              setState(() => _isCheckingUpdate = false);
-              
-              if (context.mounted) {
-                if (hasUpdate) {
-                  showDialog(context: context, builder: (_) => AlertDialog(
-                    title: Text(AppLocalizations.of(context)!.updateAvailable),
-                    content: Text(AppLocalizations.of(context)!.newVersionAvailable),
-                    actions: [
-                      TextButton(onPressed: () => Navigator.of(context, rootNavigator: true).pop(), child: Text(AppLocalizations.of(context)!.later)),
-                      ElevatedButton(
-                        onPressed: () {
-                          ref.read(updateServiceProvider).downloadUpdate();
-                          Navigator.of(context, rootNavigator: true).pop();
-                        }, 
-                        child: Text(AppLocalizations.of(context)!.download)
-                      ),
-                    ],
-                  ));
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.appUpToDate)));
-                }
               }
             },
           ),
