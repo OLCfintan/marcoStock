@@ -418,39 +418,37 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           const SizedBox(height: 8),
                           const Text('Arabic Transliteration Map:'),
                           const SizedBox(height: 8),
-                          Expanded(
-                            child: SingleChildScrollView(
-                              child: Table(
-                                border: TableBorder.all(color: Colors.grey.shade300),
-                                children: [
-                                  TableRow(
-                                    decoration: BoxDecoration(color: Colors.grey.shade100),
-                                    children: const [
-                                      Padding(padding: EdgeInsets.all(4), child: Text('Input', style: TextStyle(fontWeight: FontWeight.bold))),
-                                      Padding(padding: EdgeInsets.all(4), child: Text('Arabic', style: TextStyle(fontWeight: FontWeight.bold))),
-                                      Padding(padding: EdgeInsets.all(4), child: Text('Input', style: TextStyle(fontWeight: FontWeight.bold))),
-                                      Padding(padding: EdgeInsets.all(4), child: Text('Arabic', style: TextStyle(fontWeight: FontWeight.bold))),
-                                    ]
-                                  ),
-                                  _buildRow(['a', 'ا', 'b', 'ب']),
-                                  _buildRow(['t', 'ت', 'th / t\'', 'ث']),
-                                  _buildRow(['j', 'ج', 'H', 'ح']),
-                                  _buildRow(['kh / H\'', 'خ', 'd', 'د']),
-                                  _buildRow(['dh / d\'', 'ذ', 'r', 'ر']),
-                                  _buildRow(['z', 'ز', 's', 'س']),
-                                  _buildRow(['sh / s\'', 'ش', 'S', 'ص']),
-                                  _buildRow(['D / S\'', 'ض', 'T', 'ط']),
-                                  _buildRow(['Z / T\'', 'ظ', '3 / e / c / g', 'ع']),
-                                  _buildRow(['gh / g\'', 'غ', 'f', 'ف']),
-                                  _buildRow(['q', 'ق', 'k', 'ك']),
-                                  _buildRow(['l', 'ل', 'm', 'م']),
-                                  _buildRow(['n', 'ن', 'h', 'ه']),
-                                  _buildRow(['w', 'و', 'y', 'ي']),
-                                  _buildRow(['-', 'ء', '-a', 'أ']),
-                                  _buildRow(['a--', 'إ', 'w--', 'ؤ']),
-                                  _buildRow(['y--', 'ئ', 'Y', 'ى']),
-                                ],
-                              )
+                          SingleChildScrollView(
+                            child: Table(
+                              border: TableBorder.all(color: Colors.grey.shade300),
+                              children: [
+                                TableRow(
+                                  decoration: BoxDecoration(color: Colors.grey.shade100),
+                                  children: const [
+                                    Padding(padding: EdgeInsets.all(4), child: Text('Input', style: TextStyle(fontWeight: FontWeight.bold))),
+                                    Padding(padding: EdgeInsets.all(4), child: Text('Arabic', style: TextStyle(fontWeight: FontWeight.bold))),
+                                    Padding(padding: EdgeInsets.all(4), child: Text('Input', style: TextStyle(fontWeight: FontWeight.bold))),
+                                    Padding(padding: EdgeInsets.all(4), child: Text('Arabic', style: TextStyle(fontWeight: FontWeight.bold))),
+                                  ]
+                                ),
+                                _buildRow(['a', 'ا', 'b', 'ب']),
+                                _buildRow(['t', 'ت', 'th / t\'', 'ث']),
+                                _buildRow(['j', 'ج', 'H', 'ح']),
+                                _buildRow(['kh / H\'', 'خ', 'd', 'د']),
+                                _buildRow(['dh / d\'', 'ذ', 'r', 'ر']),
+                                _buildRow(['z', 'ز', 's', 'س']),
+                                _buildRow(['sh / s\'', 'ش', 'S', 'ص']),
+                                _buildRow(['D / S\'', 'ض', 'T', 'ط']),
+                                _buildRow(['Z / T\'', 'ظ', '3 / e / c / g', 'ع']),
+                                _buildRow(['gh / g\'', 'غ', 'f', 'ف']),
+                                _buildRow(['q', 'ق', 'k', 'ك']),
+                                _buildRow(['l', 'ل', 'm', 'م']),
+                                _buildRow(['n', 'ن', 'h', 'ه']),
+                                _buildRow(['w', 'و', 'y', 'ي']),
+                                _buildRow(['-', 'ء', '-a', 'أ']),
+                                _buildRow(['a--', 'إ', 'w--', 'ؤ']),
+                                _buildRow(['y--', 'ئ', 'Y', 'ى']),
+                              ],
                             )
                           )
                         ],
