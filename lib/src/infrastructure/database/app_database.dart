@@ -85,7 +85,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 24;
+  int get schemaVersion => 25;
   
   @override
   MigrationStrategy get migration {
@@ -109,6 +109,12 @@ class AppDatabase extends _$AppDatabase {
         ));
       },
       onUpgrade: (Migrator m, int from, int to) async {
+        if (from < 25) {
+          await m.addColumn(purchases, purchases.paymentMethod);
+          await m.addColumn(purchases, purchases.companyBranch);
+          await m.addColumn(purchases, purchases.supplierNameOverride);
+          await m.addColumn(purchases, purchases.supplierIceOverride);
+        }
         if (from < 24) {
           await m.addColumn(clients, clients.showInDashboard);
           await m.addColumn(suppliers, suppliers.showInDashboard);

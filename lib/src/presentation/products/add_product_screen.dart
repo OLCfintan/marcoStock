@@ -155,26 +155,15 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
   Future<void> _submit() async {
     final db = ref.read(databaseProvider);
     final refToCheck = _referenceController.text.trim();
-    final existingRefList =
-        await (db.select(db.products)
-          ..where((t) => t.reference.equals(refToCheck))).get();
+    final allRefs = await (db.select(db.products)..where((t) => t.reference.equals(refToCheck))).get();
+    final existingRefList = allRefs.where((p) => p.isActive == true).toList();
     if (existingRefList.isNotEmpty &&
         existingRefList.first.id != widget.productToEdit?.id) {
-      if (!existingRefList.first.isActive) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'A deleted product with this Reference exists in the Recycle Bin. Restore it or permanently delete it first.',
-            ),
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Product with this Reference already exists!'),
-          ),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Product with this Reference already exists!'),
+        ),
+      );
       return;
     }
 

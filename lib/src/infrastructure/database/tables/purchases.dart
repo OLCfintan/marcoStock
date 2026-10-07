@@ -16,6 +16,11 @@ class Purchases extends Table {
   TextColumn get status => text()(); // 'UNPAID', 'PARTIAL', 'PAID'
   TextColumn get notes => text().nullable()();
   
+  TextColumn get paymentMethod => text().nullable()();
+  TextColumn get companyBranch => text().nullable().withDefault(const Constant('MARKO_GROUP'))(); // 'MARKO_GROUP' or 'MARKO_PEINT'
+  TextColumn get supplierNameOverride => text().nullable()();
+  TextColumn get supplierIceOverride => text().nullable()();
+
   BoolColumn get isActive => boolean().withDefault(const Constant(true))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 

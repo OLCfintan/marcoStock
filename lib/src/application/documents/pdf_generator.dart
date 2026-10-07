@@ -296,7 +296,33 @@ class PdfGeneratorService {
       print('Could not load watermark: $e');
     }
 
-    _addPages(doc, options, textDir, watermarkBg, false, font, boldFont, bgOpacity: 0.25, buildFooter: null, () => [
+    final isFactureDoc = purchase.documentType == 'FACTURE';
+    
+    String finalCompanyName = companyName;
+    pw.ImageProvider? finalLogo = logoImage;
+    pw.ImageProvider? finalBg = watermarkBg;
+    double finalOpacity = 0.25;
+    pw.BoxFit finalBgFit = pw.BoxFit.cover;
+    
+    if (purchase.companyBranch == 'MARKO_PEINT') {
+        finalCompanyName = 'Marko Peint';
+        finalLogo = markoPeintLogo;
+        finalBg = markoPeintLogo;
+        finalOpacity = 0.15;
+        finalBgFit = pw.BoxFit.contain;
+    }
+
+    _addPages(doc, options, textDir, finalBg, isFactureDoc, font, boldFont, bgOpacity: finalOpacity, bgFit: finalBgFit, buildFooter: isFactureDoc ? (context) => _buildDocumentFooter(companyInvoiceAddress, companyIce, companyRc, companyRib, companyEmail, companyPhone, companyTaxId, companyTp) : null, () {
+      if (isFactureDoc) {
+        return [
+          _buildPurchaseFactureHeader(purchase, supplier, finalCompanyName, companyInvoiceAddress, companyPhone, companyTaxId, companyIce, companyRc, companyRib, companyEmail, finalLogo ?? watermarkBg, l10n),
+          pw.SizedBox(height: 15),
+          _buildPurchaseFactureTable(lines, productMap, l10n),
+          pw.SizedBox(height: 15),
+          _buildPurchaseFactureTotals(purchase, l10n, companyInvoiceAddress, companyIce, companyRc, companyRib, companyEmail, companyPhone),
+        ];
+      } else {
+        return [
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
@@ -357,9 +383,185 @@ class PdfGeneratorService {
                 ),
               ),
             ),
-    ]);
+        ];
+      }
+    });
 
     return doc.save();
+  }
+
+  pw.Widget _buildPurchaseFactureHeader(PurchaseEntity purchase, SupplierEntity? supplier, String companyName, String companyAddress, String companyPhone, String companyTaxId, String companyIce, String companyRc, String companyRib, String companyEmail, pw.ImageProvider? logoImage, AppLocalizations l10n) {
+    String docTypeTitle = purchase.documentType == 'FACTURE' ? l10n.invoice : l10n.bonDeLivraison;
+
+    final supplierName = purchase.supplierNameOverride ?? supplier?.name ?? 'Fournisseur Passager';
+    final supplierIce = purchase.supplierIceOverride ?? '';
+    
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+      children: [
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Expanded(
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  _bidiText(companyName, style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
+                  _bidiText('SARL AU', style: pw.TextStyle(fontSize: 10)),
+                ]
+              )
+            ),
+            if (logoImage != null)
+              pw.Container(
+                height: 100,
+                alignment: pw.Alignment.center,
+                child: pw.ClipRRect(
+                  horizontalRadius: 16,
+                  verticalRadius: 16,
+                  child: pw.Image(logoImage, fit: pw.BoxFit.contain),
+                ),
+              )
+            else
+              pw.SizedBox(width: 200),
+            pw.Expanded(
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.end,
+                children: [
+                  _bidiText('MD DES PRODUITS CHIMIQUES', style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
+                  _bidiText('IMPORT EXPORT', style: pw.TextStyle(fontSize: 10)),
+                ]
+              )
+            ),
+          ],
+        ),
+        pw.SizedBox(height: 10),
+        pw.Divider(thickness: 2, color: PdfColor.fromHex('#C5A059')),
+        pw.SizedBox(height: 2),
+        pw.Divider(thickness: 1, color: PdfColor.fromHex('#C5A059')),
+        pw.SizedBox(height: 20),
+        
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          children: [
+            _bidiText('le : ${purchase.date.day.toString().padLeft(2,'0')}/${purchase.date.month.toString().padLeft(2,'0')}/${purchase.date.year}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+            _bidiText('${docTypeTitle.toUpperCase()} N°:${purchase.purchaseNumber}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+          ],
+        ),
+        pw.SizedBox(height: 15),
+        
+        pw.Table(
+          border: pw.TableBorder.all(color: PdfColors.black, width: 0.5),
+          children: [
+            pw.TableRow(
+              children: [
+                pw.Padding(padding: const pw.EdgeInsets.all(4), child: _bidiText('Fournisseur', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
+                pw.Padding(padding: const pw.EdgeInsets.all(4), child: _bidiText('ICE', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
+                pw.Padding(padding: const pw.EdgeInsets.all(4), child: _bidiText('Mode de reglement', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
+              ]
+            ),
+            pw.TableRow(
+              children: [
+                pw.Padding(padding: const pw.EdgeInsets.all(4), child: _bidiText(supplierName, style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
+                pw.Padding(padding: const pw.EdgeInsets.all(4), child: _bidiText(supplierIce.isNotEmpty ? 'ICE : $supplierIce' : '', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
+                pw.Padding(padding: const pw.EdgeInsets.all(4), child: _bidiText(purchase.paymentMethod != null ? _localizedPaymentMethod(purchase.paymentMethod, l10n) : 'Espece', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
+              ]
+            ),
+          ]
+        ),
+      ],
+    );
+  }
+
+  pw.Widget _buildPurchaseFactureTable(List<PurchaseLineEntity> lines, Map<String, ProductEntity> productMap, AppLocalizations l10n) {
+    return pw.TableHelper.fromTextArray(
+      headers: ['Produits', 'Quantités', 'P.U HT', 'MT HT'],
+      data: lines.map((line) {
+        final product = productMap[line.productId];
+        String productName = _localizedProductName(product, l10n.localeName);
+        
+        return [
+          productName,
+          line.quantity.toStringAsFixed(2),
+          line.unitPrice.toStringAsFixed(2) + ' DH',
+          line.lineTotal.toStringAsFixed(2) + ' DH',
+        ];
+      }).toList(),
+      headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.black, fontSize: 10),
+      headerDecoration: pw.BoxDecoration(
+        color: PdfColor.fromHex('#e2e2e2'),
+      ),
+      border: pw.TableBorder.all(color: PdfColors.black, width: 0.5),
+      cellPadding: const pw.EdgeInsets.all(6),
+      cellStyle: pw.TextStyle(fontSize: 10),
+      cellAlignments: {
+        0: pw.Alignment.centerLeft,
+        1: pw.Alignment.center,
+        2: pw.Alignment.center,
+        3: pw.Alignment.center,
+      },
+    );
+  }
+
+  pw.Widget _buildPurchaseFactureTotals(PurchaseEntity purchase, AppLocalizations l10n, String companyAddress, String companyIce, String companyRc, String companyRib, String companyEmail, String companyPhone) {
+    final mtHt = purchase.total.toDouble();
+    final mtTva = mtHt * 0.20;
+    final totalTtc = mtHt + mtTva;
+    
+    final amountWords = decimalToWordsTranslated(totalTtc, l10n.localeName);
+    
+    return pw.Column(
+      children: [
+        if (purchase.paymentMethod != null)
+          pw.Container(
+            alignment: pw.Alignment.centerLeft,
+            margin: const pw.EdgeInsets.only(bottom: 12),
+            child: _bidiText('${l10n.modeDeReglement}: ${_localizedPaymentMethod(purchase.paymentMethod, l10n)}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 12)),
+          ),
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.start,
+          children: [
+            pw.Container(
+              width: 300,
+              child: pw.Table(
+                border: pw.TableBorder.all(color: PdfColors.black, width: 0.5),
+                children: [
+                  pw.TableRow(
+                    children: [
+                      pw.Padding(padding: const pw.EdgeInsets.all(4), child: _bidiText('Total HT', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
+                      pw.Padding(padding: const pw.EdgeInsets.all(4), child: _bidiText('MT TVA', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
+                      pw.Padding(padding: const pw.EdgeInsets.all(4), child: _bidiText('TOTAL TTC', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
+                    ]
+                  ),
+                  pw.TableRow(
+                    children: [
+                      pw.Padding(padding: const pw.EdgeInsets.all(4), child: _bidiText('${mtHt.toStringAsFixed(2)} DH', style: pw.TextStyle(fontSize: 10))),
+                      pw.Padding(padding: const pw.EdgeInsets.all(4), child: _bidiText('${mtTva.toStringAsFixed(2)} DH', style: pw.TextStyle(fontSize: 10))),
+                      pw.Padding(padding: const pw.EdgeInsets.all(4), child: _bidiText('${totalTtc.toStringAsFixed(2)} DH', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
+                    ]
+                  ),
+                ]
+              ),
+            ),
+          ]
+        ),
+        pw.SizedBox(height: 15),
+        pw.Container(
+          alignment: pw.Alignment.centerLeft,
+          child: _bidiText('${l10n.invoiceStoppedAt} ${amountWords.substring(0,1).toUpperCase() + amountWords.substring(1)}.', style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
+        ),
+        pw.SizedBox(height: 40),
+        
+        pw.Container(
+          alignment: pw.Alignment.centerRight,
+          padding: const pw.EdgeInsets.only(right: 50),
+          child: pw.Container(
+            width: 150,
+            height: 80,
+          ),
+        ),
+      ]
+    );
   }
 
     pw.Widget _buildFactureHeader(InvoiceEntity invoice, ClientEntity? client, String companyName, String companyAddress, String companyPhone, String companyTaxId, String companyIce, String companyRc, String companyRib, String companyEmail, pw.ImageProvider? logoImage, AppLocalizations l10n) {

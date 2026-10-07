@@ -44,7 +44,6 @@ class _PaymentEntry {
 class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
   Set<String> _multiSelectedProductIds = {};
   List<String> _localOrder = [];
-  final String _selectedDocumentType = 'FACTURE';
   List<PurchaseSession> get _sessions => globalPurchaseSessions;
   int get _activeSessionIndex => globalPurchaseActiveSessionIndex;
   set _activeSessionIndex(int val) => globalPurchaseActiveSessionIndex = val;
@@ -284,12 +283,30 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
             )
             .toList();
 
+    DateTime? dateOverride;
+    try {
+      final parts = _activeSession.dateController.text.split('/');
+      if (parts.length == 3) {
+        dateOverride = DateTime(
+          int.parse(parts[2]),
+          int.parse(parts[1]),
+          int.parse(parts[0]),
+        );
+      }
+    } catch (_) {}
+
     final req = PurchaseRequest(
-      documentType: _selectedDocumentType,
+      documentType: _activeSession.selectedDocumentType,
       supplierId: _activeSession.selectedSupplierId!,
       currentUserId: 'ADMIN_01',
       lines: _activeSession.cart,
-      payments: paymentReqs,
+      payments: _activeSession.selectedDocumentType == 'FACTURE' ? [] : paymentReqs,
+      purchaseNumberOverride: _activeSession.selectedDocumentType == 'FACTURE' ? _activeSession.purchaseNumberController.text : null,
+      supplierNameOverride: _activeSession.selectedDocumentType == 'FACTURE' ? _activeSession.customNameController.text : null,
+      supplierIceOverride: _activeSession.selectedDocumentType == 'FACTURE' ? _activeSession.customIceController.text : null,
+      companyBranch: _activeSession.selectedDocumentType == 'FACTURE' ? _activeSession.selectedCompanyBranch : 'MARKO_GROUP',
+      paymentMethod: _activeSession.selectedDocumentType == 'FACTURE' ? _activeSession.selectedPaymentMethod : 'CASH',
+      dateOverride: _activeSession.selectedDocumentType == 'FACTURE' ? dateOverride : null,
     );
 
     try {
@@ -619,6 +636,98 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
             ),
           ),
           Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+            child: DropdownButtonFormField<String>(
+              value: _activeSession.selectedDocumentType,
+              decoration: const InputDecoration(labelText: 'Document Type', border: OutlineInputBorder()),
+              items: const [
+                DropdownMenuItem(value: 'BON', child: Text('BON')),
+                DropdownMenuItem(value: 'FACTURE', child: Text('FACTURE')),
+              ],
+              onChanged: (val) {
+                if (val != null) {
+                  setState(() => _activeSession.selectedDocumentType = val);
+                }
+              },
+            ),
+          ),
+          if (_activeSession.selectedDocumentType == 'FACTURE') ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _activeSession.purchaseNumberController,
+                      decoration: const InputDecoration(labelText: 'Purchase Number', border: OutlineInputBorder()),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: _activeSession.dateController,
+                      decoration: const InputDecoration(labelText: 'Date (DD/MM/YYYY)', border: OutlineInputBorder()),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      value: _activeSession.selectedCompanyBranch,
+                      decoration: const InputDecoration(labelText: 'Company Branch', border: OutlineInputBorder()),
+                      items: const [
+                        DropdownMenuItem(value: 'MARKO_GROUP', child: Text('MARKO_GROUP')),
+                        DropdownMenuItem(value: 'MARKO_PAPIER', child: Text('MARKO_PAPIER')),
+                        DropdownMenuItem(value: 'DAF_PAPIER', child: Text('DAF_PAPIER')),
+                        DropdownMenuItem(value: 'BUREAU_GOMME', child: Text('BUREAU_GOMME')),
+                      ],
+                      onChanged: (val) => setState(() => _activeSession.selectedCompanyBranch = val ?? 'MARKO_GROUP'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      value: _activeSession.selectedPaymentMethod,
+                      decoration: const InputDecoration(labelText: 'Payment Method', border: OutlineInputBorder()),
+                      items: const [
+                        DropdownMenuItem(value: 'CASH', child: Text('Espèce')),
+                        DropdownMenuItem(value: 'CHECK', child: Text('Chèque')),
+                        DropdownMenuItem(value: 'VIREMENT', child: Text('Virement')),
+                        DropdownMenuItem(value: 'TRAITE', child: Text('Effet')),
+                      ],
+                      onChanged: (val) => setState(() => _activeSession.selectedPaymentMethod = val ?? 'CASH'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _activeSession.customNameController,
+                      decoration: const InputDecoration(labelText: 'Custom Supplier Name', border: OutlineInputBorder()),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: _activeSession.customIceController,
+                      decoration: const InputDecoration(labelText: 'Custom Supplier ICE', border: OutlineInputBorder()),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          Padding(
             padding: const EdgeInsets.all(8.0),
             child: suppliersAsync.when(
               data:
@@ -755,9 +864,9 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
                   ),
                 ),
                 const Divider(height: 24),
-
-                // Payments List
-                ..._activeSession.payments.asMap().entries.map((entry) {
+                if (_activeSession.selectedDocumentType != 'FACTURE') ...[
+                  // Payments List
+                  ..._activeSession.payments.asMap().entries.map((entry) {
                   final idx = entry.key;
                   final p = entry.value;
                   return Container(
@@ -881,6 +990,7 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
                   icon: const Icon(Icons.add),
                   label: Text(AppLocalizations.of(context)!.addPaymentMethod),
                 ),
+                ],
                 const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
@@ -1004,6 +1114,16 @@ class PurchaseSession {
   List<_PaymentEntry> payments = [];
   String? editingId;
 
+  String selectedDocumentType = 'BON';
+  String selectedCompanyBranch = 'MARKO_GROUP';
+  String selectedPaymentMethod = 'CASH';
+  final TextEditingController purchaseNumberController = TextEditingController();
+  final TextEditingController dateController = TextEditingController(
+      text:
+          '${DateTime.now().day.toString().padLeft(2, '0')}/${DateTime.now().month.toString().padLeft(2, '0')}/${DateTime.now().year}');
+  final TextEditingController customNameController = TextEditingController();
+  final TextEditingController customIceController = TextEditingController();
+
   PurchaseSession({required this.id, required this.title}) {
     payments.add(_PaymentEntry(method: 'CASH'));
   }
@@ -1012,6 +1132,10 @@ class PurchaseSession {
     for (var p in payments) {
       p.amountController.dispose();
     }
+    purchaseNumberController.dispose();
+    dateController.dispose();
+    customNameController.dispose();
+    customIceController.dispose();
   }
 }
 

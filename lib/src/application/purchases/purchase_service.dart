@@ -31,6 +31,12 @@ class PurchaseRequest {
   final String currentUserId;
   final List<PurchaseLineRequest> lines;
   final List<PurchasePaymentRequest> payments;
+  final String paymentMethod;
+  final String companyBranch;
+  final String? supplierNameOverride;
+  final String? supplierIceOverride;
+  final String? purchaseNumberOverride;
+  final DateTime? dateOverride;
   
   PurchaseRequest({
     required this.documentType,
@@ -38,6 +44,12 @@ class PurchaseRequest {
     required this.currentUserId,
     required this.lines,
     this.payments = const [],
+    this.paymentMethod = 'CASH',
+    this.companyBranch = 'MARKO_GROUP',
+    this.supplierNameOverride,
+    this.supplierIceOverride,
+    this.purchaseNumberOverride,
+    this.dateOverride,
   });
 }
 
@@ -87,7 +99,9 @@ class PurchaseService {
         ));
       }
       
-      final purchaseNumber = '$prefix-${nextNum.toString().padLeft(4, '0')}';
+      final purchaseNumber = request.purchaseNumberOverride != null && request.purchaseNumberOverride!.isNotEmpty 
+          ? request.purchaseNumberOverride! 
+          : '$prefix-${nextNum.toString().padLeft(4, '0')}';
       
       Decimal total = Decimal.zero;
       
@@ -183,10 +197,14 @@ class PurchaseService {
         documentType: drift.Value(request.documentType),
         purchaseNumber: purchaseNumber,
         supplierId: request.supplierId,
-        date: date,
+        date: request.dateOverride ?? date,
         total: total,
         paidAmount: paidAmount,
         status: status,
+        paymentMethod: drift.Value(request.paymentMethod),
+        companyBranch: drift.Value(request.companyBranch),
+        supplierNameOverride: drift.Value(request.supplierNameOverride),
+        supplierIceOverride: drift.Value(request.supplierIceOverride),
       ));
       
       // 4.5 Insert Payments

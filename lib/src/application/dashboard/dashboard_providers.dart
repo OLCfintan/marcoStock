@@ -60,8 +60,11 @@ final todaySalesProvider = StreamProvider<Decimal>((ref) {
     t.isActive.equals(true)
   );
 
-  return query.watch().map((rows) {
-    return rows.fold<Decimal>(Decimal.zero, (sum, inv) {
+  return query.watch().asyncMap((rows) async {
+    final validClients = await (db.select(db.clients)..where((t) => t.showInDashboard.equals(true))).get();
+    final validIds = validClients.map((c) => c.id).toList();
+    
+    return rows.where((inv) => inv.clientId == null || validIds.contains(inv.clientId)).fold<Decimal>(Decimal.zero, (sum, inv) {
       return sum + inv.total;
     });
   });
@@ -98,8 +101,11 @@ final todaysCreditProvider = StreamProvider<Decimal>((ref) {
     ])
   );
 
-  return query.watch().map((rows) {
-    return rows.fold<Decimal>(Decimal.zero, (sum, inv) {
+  return query.watch().asyncMap((rows) async {
+    final validClients = await (db.select(db.clients)..where((t) => t.showInDashboard.equals(true))).get();
+    final validIds = validClients.map((c) => c.id).toList();
+
+    return rows.where((inv) => inv.clientId == null || validIds.contains(inv.clientId)).fold<Decimal>(Decimal.zero, (sum, inv) {
       return sum + (inv.total - inv.paidAmount);
     });
   });
@@ -361,7 +367,12 @@ final salesChartDataProvider = StreamProvider<List<ChartDataPoint>>((ref) {
       }
     }
 
+    final validClients = await (db.select(db.clients)..where((t) => t.showInDashboard.equals(true))).get();
+    final validIds = validClients.map((c) => c.id).toList();
+
     for (final inv in invoices) {
+      if (inv.clientId != null && !validIds.contains(inv.clientId)) continue;
+      
       if (period == SalesChartPeriod.daily) {
         if (inv.date.isAfter(now.subtract(const Duration(days: 7)))) {
           final dayStr = '${inv.date.month}/${inv.date.day}';

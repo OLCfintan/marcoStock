@@ -54,15 +54,51 @@ class PaymentService {
           // Update client balance
           await _db.update(_db.clients).replace(client.copyWith(balance: client.balance - amount));
           
+          Decimal remainingAmountToAllocate = amount;
+          
           if (invoiceId != null) {
             // Explicitly pay a specific invoice
             final inv = await (_db.select(_db.invoices)..where((t) => t.id.equals(invoiceId))).getSingleOrNull();
             if (inv != null) {
-              final newPaid = inv.paidAmount + amount;
-              final newStatus = newPaid >= inv.total ? 'PAID' : 'PARTIAL';
+              final remainingDebt = inv.total - inv.paidAmount;
+              final amountToApply = remainingAmountToAllocate <= remainingDebt ? remainingAmountToAllocate : remainingDebt;
+              
+              if (amountToApply > Decimal.zero) {
+                final newPaid = inv.paidAmount + amountToApply;
+                final newStatus = newPaid >= inv.total ? 'PAID' : (newPaid > Decimal.zero ? 'PARTIAL' : 'UNPAID');
+                await (_db.update(_db.invoices)..where((t) => t.id.equals(inv.id))).write(
+                  InvoicesCompanion(status: drift.Value(newStatus), paidAmount: drift.Value(newPaid))
+                );
+                remainingAmountToAllocate -= amountToApply;
+              }
+            }
+          }
+          
+          // Allocate excess/all to other UNPAID/PARTIAL BON invoices
+          if (remainingAmountToAllocate > Decimal.zero) {
+            final query = _db.select(_db.invoices)
+              ..where((t) => t.clientId.equals(clientId))
+              ..where((t) => t.documentType.equals('BON'))
+              ..where((t) => t.status.isIn(['UNPAID', 'PARTIAL']))
+              ..orderBy([(t) => drift.OrderingTerm.asc(t.date)]);
+            
+            final unpaidInvoices = await query.get();
+            
+            for (final inv in unpaidInvoices) {
+              if (remainingAmountToAllocate <= Decimal.zero) break;
+              
+              final remainingDebt = inv.total - inv.paidAmount;
+              if (remainingDebt <= Decimal.zero) continue;
+              
+              final amountToApply = remainingAmountToAllocate <= remainingDebt ? remainingAmountToAllocate : remainingDebt;
+              final newPaid = inv.paidAmount + amountToApply;
+              final newStatus = newPaid >= inv.total ? 'PAID' : (newPaid > Decimal.zero ? 'PARTIAL' : 'UNPAID');
+              
               await (_db.update(_db.invoices)..where((t) => t.id.equals(inv.id))).write(
                 InvoicesCompanion(status: drift.Value(newStatus), paidAmount: drift.Value(newPaid))
               );
+              
+              remainingAmountToAllocate -= amountToApply;
             }
           }
           
@@ -88,15 +124,51 @@ class PaymentService {
           // Update supplier balance
           await _db.update(_db.suppliers).replace(supplier.copyWith(balance: supplier.balance - amount));
           
+          Decimal remainingAmountToAllocate = amount;
+          
           if (purchaseId != null) {
             // Explicitly pay a specific purchase
             final pur = await (_db.select(_db.purchases)..where((t) => t.id.equals(purchaseId))).getSingleOrNull();
             if (pur != null) {
-              final newPaid = pur.paidAmount + amount;
-              final newStatus = newPaid >= pur.total ? 'PAID' : 'PARTIAL';
+              final remainingDebt = pur.total - pur.paidAmount;
+              final amountToApply = remainingAmountToAllocate <= remainingDebt ? remainingAmountToAllocate : remainingDebt;
+              
+              if (amountToApply > Decimal.zero) {
+                final newPaid = pur.paidAmount + amountToApply;
+                final newStatus = newPaid >= pur.total ? 'PAID' : (newPaid > Decimal.zero ? 'PARTIAL' : 'UNPAID');
+                await (_db.update(_db.purchases)..where((t) => t.id.equals(pur.id))).write(
+                  PurchasesCompanion(status: drift.Value(newStatus), paidAmount: drift.Value(newPaid))
+                );
+                remainingAmountToAllocate -= amountToApply;
+              }
+            }
+          }
+          
+          // Allocate excess/all to other UNPAID/PARTIAL BON purchases
+          if (remainingAmountToAllocate > Decimal.zero) {
+            final query = _db.select(_db.purchases)
+              ..where((t) => t.supplierId.equals(supplierId))
+              ..where((t) => t.documentType.equals('BON'))
+              ..where((t) => t.status.isIn(['UNPAID', 'PARTIAL']))
+              ..orderBy([(t) => drift.OrderingTerm.asc(t.date)]);
+            
+            final unpaidPurchases = await query.get();
+            
+            for (final pur in unpaidPurchases) {
+              if (remainingAmountToAllocate <= Decimal.zero) break;
+              
+              final remainingDebt = pur.total - pur.paidAmount;
+              if (remainingDebt <= Decimal.zero) continue;
+              
+              final amountToApply = remainingAmountToAllocate <= remainingDebt ? remainingAmountToAllocate : remainingDebt;
+              final newPaid = pur.paidAmount + amountToApply;
+              final newStatus = newPaid >= pur.total ? 'PAID' : (newPaid > Decimal.zero ? 'PARTIAL' : 'UNPAID');
+              
               await (_db.update(_db.purchases)..where((t) => t.id.equals(pur.id))).write(
                 PurchasesCompanion(status: drift.Value(newStatus), paidAmount: drift.Value(newPaid))
               );
+              
+              remainingAmountToAllocate -= amountToApply;
             }
           }
           

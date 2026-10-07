@@ -8992,6 +8992,51 @@ class $PurchasesTable extends Purchases
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _paymentMethodMeta = const VerificationMeta(
+    'paymentMethod',
+  );
+  @override
+  late final GeneratedColumn<String> paymentMethod = GeneratedColumn<String>(
+    'payment_method',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _companyBranchMeta = const VerificationMeta(
+    'companyBranch',
+  );
+  @override
+  late final GeneratedColumn<String> companyBranch = GeneratedColumn<String>(
+    'company_branch',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('MARKO_GROUP'),
+  );
+  static const VerificationMeta _supplierNameOverrideMeta =
+      const VerificationMeta('supplierNameOverride');
+  @override
+  late final GeneratedColumn<String> supplierNameOverride =
+      GeneratedColumn<String>(
+        'supplier_name_override',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _supplierIceOverrideMeta =
+      const VerificationMeta('supplierIceOverride');
+  @override
+  late final GeneratedColumn<String> supplierIceOverride =
+      GeneratedColumn<String>(
+        'supplier_ice_override',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _isActiveMeta = const VerificationMeta(
     'isActive',
   );
@@ -9030,6 +9075,10 @@ class $PurchasesTable extends Purchases
     paidAmount,
     status,
     notes,
+    paymentMethod,
+    companyBranch,
+    supplierNameOverride,
+    supplierIceOverride,
     isActive,
     createdAt,
   ];
@@ -9100,6 +9149,42 @@ class $PurchasesTable extends Purchases
         notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
       );
     }
+    if (data.containsKey('payment_method')) {
+      context.handle(
+        _paymentMethodMeta,
+        paymentMethod.isAcceptableOrUnknown(
+          data['payment_method']!,
+          _paymentMethodMeta,
+        ),
+      );
+    }
+    if (data.containsKey('company_branch')) {
+      context.handle(
+        _companyBranchMeta,
+        companyBranch.isAcceptableOrUnknown(
+          data['company_branch']!,
+          _companyBranchMeta,
+        ),
+      );
+    }
+    if (data.containsKey('supplier_name_override')) {
+      context.handle(
+        _supplierNameOverrideMeta,
+        supplierNameOverride.isAcceptableOrUnknown(
+          data['supplier_name_override']!,
+          _supplierNameOverrideMeta,
+        ),
+      );
+    }
+    if (data.containsKey('supplier_ice_override')) {
+      context.handle(
+        _supplierIceOverrideMeta,
+        supplierIceOverride.isAcceptableOrUnknown(
+          data['supplier_ice_override']!,
+          _supplierIceOverrideMeta,
+        ),
+      );
+    }
     if (data.containsKey('is_active')) {
       context.handle(
         _isActiveMeta,
@@ -9167,6 +9252,22 @@ class $PurchasesTable extends Purchases
         DriftSqlType.string,
         data['${effectivePrefix}notes'],
       ),
+      paymentMethod: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payment_method'],
+      ),
+      companyBranch: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}company_branch'],
+      ),
+      supplierNameOverride: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}supplier_name_override'],
+      ),
+      supplierIceOverride: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}supplier_ice_override'],
+      ),
       isActive:
           attachedDatabase.typeMapping.read(
             DriftSqlType.bool,
@@ -9201,6 +9302,10 @@ class PurchaseEntity extends DataClass implements Insertable<PurchaseEntity> {
   final Decimal paidAmount;
   final String status;
   final String? notes;
+  final String? paymentMethod;
+  final String? companyBranch;
+  final String? supplierNameOverride;
+  final String? supplierIceOverride;
   final bool isActive;
   final DateTime createdAt;
   const PurchaseEntity({
@@ -9213,6 +9318,10 @@ class PurchaseEntity extends DataClass implements Insertable<PurchaseEntity> {
     required this.paidAmount,
     required this.status,
     this.notes,
+    this.paymentMethod,
+    this.companyBranch,
+    this.supplierNameOverride,
+    this.supplierIceOverride,
     required this.isActive,
     required this.createdAt,
   });
@@ -9238,6 +9347,18 @@ class PurchaseEntity extends DataClass implements Insertable<PurchaseEntity> {
     if (!nullToAbsent || notes != null) {
       map['notes'] = Variable<String>(notes);
     }
+    if (!nullToAbsent || paymentMethod != null) {
+      map['payment_method'] = Variable<String>(paymentMethod);
+    }
+    if (!nullToAbsent || companyBranch != null) {
+      map['company_branch'] = Variable<String>(companyBranch);
+    }
+    if (!nullToAbsent || supplierNameOverride != null) {
+      map['supplier_name_override'] = Variable<String>(supplierNameOverride);
+    }
+    if (!nullToAbsent || supplierIceOverride != null) {
+      map['supplier_ice_override'] = Variable<String>(supplierIceOverride);
+    }
     map['is_active'] = Variable<bool>(isActive);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
@@ -9255,6 +9376,22 @@ class PurchaseEntity extends DataClass implements Insertable<PurchaseEntity> {
       status: Value(status),
       notes:
           notes == null && nullToAbsent ? const Value.absent() : Value(notes),
+      paymentMethod:
+          paymentMethod == null && nullToAbsent
+              ? const Value.absent()
+              : Value(paymentMethod),
+      companyBranch:
+          companyBranch == null && nullToAbsent
+              ? const Value.absent()
+              : Value(companyBranch),
+      supplierNameOverride:
+          supplierNameOverride == null && nullToAbsent
+              ? const Value.absent()
+              : Value(supplierNameOverride),
+      supplierIceOverride:
+          supplierIceOverride == null && nullToAbsent
+              ? const Value.absent()
+              : Value(supplierIceOverride),
       isActive: Value(isActive),
       createdAt: Value(createdAt),
     );
@@ -9275,6 +9412,14 @@ class PurchaseEntity extends DataClass implements Insertable<PurchaseEntity> {
       paidAmount: serializer.fromJson<Decimal>(json['paidAmount']),
       status: serializer.fromJson<String>(json['status']),
       notes: serializer.fromJson<String?>(json['notes']),
+      paymentMethod: serializer.fromJson<String?>(json['paymentMethod']),
+      companyBranch: serializer.fromJson<String?>(json['companyBranch']),
+      supplierNameOverride: serializer.fromJson<String?>(
+        json['supplierNameOverride'],
+      ),
+      supplierIceOverride: serializer.fromJson<String?>(
+        json['supplierIceOverride'],
+      ),
       isActive: serializer.fromJson<bool>(json['isActive']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
@@ -9292,6 +9437,10 @@ class PurchaseEntity extends DataClass implements Insertable<PurchaseEntity> {
       'paidAmount': serializer.toJson<Decimal>(paidAmount),
       'status': serializer.toJson<String>(status),
       'notes': serializer.toJson<String?>(notes),
+      'paymentMethod': serializer.toJson<String?>(paymentMethod),
+      'companyBranch': serializer.toJson<String?>(companyBranch),
+      'supplierNameOverride': serializer.toJson<String?>(supplierNameOverride),
+      'supplierIceOverride': serializer.toJson<String?>(supplierIceOverride),
       'isActive': serializer.toJson<bool>(isActive),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
@@ -9307,6 +9456,10 @@ class PurchaseEntity extends DataClass implements Insertable<PurchaseEntity> {
     Decimal? paidAmount,
     String? status,
     Value<String?> notes = const Value.absent(),
+    Value<String?> paymentMethod = const Value.absent(),
+    Value<String?> companyBranch = const Value.absent(),
+    Value<String?> supplierNameOverride = const Value.absent(),
+    Value<String?> supplierIceOverride = const Value.absent(),
     bool? isActive,
     DateTime? createdAt,
   }) => PurchaseEntity(
@@ -9319,6 +9472,18 @@ class PurchaseEntity extends DataClass implements Insertable<PurchaseEntity> {
     paidAmount: paidAmount ?? this.paidAmount,
     status: status ?? this.status,
     notes: notes.present ? notes.value : this.notes,
+    paymentMethod:
+        paymentMethod.present ? paymentMethod.value : this.paymentMethod,
+    companyBranch:
+        companyBranch.present ? companyBranch.value : this.companyBranch,
+    supplierNameOverride:
+        supplierNameOverride.present
+            ? supplierNameOverride.value
+            : this.supplierNameOverride,
+    supplierIceOverride:
+        supplierIceOverride.present
+            ? supplierIceOverride.value
+            : this.supplierIceOverride,
     isActive: isActive ?? this.isActive,
     createdAt: createdAt ?? this.createdAt,
   );
@@ -9341,6 +9506,22 @@ class PurchaseEntity extends DataClass implements Insertable<PurchaseEntity> {
           data.paidAmount.present ? data.paidAmount.value : this.paidAmount,
       status: data.status.present ? data.status.value : this.status,
       notes: data.notes.present ? data.notes.value : this.notes,
+      paymentMethod:
+          data.paymentMethod.present
+              ? data.paymentMethod.value
+              : this.paymentMethod,
+      companyBranch:
+          data.companyBranch.present
+              ? data.companyBranch.value
+              : this.companyBranch,
+      supplierNameOverride:
+          data.supplierNameOverride.present
+              ? data.supplierNameOverride.value
+              : this.supplierNameOverride,
+      supplierIceOverride:
+          data.supplierIceOverride.present
+              ? data.supplierIceOverride.value
+              : this.supplierIceOverride,
       isActive: data.isActive.present ? data.isActive.value : this.isActive,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
@@ -9358,6 +9539,10 @@ class PurchaseEntity extends DataClass implements Insertable<PurchaseEntity> {
           ..write('paidAmount: $paidAmount, ')
           ..write('status: $status, ')
           ..write('notes: $notes, ')
+          ..write('paymentMethod: $paymentMethod, ')
+          ..write('companyBranch: $companyBranch, ')
+          ..write('supplierNameOverride: $supplierNameOverride, ')
+          ..write('supplierIceOverride: $supplierIceOverride, ')
           ..write('isActive: $isActive, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -9375,6 +9560,10 @@ class PurchaseEntity extends DataClass implements Insertable<PurchaseEntity> {
     paidAmount,
     status,
     notes,
+    paymentMethod,
+    companyBranch,
+    supplierNameOverride,
+    supplierIceOverride,
     isActive,
     createdAt,
   );
@@ -9391,6 +9580,10 @@ class PurchaseEntity extends DataClass implements Insertable<PurchaseEntity> {
           other.paidAmount == this.paidAmount &&
           other.status == this.status &&
           other.notes == this.notes &&
+          other.paymentMethod == this.paymentMethod &&
+          other.companyBranch == this.companyBranch &&
+          other.supplierNameOverride == this.supplierNameOverride &&
+          other.supplierIceOverride == this.supplierIceOverride &&
           other.isActive == this.isActive &&
           other.createdAt == this.createdAt);
 }
@@ -9405,6 +9598,10 @@ class PurchasesCompanion extends UpdateCompanion<PurchaseEntity> {
   final Value<Decimal> paidAmount;
   final Value<String> status;
   final Value<String?> notes;
+  final Value<String?> paymentMethod;
+  final Value<String?> companyBranch;
+  final Value<String?> supplierNameOverride;
+  final Value<String?> supplierIceOverride;
   final Value<bool> isActive;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
@@ -9418,6 +9615,10 @@ class PurchasesCompanion extends UpdateCompanion<PurchaseEntity> {
     this.paidAmount = const Value.absent(),
     this.status = const Value.absent(),
     this.notes = const Value.absent(),
+    this.paymentMethod = const Value.absent(),
+    this.companyBranch = const Value.absent(),
+    this.supplierNameOverride = const Value.absent(),
+    this.supplierIceOverride = const Value.absent(),
     this.isActive = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -9432,6 +9633,10 @@ class PurchasesCompanion extends UpdateCompanion<PurchaseEntity> {
     required Decimal paidAmount,
     required String status,
     this.notes = const Value.absent(),
+    this.paymentMethod = const Value.absent(),
+    this.companyBranch = const Value.absent(),
+    this.supplierNameOverride = const Value.absent(),
+    this.supplierIceOverride = const Value.absent(),
     this.isActive = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -9452,6 +9657,10 @@ class PurchasesCompanion extends UpdateCompanion<PurchaseEntity> {
     Expression<String>? paidAmount,
     Expression<String>? status,
     Expression<String>? notes,
+    Expression<String>? paymentMethod,
+    Expression<String>? companyBranch,
+    Expression<String>? supplierNameOverride,
+    Expression<String>? supplierIceOverride,
     Expression<bool>? isActive,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
@@ -9466,6 +9675,12 @@ class PurchasesCompanion extends UpdateCompanion<PurchaseEntity> {
       if (paidAmount != null) 'paid_amount': paidAmount,
       if (status != null) 'status': status,
       if (notes != null) 'notes': notes,
+      if (paymentMethod != null) 'payment_method': paymentMethod,
+      if (companyBranch != null) 'company_branch': companyBranch,
+      if (supplierNameOverride != null)
+        'supplier_name_override': supplierNameOverride,
+      if (supplierIceOverride != null)
+        'supplier_ice_override': supplierIceOverride,
       if (isActive != null) 'is_active': isActive,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
@@ -9482,6 +9697,10 @@ class PurchasesCompanion extends UpdateCompanion<PurchaseEntity> {
     Value<Decimal>? paidAmount,
     Value<String>? status,
     Value<String?>? notes,
+    Value<String?>? paymentMethod,
+    Value<String?>? companyBranch,
+    Value<String?>? supplierNameOverride,
+    Value<String?>? supplierIceOverride,
     Value<bool>? isActive,
     Value<DateTime>? createdAt,
     Value<int>? rowid,
@@ -9496,6 +9715,10 @@ class PurchasesCompanion extends UpdateCompanion<PurchaseEntity> {
       paidAmount: paidAmount ?? this.paidAmount,
       status: status ?? this.status,
       notes: notes ?? this.notes,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
+      companyBranch: companyBranch ?? this.companyBranch,
+      supplierNameOverride: supplierNameOverride ?? this.supplierNameOverride,
+      supplierIceOverride: supplierIceOverride ?? this.supplierIceOverride,
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
@@ -9536,6 +9759,22 @@ class PurchasesCompanion extends UpdateCompanion<PurchaseEntity> {
     if (notes.present) {
       map['notes'] = Variable<String>(notes.value);
     }
+    if (paymentMethod.present) {
+      map['payment_method'] = Variable<String>(paymentMethod.value);
+    }
+    if (companyBranch.present) {
+      map['company_branch'] = Variable<String>(companyBranch.value);
+    }
+    if (supplierNameOverride.present) {
+      map['supplier_name_override'] = Variable<String>(
+        supplierNameOverride.value,
+      );
+    }
+    if (supplierIceOverride.present) {
+      map['supplier_ice_override'] = Variable<String>(
+        supplierIceOverride.value,
+      );
+    }
     if (isActive.present) {
       map['is_active'] = Variable<bool>(isActive.value);
     }
@@ -9560,6 +9799,10 @@ class PurchasesCompanion extends UpdateCompanion<PurchaseEntity> {
           ..write('paidAmount: $paidAmount, ')
           ..write('status: $status, ')
           ..write('notes: $notes, ')
+          ..write('paymentMethod: $paymentMethod, ')
+          ..write('companyBranch: $companyBranch, ')
+          ..write('supplierNameOverride: $supplierNameOverride, ')
+          ..write('supplierIceOverride: $supplierIceOverride, ')
           ..write('isActive: $isActive, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
@@ -16753,6 +16996,10 @@ typedef $$PurchasesTableCreateCompanionBuilder =
       required Decimal paidAmount,
       required String status,
       Value<String?> notes,
+      Value<String?> paymentMethod,
+      Value<String?> companyBranch,
+      Value<String?> supplierNameOverride,
+      Value<String?> supplierIceOverride,
       Value<bool> isActive,
       Value<DateTime> createdAt,
       Value<int> rowid,
@@ -16768,6 +17015,10 @@ typedef $$PurchasesTableUpdateCompanionBuilder =
       Value<Decimal> paidAmount,
       Value<String> status,
       Value<String?> notes,
+      Value<String?> paymentMethod,
+      Value<String?> companyBranch,
+      Value<String?> supplierNameOverride,
+      Value<String?> supplierIceOverride,
       Value<bool> isActive,
       Value<DateTime> createdAt,
       Value<int> rowid,
@@ -16826,6 +17077,26 @@ class $$PurchasesTableFilterComposer
 
   ColumnFilters<String> get notes => $composableBuilder(
     column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get paymentMethod => $composableBuilder(
+    column: $table.paymentMethod,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get companyBranch => $composableBuilder(
+    column: $table.companyBranch,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get supplierNameOverride => $composableBuilder(
+    column: $table.supplierNameOverride,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get supplierIceOverride => $composableBuilder(
+    column: $table.supplierIceOverride,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -16894,6 +17165,26 @@ class $$PurchasesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get paymentMethod => $composableBuilder(
+    column: $table.paymentMethod,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get companyBranch => $composableBuilder(
+    column: $table.companyBranch,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get supplierNameOverride => $composableBuilder(
+    column: $table.supplierNameOverride,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get supplierIceOverride => $composableBuilder(
+    column: $table.supplierIceOverride,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get isActive => $composableBuilder(
     column: $table.isActive,
     builder: (column) => ColumnOrderings(column),
@@ -16950,6 +17241,26 @@ class $$PurchasesTableAnnotationComposer
   GeneratedColumn<String> get notes =>
       $composableBuilder(column: $table.notes, builder: (column) => column);
 
+  GeneratedColumn<String> get paymentMethod => $composableBuilder(
+    column: $table.paymentMethod,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get companyBranch => $composableBuilder(
+    column: $table.companyBranch,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get supplierNameOverride => $composableBuilder(
+    column: $table.supplierNameOverride,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get supplierIceOverride => $composableBuilder(
+    column: $table.supplierIceOverride,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<bool> get isActive =>
       $composableBuilder(column: $table.isActive, builder: (column) => column);
 
@@ -16997,6 +17308,10 @@ class $$PurchasesTableTableManager
                 Value<Decimal> paidAmount = const Value.absent(),
                 Value<String> status = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
+                Value<String?> paymentMethod = const Value.absent(),
+                Value<String?> companyBranch = const Value.absent(),
+                Value<String?> supplierNameOverride = const Value.absent(),
+                Value<String?> supplierIceOverride = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -17010,6 +17325,10 @@ class $$PurchasesTableTableManager
                 paidAmount: paidAmount,
                 status: status,
                 notes: notes,
+                paymentMethod: paymentMethod,
+                companyBranch: companyBranch,
+                supplierNameOverride: supplierNameOverride,
+                supplierIceOverride: supplierIceOverride,
                 isActive: isActive,
                 createdAt: createdAt,
                 rowid: rowid,
@@ -17025,6 +17344,10 @@ class $$PurchasesTableTableManager
                 required Decimal paidAmount,
                 required String status,
                 Value<String?> notes = const Value.absent(),
+                Value<String?> paymentMethod = const Value.absent(),
+                Value<String?> companyBranch = const Value.absent(),
+                Value<String?> supplierNameOverride = const Value.absent(),
+                Value<String?> supplierIceOverride = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -17038,6 +17361,10 @@ class $$PurchasesTableTableManager
                 paidAmount: paidAmount,
                 status: status,
                 notes: notes,
+                paymentMethod: paymentMethod,
+                companyBranch: companyBranch,
+                supplierNameOverride: supplierNameOverride,
+                supplierIceOverride: supplierIceOverride,
                 isActive: isActive,
                 createdAt: createdAt,
                 rowid: rowid,

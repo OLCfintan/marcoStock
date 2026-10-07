@@ -418,7 +418,9 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
                 },
                 child: ListTile(
                   onTap: () {
-                    PaymentDialog.show(context, entityId: inv.id, entityType: 'INVOICE', partnerId: widget.id, currentTotal: inv.total, currentlyPaid: inv.paidAmount);
+                    if (inv.documentType == 'BON') {
+                      PaymentDialog.show(context, entityId: inv.id, entityType: 'INVOICE', partnerId: widget.id, currentTotal: inv.total, currentlyPaid: inv.paidAmount);
+                    }
                   },
                   leading: const Icon(Icons.receipt_long, color: Colors.blue),
                   title: Text('${inv.documentType == 'FACTURE_DUMMY' ? 'FACTURE' : inv.documentType} #${inv.invoiceNumber}' + (inv.clientNameOverride != null && inv.clientNameOverride!.isNotEmpty ? ' - ${inv.clientNameOverride}' : '')),
@@ -426,7 +428,10 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Date: ${inv.date.toString().split(' ')[0]}'),
-                      Text('${inv.total.toStringAsFixed(2)} Dhs - ${inv.status}', style: TextStyle(fontWeight: FontWeight.bold, color: inv.status == 'PAID' ? Colors.green : (inv.status == 'PARTIAL' ? Colors.orange : Colors.red))),
+                      if (inv.documentType == 'BON')
+                        Text('${inv.total.toStringAsFixed(2)} Dhs - ${inv.status}', style: TextStyle(fontWeight: FontWeight.bold, color: inv.status == 'PAID' ? Colors.green : (inv.status == 'PARTIAL' ? Colors.orange : Colors.red)))
+                      else
+                        Text('${inv.total.toStringAsFixed(2)} Dhs', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
                     ]
                   ),
                   trailing: PopupMenuButton<String>(
@@ -436,9 +441,9 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
                         if (options != null && context.mounted) {
                           Navigator.push(context, MaterialPageRoute(builder: (_) => PdfPreviewScreen(title: "Invoice ${inv.invoiceNumber}", buildPdf: () => ref.read(pdfGeneratorProvider).generateInvoicePdf(inv.id, options))));
                         }
-                      } else if (value == 'record_payment') {
+                      } else if (value == 'record_payment' && inv.documentType == 'BON') {
                         PaymentDialog.show(context, entityId: inv.id, entityType: 'INVOICE', partnerId: widget.id, currentTotal: inv.total, currentlyPaid: inv.paidAmount);
-                      } else if (value == 'view_payments') {
+                      } else if (value == 'view_payments' && inv.documentType == 'BON') {
                         ViewPaymentsDialog.show(context, entityId: inv.id, entityType: 'INVOICE');
                       } else if (value == 'delete') {
                         final userId = ref.read(currentUserProvider)?.id ?? '';
@@ -447,8 +452,10 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
                     },
                     itemBuilder: (context) => [
                       PopupMenuItem(value: 'print', child: Text(AppLocalizations.of(context)?.printDocument ?? 'Print')),
-                      PopupMenuItem(value: 'record_payment', child: Text(AppLocalizations.of(context)?.recordPayment ?? 'Record Payment')),
-                      PopupMenuItem(value: 'view_payments', child: Text(AppLocalizations.of(context)?.viewPaymentsChecks ?? 'View Payments')),
+                      if (inv.documentType == 'BON')
+                        PopupMenuItem(value: 'record_payment', child: Text(AppLocalizations.of(context)?.recordPayment ?? 'Record Payment')),
+                      if (inv.documentType == 'BON')
+                        PopupMenuItem(value: 'view_payments', child: Text(AppLocalizations.of(context)?.viewPaymentsChecks ?? 'View Payments')),
                       if (ref.watch(currentUserProvider)?.role == 'ADMIN')
                         PopupMenuItem(value: 'delete', child: Text(AppLocalizations.of(context)?.deleteStr ?? 'Delete', style: const TextStyle(color: Colors.red))),
                     ],

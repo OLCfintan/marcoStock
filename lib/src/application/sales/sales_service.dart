@@ -131,7 +131,7 @@ class SalesService {
   Future<void> executeSale(SaleRequest request) async {
     await _db.transaction(() async {
       final client = await (_db.select(_db.clients)..where((t) => t.id.equals(request.clientId))).getSingleOrNull();
-      final locationId = (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL' || client?.id == 'MAGAZIN_01') ? AppLocations.baseWarehouse : AppLocations.magazin;
+      final locationId = (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL') ? AppLocations.baseWarehouse : AppLocations.magazin;
 
       final invoiceId = _uuid.v4();
       final date = request.customDate ?? DateTime.now();
@@ -202,7 +202,7 @@ class SalesService {
             locationId: locationId,
           );
           
-          if (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL' || client?.id == 'MAGAZIN_01') {
+          if (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL') {
             await _restoreStock(
               productId: line.productId,
               quantity: line.quantity,
@@ -320,7 +320,7 @@ class SalesService {
       if (invoice.clientId != null) {
         client = await (_db.select(_db.clients)..where((t) => t.id.equals(invoice.clientId!))).getSingleOrNull();
       }
-      final locationId = (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL' || client?.id == 'MAGAZIN_01') ? AppLocations.baseWarehouse : AppLocations.magazin;
+      final locationId = (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL') ? AppLocations.baseWarehouse : AppLocations.magazin;
 
       if (invoice.documentType != 'COMMANDE' && invoice.documentType != 'FACTURE_DUMMY' && invoice.documentType != 'FACTURE') {
         for (final line in lines) {
@@ -335,7 +335,7 @@ class SalesService {
           );
 
           // If it was a Magazin or Special client (transfer), reverse the inbound to Magazin
-          if (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL' || client?.id == 'MAGAZIN_01') {
+          if (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL') {
             await _deductStock(
               productId: line.productId,
               quantity: line.quantity,
@@ -382,7 +382,7 @@ class SalesService {
       if (invoice.clientId != null) {
         client = await (_db.select(_db.clients)..where((t) => t.id.equals(invoice.clientId!))).getSingleOrNull();
       }
-      final locationId = (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL' || client?.id == 'MAGAZIN_01') ? AppLocations.baseWarehouse : AppLocations.magazin;
+      final locationId = (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL') ? AppLocations.baseWarehouse : AppLocations.magazin;
 
       if (invoice.documentType != 'COMMANDE' && invoice.documentType != 'FACTURE_DUMMY' && invoice.documentType != 'FACTURE') {
         for (final line in lines) {
@@ -398,7 +398,7 @@ class SalesService {
           );
 
           // Re-apply Magazin transfer if Magazin or Special client
-          if (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL' || client?.id == 'MAGAZIN_01') {
+          if (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL') {
             await _restoreStock(
               productId: line.productId,
               quantity: line.quantity,
@@ -551,7 +551,7 @@ class SalesService {
   Future<void> processReturn(ReturnRequest request) async {
     await _db.transaction(() async {
       final client = await (_db.select(_db.clients)..where((t) => t.id.equals(request.clientId))).getSingleOrNull();
-      final locationId = (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL' || client?.id == 'MAGAZIN_01') ? AppLocations.baseWarehouse : AppLocations.magazin;
+      final locationId = (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL') ? AppLocations.baseWarehouse : AppLocations.magazin;
 
       final invoiceId = _uuid.v4();
       final date = DateTime.now();
@@ -611,7 +611,7 @@ class SalesService {
         
 
         // If Magazin or Special client is returning goods to base, deduct from Magazin
-        if (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL' || client?.id == 'MAGAZIN_01') {
+        if (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL') {
           await _deductStock(
             productId: line.productId,
             quantity: line.quantity,
@@ -844,7 +844,7 @@ class SalesService {
       if (invoice.clientId != null) {
         client = await (_db.select(_db.clients)..where((t) => t.id.equals(invoice.clientId!))).getSingleOrNull();
       }
-      final locationId = (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL' || client?.id == 'MAGAZIN_01') ? AppLocations.baseWarehouse : AppLocations.magazin;
+      final locationId = (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL') ? AppLocations.baseWarehouse : AppLocations.magazin;
 
       // Reverse old lines
       if (invoice.documentType != 'COMMANDE' && invoice.documentType != 'FACTURE_DUMMY' && invoice.documentType != 'FACTURE') {
@@ -858,7 +858,7 @@ class SalesService {
             locationId: locationId,
           );
 
-          if (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL' || client?.id == 'MAGAZIN_01') {
+          if (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL') {
             await _deductStock(
               productId: line.productId,
               quantity: line.quantity,
@@ -918,7 +918,7 @@ class SalesService {
             locationId: locationId,
           );
           
-          if (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL' || client?.id == 'MAGAZIN_01') {
+          if (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL') {
             await _restoreStock(
               productId: line.productId,
               quantity: line.quantity,

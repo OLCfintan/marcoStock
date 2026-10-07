@@ -21,15 +21,16 @@ class GarbageScreen extends ConsumerStatefulWidget {
 }
 
 class _GarbageScreenState extends ConsumerState<GarbageScreen> {
-  Future<bool> _confirmRestore(BuildContext context) async {
+  Future<bool> _confirmRestore(BuildContext context, int count) async {
     final l10n = AppLocalizations.of(context);
     return await showDialog<bool>(
           context: context,
           builder:
               (ctx) => AlertDialog(
-                title: const Text('Confirm Restore'),
-                content: const Text(
-                  'Are you sure you want to restore the selected items?',
+                title: Text('Confirm Restore ($count items)'),
+                content: Text(
+                  'Are you sure you want to RESTORE the $count selected items?\nThey will be put back into the active lists.',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 actions: [
                   TextButton(
@@ -43,7 +44,7 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
                     onPressed: () => Navigator.pop(ctx, true),
                     child: Text(
                       l10n?.restoreStr ?? 'Restore',
-                      style: const TextStyle(color: Colors.white),
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
@@ -52,15 +53,16 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
         false;
   }
 
-  Future<bool> _confirmDelete(BuildContext context) async {
+  Future<bool> _confirmDelete(BuildContext context, int count) async {
     final l10n = AppLocalizations.of(context);
     return await showDialog<bool>(
           context: context,
           builder:
               (ctx) => AlertDialog(
-                title: const Text('Confirm Delete'),
-                content: const Text(
-                  'Are you sure you want to permanently delete? This cannot be undone.',
+                title: Text('Confirm Permanent Delete ($count items)'),
+                content: Text(
+                  'Are you sure you want to PERMANENTLY DELETE the $count selected items?\nThis action CANNOT be undone.',
+                  style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
                 ),
                 actions: [
                   TextButton(
@@ -74,7 +76,7 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
                     onPressed: () => Navigator.pop(ctx, true),
                     child: Text(
                       l10n?.deleteStr ?? 'Delete',
-                      style: const TextStyle(color: Colors.white),
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
@@ -99,7 +101,7 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
               icon: const Icon(Icons.restore, color: Colors.green),
               tooltip: AppLocalizations.of(context)!.restoreSelected,
               onPressed: () async {
-                if (!await _confirmRestore(context)) return;
+                if (!await _confirmRestore(context, _selectedIds.length)) return;
                 final db = ref.read(databaseProvider);
                 final userId = ref.read(currentUserProvider)?.id ?? '';
                 final salesSvc = ref.read(salesServiceProvider);
@@ -161,7 +163,7 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
               icon: const Icon(Icons.delete_forever, color: Colors.red),
               tooltip: AppLocalizations.of(context)!.permanentlyDeleteSelected,
               onPressed: () async {
-                if (!await _confirmDelete(context)) return;
+                if (!await _confirmDelete(context, _selectedIds.length)) return;
                 final db = ref.read(databaseProvider);
                 await db.transaction(() async {
                   for (final id in _selectedIds.toList()) {
