@@ -21,23 +21,66 @@ class GarbageScreen extends ConsumerStatefulWidget {
 }
 
 class _GarbageScreenState extends ConsumerState<GarbageScreen> {
+  Future<bool> _confirmRestore(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
+    return await showDialog<bool>(
+          context: context,
+          builder:
+              (ctx) => AlertDialog(
+                title: const Text('Confirm Restore'),
+                content: const Text(
+                  'Are you sure you want to restore the selected items?',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: Text(l10n?.cancel ?? 'Cancel'),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                    ),
+                    onPressed: () => Navigator.pop(ctx, true),
+                    child: Text(
+                      l10n?.restoreStr ?? 'Restore',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+        ) ??
+        false;
+  }
+
   Future<bool> _confirmDelete(BuildContext context) async {
     final l10n = AppLocalizations.of(context);
     return await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Confirm Delete'),
-        content: const Text('Are you sure you want to permanently delete? This cannot be undone.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n?.cancel ?? 'Cancel')),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n?.deleteStr ?? 'Delete', style: const TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    ) ?? false;
+          context: context,
+          builder:
+              (ctx) => AlertDialog(
+                title: const Text('Confirm Delete'),
+                content: const Text(
+                  'Are you sure you want to permanently delete? This cannot be undone.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: Text(l10n?.cancel ?? 'Cancel'),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                    ),
+                    onPressed: () => Navigator.pop(ctx, true),
+                    child: Text(
+                      l10n?.deleteStr ?? 'Delete',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+        ) ??
+        false;
   }
 
   final Set<String> _selectedIds = {};
@@ -56,7 +99,7 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
               icon: const Icon(Icons.restore, color: Colors.green),
               tooltip: AppLocalizations.of(context)!.restoreSelected,
               onPressed: () async {
-                if (!await _confirmDelete(context)) return;
+                if (!await _confirmRestore(context)) return;
                 final db = ref.read(databaseProvider);
                 final userId = ref.read(currentUserProvider)?.id ?? '';
                 final salesSvc = ref.read(salesServiceProvider);
@@ -89,7 +132,30 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
                       await (db.select(db.products)
                         ..where((t) => t.id.equals(id))).getSingleOrNull();
                   if (isProduct != null) {
-                    await (db.update(db.products)..where((t) => t.id.equals(id))).write(const ProductsCompanion(isActive: drift.Value(true)));
+                    await (db.update(db.products)
+                      ..where((t) => t.id.equals(id))).write(
+                      const ProductsCompanion(isActive: drift.Value(true)),
+                    );
+                    continue;
+                  }
+                  final isClient =
+                      await (db.select(db.clients)
+                        ..where((t) => t.id.equals(id))).getSingleOrNull();
+                  if (isClient != null) {
+                    await (db.update(db.clients)
+                      ..where((t) => t.id.equals(id))).write(
+                      const ClientsCompanion(isActive: drift.Value(true)),
+                    );
+                    continue;
+                  }
+                  final isSupplier =
+                      await (db.select(db.suppliers)
+                        ..where((t) => t.id.equals(id))).getSingleOrNull();
+                  if (isSupplier != null) {
+                    await (db.update(db.suppliers)
+                      ..where((t) => t.id.equals(id))).write(
+                      const SuppliersCompanion(isActive: drift.Value(true)),
+                    );
                     continue;
                   }
                 }
@@ -161,9 +227,30 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
                         await (db.select(db.products)
                           ..where((t) => t.id.equals(id))).getSingleOrNull();
                     if (isProduct != null) {
-                      await (db.delete(db.productConsumables)..where((t) => t.productId.equals(id) | t.consumableId.equals(id))).go();
-                      await (db.delete(db.stockBalances)..where((t) => t.productId.equals(id))).go();
-                      await (db.delete(db.products)..where((t) => t.id.equals(id))).go();
+                      await (db.delete(db.productConsumables)..where(
+                        (t) =>
+                            t.productId.equals(id) | t.consumableId.equals(id),
+                      )).go();
+                      await (db.delete(db.stockBalances)
+                        ..where((t) => t.productId.equals(id))).go();
+                      await (db.delete(db.products)
+                        ..where((t) => t.id.equals(id))).go();
+                      continue;
+                    }
+                    final isClient =
+                        await (db.select(db.clients)
+                          ..where((t) => t.id.equals(id))).getSingleOrNull();
+                    if (isClient != null) {
+                      await (db.delete(db.clients)
+                        ..where((t) => t.id.equals(id))).go();
+                      continue;
+                    }
+                    final isSupplier =
+                        await (db.select(db.suppliers)
+                          ..where((t) => t.id.equals(id))).getSingleOrNull();
+                    if (isSupplier != null) {
+                      await (db.delete(db.suppliers)
+                        ..where((t) => t.id.equals(id))).go();
                       continue;
                     }
                   }
@@ -203,34 +290,82 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
           Expanded(
             child: ListView(
               children: [
+                _buildSection<ClientEntity>(
+                  context,
+                  'Deleted Clients',
+                  (db.select(db.clients)
+                    ..where((t) => t.isActive.equals(false))).watch(),
+                  (client) => client.id,
+                  (client) => client.name,
+                  (client) async {
+                    await (db.update(db.clients)
+                      ..where((t) => t.id.equals(client.id))).write(
+                      const ClientsCompanion(isActive: drift.Value(true)),
+                    );
+                  },
+                  (client) async {
+                    await (db.delete(db.clients)
+                      ..where((t) => t.id.equals(client.id))).go();
+                  },
+                  buildSubtitle:
+                      (client) => Text('Phone: ${client.phone ?? "N/A"}'),
+                ),
+                _buildSection<SupplierEntity>(
+                  context,
+                  'Deleted Suppliers',
+                  (db.select(db.suppliers)
+                    ..where((t) => t.isActive.equals(false))).watch(),
+                  (supplier) => supplier.id,
+                  (supplier) => supplier.name,
+                  (supplier) async {
+                    await (db.update(db.suppliers)
+                      ..where((t) => t.id.equals(supplier.id))).write(
+                      const SuppliersCompanion(isActive: drift.Value(true)),
+                    );
+                  },
+                  (supplier) async {
+                    await (db.delete(db.suppliers)
+                      ..where((t) => t.id.equals(supplier.id))).go();
+                  },
+                  buildSubtitle:
+                      (supplier) => Text('Phone: ${supplier.phone ?? "N/A"}'),
+                ),
                 _buildSection<ProductEntity>(
                   context,
                   'Deleted Products',
                   (db.select(db.products)
-                        ..where((t) => t.isActive.equals(false))
-                        )
-                      .watch(),
+                    ..where((t) => t.isActive.equals(false))).watch(),
                   (product) => product.id,
                   (product) => product.name,
                   (product) async {
-                    await (db.update(db.products)..where((t) => t.id.equals(product.id))).write(const ProductsCompanion(isActive: drift.Value(true)));
+                    await (db.update(db.products)
+                      ..where((t) => t.id.equals(product.id))).write(
+                      const ProductsCompanion(isActive: drift.Value(true)),
+                    );
                   },
                   (product) async {
                     await db.transaction(() async {
-                      await (db.delete(db.productConsumables)..where((t) => t.productId.equals(product.id) | t.consumableId.equals(product.id))).go();
-                      await (db.delete(db.stockBalances)..where((t) => t.productId.equals(product.id))).go();
-                      await (db.delete(db.products)..where((t) => t.id.equals(product.id))).go();
+                      await (db.delete(db.productConsumables)..where(
+                        (t) =>
+                            t.productId.equals(product.id) |
+                            t.consumableId.equals(product.id),
+                      )).go();
+                      await (db.delete(db.stockBalances)
+                        ..where((t) => t.productId.equals(product.id))).go();
+                      await (db.delete(db.products)
+                        ..where((t) => t.id.equals(product.id))).go();
                     });
                   },
-                  buildSubtitle: (product) => Text('Ref: ${product.reference} | Price: ${product.sellingPrice}'),
+                  buildSubtitle:
+                      (product) => Text(
+                        'Ref: ${product.reference} | Price: ${product.sellingPrice}',
+                      ),
                 ),
                 _buildSection<InvoiceEntity>(
                   context,
                   AppLocalizations.of(context)!.deletedInvoicesBons,
                   (db.select(db.invoices)
-                        ..where((t) => t.isActive.equals(false))
-                        )
-                      .watch(),
+                    ..where((t) => t.isActive.equals(false))).watch(),
                   (invoice) => invoice.id,
                   (invoice) =>
                       '${invoice.documentType} - ${invoice.invoiceNumber}',
@@ -290,9 +425,7 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
                   context,
                   AppLocalizations.of(context)!.deletedPurchases,
                   (db.select(db.purchases)
-                        ..where((t) => t.isActive.equals(false))
-                        )
-                      .watch(),
+                    ..where((t) => t.isActive.equals(false))).watch(),
                   (purchase) => purchase.id,
                   (purchase) =>
                       '${AppLocalizations.of(context)!.pdfPurchase} - ${purchase.purchaseNumber}',
@@ -350,9 +483,7 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
                   context,
                   AppLocalizations.of(context)!.deletedPaymentsChecks,
                   (db.select(db.payments)
-                        ..where((t) => t.isActive.equals(false))
-                        )
-                      .watch(),
+                    ..where((t) => t.isActive.equals(false))).watch(),
                   (payment) => payment.id,
                   (payment) =>
                       '${payment.method} - ${payment.amount} ${AppLocalizations.of(context)!.dhsStr}',
@@ -404,7 +535,7 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
               if (_searchQuery.isEmpty) return true;
               final q = _searchQuery.toLowerCase();
               final aq = ArabicTransliterator.transliterate(_searchQuery);
-              
+
               String searchable = getName(item);
               if (item is ProductEntity) {
                 searchable += ' ${item.reference} ${item.sellingPrice}';
@@ -414,7 +545,7 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
                 searchable += ' ${item.total}';
               }
               searchable = searchable.toLowerCase();
-              
+
               return searchable.contains(q) || searchable.contains(aq);
             }).toList();
 
