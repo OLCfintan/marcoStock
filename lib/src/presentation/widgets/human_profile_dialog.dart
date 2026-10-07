@@ -11,6 +11,8 @@ import "../documents/pdf_preview_screen.dart";
 import 'package:marko_group/src/localization/arb/app_localizations.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:flutter/services.dart';
 import '../../utils/arabic_transliterator.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -189,7 +191,7 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
     }
     
     final balanceColor = currentBalance > Decimal.zero ? Colors.red : Colors.green;
-    final String balanceLabel = widget.type == HumanType.employee ? 'Salary Owed' : 'Balance';
+    final String balanceLabel = widget.type == HumanType.employee ? 'Salary Owed' : 'Total Debt';
 
     return Scaffold(
       appBar: AppBar(
@@ -295,6 +297,40 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
                     Text(balanceLabel, style: const TextStyle(fontSize: 14, color: Colors.grey)),
                     Text('${currentBalance.toStringAsFixed(2)} Dhs', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: balanceColor)),
                   ],
+                ),
+                const SizedBox(width: 16),
+                Builder(
+                  builder: (ctx) {
+                    String qrData = '';
+                    if (widget.type == HumanType.client) {
+                      qrData = 'TYPE: CLIENT\nNAME: ${widget.name}\nPHONE: ${widget.phone ?? ''}\nEMAIL: ${widget.email ?? ''}\nTIER: ${widget.clientTier ?? ''}';
+                    } else if (widget.type == HumanType.supplier) {
+                      qrData = 'TYPE: SUPPLIER\nNAME: ${widget.name}\nPHONE: ${widget.phone ?? ''}\nEMAIL: ${widget.email ?? ''}';
+                    } else {
+                      qrData = 'TYPE: EMPLOYEE\nNAME: ${widget.name}\nPHONE: ${widget.phone ?? ''}\nROLE: ${widget.roleOrType}';
+                    }
+                    return InkWell(
+                      onTap: () async {
+                        await Clipboard.setData(ClipboardData(text: qrData));
+                        if (ctx.mounted) {
+                          ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Profile info copied to clipboard')));
+                        }
+                      },
+                      child: Tooltip(
+                        message: 'Scan or click to copy',
+                        child: Container(
+                          color: Colors.white,
+                          padding: const EdgeInsets.all(4),
+                          child: QrImageView(
+                            data: qrData,
+                            version: QrVersions.auto,
+                            size: 80.0,
+                            backgroundColor: Colors.white,
+                          ),
+                        ),
+                      ),
+                    );
+                  }
                 ),
               ],
             ),

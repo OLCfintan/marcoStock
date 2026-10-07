@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:drift/drift.dart' as drift;
 import '../widgets/logo_loader.dart';
@@ -106,6 +108,33 @@ class _ProductProfileDialogState extends ConsumerState<ProductProfileDialog> wit
                       Text('Tier 3: ${p.tier3Price!.toStringAsFixed(2)}', style: const TextStyle(fontSize: 14, color: Colors.blue)),
                     ],
                   ],
+                ),
+                const SizedBox(width: 16),
+                Builder(
+                  builder: (ctx) {
+                    final qrData = 'TYPE: PRODUCT\nNAME: ${p.name}\nREFERENCE: ${p.reference}\nNAME_AR: ${p.nameAr ?? ''}\nNAME_FR: ${p.nameFr ?? ''}\nNAME_ES: ${p.nameEs ?? ''}\nUNIT: ${p.unit}\nUNIT_SIZE: ${p.unitSize}\nUNITS_PER_BOX: ${p.unitsPerBox ?? ''}\nPURCHASE_PRICE: ${p.purchasePrice}\nSELLING_PRICE: ${p.sellingPrice}\nTIER2_PRICE: ${p.tier2Price ?? ''}\nTIER3_PRICE: ${p.tier3Price ?? ''}\nMIN_STOCK: ${p.minimumStockAlert}\nBASE_MIN_STOCK: ${p.baseMinStock ?? ''}\nMAGAZIN_MIN_STOCK: ${p.magazinMinStock ?? ''}\nPACKAGING: ${p.packagingType ?? ''}';
+                    return InkWell(
+                      onTap: () async {
+                        await Clipboard.setData(ClipboardData(text: qrData));
+                        if (ctx.mounted) {
+                          ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Product info copied to clipboard')));
+                        }
+                      },
+                      child: Tooltip(
+                        message: 'Scan or click to copy',
+                        child: Container(
+                          color: Colors.white,
+                          padding: const EdgeInsets.all(4),
+                          child: QrImageView(
+                            data: qrData,
+                            version: QrVersions.auto,
+                            size: 80.0,
+                            backgroundColor: Colors.white,
+                          ),
+                        ),
+                      ),
+                    );
+                  }
                 ),
               ],
             ),

@@ -94,18 +94,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get systemMaintenance => 'Mantenimiento del Sistema';
 
   @override
-  String get forceSync => 'Forzar Sincronización';
-
-  @override
-  String get pushPendingChanges => 'Enviar cambios pendientes a la nube';
-
-  @override
-  String get syncing => 'Sincronizando...';
-
-  @override
-  String get syncComplete => 'Sincronización Completa';
-
-  @override
   String get checkForUpdates => 'Buscar Actualizaciones';
 
   @override

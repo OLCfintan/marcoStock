@@ -20,6 +20,8 @@ class PaymentService {
     String? clientId,
     String? supplierId,
     String? employeeId,
+    String? invoiceId,
+    String? purchaseId,
     required Decimal amount,
     required String method,
     String? checkImagePath,
@@ -45,41 +47,30 @@ class PaymentService {
         return;
       }
 
-      // 2. Client Payment (FIFO Allocation)
+      // 2. Client Payment
       if (clientId != null) {
         final client = await (_db.select(_db.clients)..where((t) => t.id.equals(clientId))).getSingleOrNull();
         if (client != null && client.type != 'TEMP') {
           // Update client balance
           await _db.update(_db.clients).replace(client.copyWith(balance: client.balance - amount));
           
-          // FIFO Allocation to Invoices
-          Decimal remainingToAllocate = amount;
-          
-          final unpaidInvoices = await (_db.select(_db.invoices)
-            ..where((t) => t.clientId.equals(clientId) & t.isActive.equals(true) & t.status.isNotIn(['PAID', 'CANCELLED']))
-            ..orderBy([(t) => drift.OrderingTerm(expression: t.date, mode: drift.OrderingMode.asc)])
-          ).get();
-
-          for (final inv in unpaidInvoices) {
-            if (remainingToAllocate <= Decimal.zero) break;
-            
-            final invoiceDebt = inv.total - inv.paidAmount;
-            final allocation = remainingToAllocate > invoiceDebt ? invoiceDebt : remainingToAllocate;
-            
-            final newPaid = inv.paidAmount + allocation;
-            final newStatus = newPaid >= inv.total ? 'PAID' : 'PARTIAL';
-            
-            await (_db.update(_db.invoices)..where((t) => t.id.equals(inv.id))).write(
-              InvoicesCompanion(status: drift.Value(newStatus), paidAmount: drift.Value(newPaid))
-            );
-            
-            remainingToAllocate -= allocation;
+          if (invoiceId != null) {
+            // Explicitly pay a specific invoice
+            final inv = await (_db.select(_db.invoices)..where((t) => t.id.equals(invoiceId))).getSingleOrNull();
+            if (inv != null) {
+              final newPaid = inv.paidAmount + amount;
+              final newStatus = newPaid >= inv.total ? 'PAID' : 'PARTIAL';
+              await (_db.update(_db.invoices)..where((t) => t.id.equals(inv.id))).write(
+                InvoicesCompanion(status: drift.Value(newStatus), paidAmount: drift.Value(newPaid))
+              );
+            }
           }
           
-          // Record Payment (we don't link to a single invoiceId because it may span multiple)
+          // Record Payment
           await _db.into(_db.payments).insert(PaymentsCompanion.insert(
             id: paymentId,
             clientId: drift.Value(clientId),
+            invoiceId: drift.Value(invoiceId),
             amount: amount,
             method: method,
             checkImagePath: drift.Value(checkImagePath),
@@ -90,40 +81,29 @@ class PaymentService {
         return;
       }
 
-      // 3. Supplier Payment (FIFO Allocation)
+      // 3. Supplier Payment
       if (supplierId != null) {
         final supplier = await (_db.select(_db.suppliers)..where((t) => t.id.equals(supplierId))).getSingleOrNull();
         if (supplier != null) {
           // Update supplier balance
           await _db.update(_db.suppliers).replace(supplier.copyWith(balance: supplier.balance - amount));
           
-          // FIFO Allocation to Purchases
-          Decimal remainingToAllocate = amount;
-          
-          final unpaidPurchases = await (_db.select(_db.purchases)
-            ..where((t) => t.supplierId.equals(supplierId) & t.isActive.equals(true) & t.status.isNotIn(['PAID', 'CANCELLED']))
-            ..orderBy([(t) => drift.OrderingTerm(expression: t.date, mode: drift.OrderingMode.asc)])
-          ).get();
-
-          for (final pur in unpaidPurchases) {
-            if (remainingToAllocate <= Decimal.zero) break;
-            
-            final purchaseDebt = pur.total - pur.paidAmount;
-            final allocation = remainingToAllocate > purchaseDebt ? purchaseDebt : remainingToAllocate;
-            
-            final newPaid = pur.paidAmount + allocation;
-            final newStatus = newPaid >= pur.total ? 'PAID' : 'PARTIAL';
-            
-            await (_db.update(_db.purchases)..where((t) => t.id.equals(pur.id))).write(
-              PurchasesCompanion(status: drift.Value(newStatus), paidAmount: drift.Value(newPaid))
-            );
-            
-            remainingToAllocate -= allocation;
+          if (purchaseId != null) {
+            // Explicitly pay a specific purchase
+            final pur = await (_db.select(_db.purchases)..where((t) => t.id.equals(purchaseId))).getSingleOrNull();
+            if (pur != null) {
+              final newPaid = pur.paidAmount + amount;
+              final newStatus = newPaid >= pur.total ? 'PAID' : 'PARTIAL';
+              await (_db.update(_db.purchases)..where((t) => t.id.equals(pur.id))).write(
+                PurchasesCompanion(status: drift.Value(newStatus), paidAmount: drift.Value(newPaid))
+              );
+            }
           }
           
           await _db.into(_db.payments).insert(PaymentsCompanion.insert(
             id: paymentId,
             supplierId: drift.Value(supplierId),
+            purchaseId: drift.Value(purchaseId),
             amount: amount,
             method: method,
             checkImagePath: drift.Value(checkImagePath),
@@ -183,28 +163,7 @@ class PaymentService {
         if (client != null && client.type != 'TEMP') {
           await _db.update(_db.clients).replace(client.copyWith(balance: client.balance + payment.amount));
           
-          if (payment.invoiceId == null) {
-            // LIFO De-allocation: We take away paid amount from the NEWEST paid invoices
-            Decimal remainingToReverse = payment.amount;
-            final paidInvoices = await (_db.select(_db.invoices)
-              ..where((t) => t.clientId.equals(payment.clientId!) & t.isActive.equals(true))
-              ..orderBy([(t) => drift.OrderingTerm(expression: t.date, mode: drift.OrderingMode.desc)])
-            ).get();
 
-            for (final inv in paidInvoices) {
-              if (inv.paidAmount <= Decimal.zero) continue;
-              if (remainingToReverse <= Decimal.zero) break;
-              
-              final reversal = remainingToReverse > inv.paidAmount ? inv.paidAmount : remainingToReverse;
-              final newPaid = inv.paidAmount - reversal;
-              final newStatus = newPaid >= inv.total ? 'PAID' : (newPaid > Decimal.zero ? 'PARTIAL' : 'UNPAID');
-              
-              await (_db.update(_db.invoices)..where((t) => t.id.equals(inv.id))).write(
-                InvoicesCompanion(status: drift.Value(newStatus), paidAmount: drift.Value(newPaid))
-              );
-              remainingToReverse -= reversal;
-            }
-          }
         }
       }
 
@@ -214,27 +173,7 @@ class PaymentService {
         if (supplier != null) {
           await _db.update(_db.suppliers).replace(supplier.copyWith(balance: supplier.balance + payment.amount));
           
-          if (payment.purchaseId == null) {
-            Decimal remainingToReverse = payment.amount;
-            final paidPurchases = await (_db.select(_db.purchases)
-              ..where((t) => t.supplierId.equals(payment.supplierId!) & t.isActive.equals(true))
-              ..orderBy([(t) => drift.OrderingTerm(expression: t.date, mode: drift.OrderingMode.desc)])
-            ).get();
 
-            for (final pur in paidPurchases) {
-              if (pur.paidAmount <= Decimal.zero) continue;
-              if (remainingToReverse <= Decimal.zero) break;
-              
-              final reversal = remainingToReverse > pur.paidAmount ? pur.paidAmount : remainingToReverse;
-              final newPaid = pur.paidAmount - reversal;
-              final newStatus = newPaid >= pur.total ? 'PAID' : (newPaid > Decimal.zero ? 'PARTIAL' : 'UNPAID');
-              
-              await (_db.update(_db.purchases)..where((t) => t.id.equals(pur.id))).write(
-                PurchasesCompanion(status: drift.Value(newStatus), paidAmount: drift.Value(newPaid))
-              );
-              remainingToReverse -= reversal;
-            }
-          }
         }
       }
 
@@ -299,26 +238,7 @@ class PaymentService {
         if (client != null && client.type != 'TEMP') {
           await _db.update(_db.clients).replace(client.copyWith(balance: client.balance - payment.amount));
           
-          if (payment.invoiceId == null) {
-            Decimal remainingToAllocate = payment.amount;
-            final unpaidInvoices = await (_db.select(_db.invoices)
-              ..where((t) => t.clientId.equals(payment.clientId!) & t.isActive.equals(true) & t.status.isNotIn(['PAID', 'CANCELLED']))
-              ..orderBy([(t) => drift.OrderingTerm(expression: t.date, mode: drift.OrderingMode.asc)])
-            ).get();
 
-            for (final inv in unpaidInvoices) {
-              if (remainingToAllocate <= Decimal.zero) break;
-              final invoiceDebt = inv.total - inv.paidAmount;
-              final allocation = remainingToAllocate > invoiceDebt ? invoiceDebt : remainingToAllocate;
-              final newPaid = inv.paidAmount + allocation;
-              final newStatus = newPaid >= inv.total ? 'PAID' : 'PARTIAL';
-              
-              await (_db.update(_db.invoices)..where((t) => t.id.equals(inv.id))).write(
-                InvoicesCompanion(status: drift.Value(newStatus), paidAmount: drift.Value(newPaid))
-              );
-              remainingToAllocate -= allocation;
-            }
-          }
         }
       }
 
@@ -328,26 +248,7 @@ class PaymentService {
         if (supplier != null) {
           await _db.update(_db.suppliers).replace(supplier.copyWith(balance: supplier.balance - payment.amount));
           
-          if (payment.purchaseId == null) {
-            Decimal remainingToAllocate = payment.amount;
-            final unpaidPurchases = await (_db.select(_db.purchases)
-              ..where((t) => t.supplierId.equals(payment.supplierId!) & t.isActive.equals(true) & t.status.isNotIn(['PAID', 'CANCELLED']))
-              ..orderBy([(t) => drift.OrderingTerm(expression: t.date, mode: drift.OrderingMode.asc)])
-            ).get();
 
-            for (final pur in unpaidPurchases) {
-              if (remainingToAllocate <= Decimal.zero) break;
-              final purchaseDebt = pur.total - pur.paidAmount;
-              final allocation = remainingToAllocate > purchaseDebt ? purchaseDebt : remainingToAllocate;
-              final newPaid = pur.paidAmount + allocation;
-              final newStatus = newPaid >= pur.total ? 'PAID' : 'PARTIAL';
-              
-              await (_db.update(_db.purchases)..where((t) => t.id.equals(pur.id))).write(
-                PurchasesCompanion(status: drift.Value(newStatus), paidAmount: drift.Value(newPaid))
-              );
-              remainingToAllocate -= allocation;
-            }
-          }
         }
       }
 

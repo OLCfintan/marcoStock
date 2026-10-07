@@ -106,68 +106,54 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
                 final purchSvc = ref.read(purchaseServiceProvider);
                 final paySvc = ref.read(paymentServiceProvider);
 
-                for (final id in _selectedIds.toList()) {
-                  final isInvoice =
-                      await (db.select(db.invoices)
-                        ..where((t) => t.id.equals(id))).getSingleOrNull();
-                  if (isInvoice != null) {
-                    await salesSvc.restoreInvoice(id, userId);
-                    continue;
+                try {
+                  for (final id in _selectedIds.toList()) {
+                    final isInvoice = await (db.select(db.invoices)..where((t) => t.id.equals(id))).getSingleOrNull();
+                    if (isInvoice != null) {
+                      await salesSvc.restoreInvoice(id, userId);
+                      continue;
+                    }
+                    final isPurchase = await (db.select(db.purchases)..where((t) => t.id.equals(id))).getSingleOrNull();
+                    if (isPurchase != null) {
+                      await purchSvc.restorePurchase(id, userId);
+                      continue;
+                    }
+                    final isPayment = await (db.select(db.payments)..where((t) => t.id.equals(id))).getSingleOrNull();
+                    if (isPayment != null) {
+                      await paySvc.restorePayment(id);
+                      continue;
+                    }
+                    final isProduct = await (db.select(db.products)..where((t) => t.id.equals(id))).getSingleOrNull();
+                    if (isProduct != null) {
+                      await (db.update(db.products)..where((t) => t.id.equals(id))).write(
+                        const ProductsCompanion(isActive: drift.Value(true)),
+                      );
+                      continue;
+                    }
+                    final isClient = await (db.select(db.clients)..where((t) => t.id.equals(id))).getSingleOrNull();
+                    if (isClient != null) {
+                      await (db.update(db.clients)..where((t) => t.id.equals(id))).write(
+                        const ClientsCompanion(isActive: drift.Value(true)),
+                      );
+                      continue;
+                    }
+                    final isSupplier = await (db.select(db.suppliers)..where((t) => t.id.equals(id))).getSingleOrNull();
+                    if (isSupplier != null) {
+                      await (db.update(db.suppliers)..where((t) => t.id.equals(id))).write(
+                        const SuppliersCompanion(isActive: drift.Value(true)),
+                      );
+                      continue;
+                    }
                   }
-                  final isPurchase =
-                      await (db.select(db.purchases)
-                        ..where((t) => t.id.equals(id))).getSingleOrNull();
-                  if (isPurchase != null) {
-                    await purchSvc.restorePurchase(id, userId);
-                    continue;
+                  
+                  setState(() => _selectedIds.clear());
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.selectedItemsRestored)));
                   }
-                  final isPayment =
-                      await (db.select(db.payments)
-                        ..where((t) => t.id.equals(id))).getSingleOrNull();
-                  if (isPayment != null) {
-                    await paySvc.restorePayment(id);
-                    continue;
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error restoring: $e')));
                   }
-                  final isProduct =
-                      await (db.select(db.products)
-                        ..where((t) => t.id.equals(id))).getSingleOrNull();
-                  if (isProduct != null) {
-                    await (db.update(db.products)
-                      ..where((t) => t.id.equals(id))).write(
-                      const ProductsCompanion(isActive: drift.Value(true)),
-                    );
-                    continue;
-                  }
-                  final isClient =
-                      await (db.select(db.clients)
-                        ..where((t) => t.id.equals(id))).getSingleOrNull();
-                  if (isClient != null) {
-                    await (db.update(db.clients)
-                      ..where((t) => t.id.equals(id))).write(
-                      const ClientsCompanion(isActive: drift.Value(true)),
-                    );
-                    continue;
-                  }
-                  final isSupplier =
-                      await (db.select(db.suppliers)
-                        ..where((t) => t.id.equals(id))).getSingleOrNull();
-                  if (isSupplier != null) {
-                    await (db.update(db.suppliers)
-                      ..where((t) => t.id.equals(id))).write(
-                      const SuppliersCompanion(isActive: drift.Value(true)),
-                    );
-                    continue;
-                  }
-                }
-                setState(() => _selectedIds.clear());
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        AppLocalizations.of(context)!.selectedItemsRestored,
-                      ),
-                    ),
-                  );
                 }
               },
             ),

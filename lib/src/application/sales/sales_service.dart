@@ -359,7 +359,7 @@ class SalesService {
 
         // Reverse Client Debt — skip for walk-in (TEMP) clients
         final debtAdded = invoice.total - invoice.paidAmount;
-        if (debtAdded > Decimal.zero && client != null && client.type != 'TEMP') {
+        if (debtAdded.compareTo(Decimal.zero) != 0 && client != null && client.type != 'TEMP') {
           final newBalance = client.balance - debtAdded;
           await _db.update(_db.clients).replace(client.copyWith(balance: newBalance));
         }
@@ -421,7 +421,7 @@ class SalesService {
 
         // Re-apply Client Debt — skip for walk-in (TEMP) clients
         final debtAdded = invoice.total - invoice.paidAmount;
-        if (debtAdded > Decimal.zero && client != null && client.type != 'TEMP') {
+        if (debtAdded.compareTo(Decimal.zero) != 0 && client != null && client.type != 'TEMP') {
           final newBalance = client.balance + debtAdded;
           await _db.update(_db.clients).replace(client.copyWith(balance: newBalance));
         }
@@ -669,6 +669,40 @@ class SalesService {
         paidAmount: negativePaidAmount,
         status: status,
       ));
+
+      // 6.5 Cross-cancel return credit with older unpaid invoices
+      if (debt < Decimal.zero && request.clientId != null && client?.type != 'TEMP') {
+        Decimal creditToApply = -debt;
+        final unpaidInvoices = await (_db.select(_db.invoices)
+          ..where((t) => t.clientId.equals(request.clientId!) & t.isActive.equals(true) & t.status.isNotIn(['PAID', 'CANCELLED']) & t.id.isNotValue(invoiceId))
+          ..orderBy([(t) => drift.OrderingTerm(expression: t.date, mode: drift.OrderingMode.asc)])
+        ).get();
+
+        for (final inv in unpaidInvoices) {
+          if (creditToApply <= Decimal.zero) break;
+          if (inv.total <= Decimal.zero) continue;
+          
+          final invoiceDebt = inv.total - inv.paidAmount;
+          if (invoiceDebt <= Decimal.zero) continue;
+          
+          final allocation = creditToApply > invoiceDebt ? invoiceDebt : creditToApply;
+          final newPaid = inv.paidAmount + allocation;
+          final newStatus = newPaid >= inv.total ? 'PAID' : 'PARTIAL';
+          
+          await (_db.update(_db.invoices)..where((t) => t.id.equals(inv.id))).write(
+            InvoicesCompanion(status: drift.Value(newStatus), paidAmount: drift.Value(newPaid))
+          );
+          creditToApply -= allocation;
+        }
+
+        final appliedCredit = (-debt) - creditToApply;
+        if (appliedCredit > Decimal.zero) {
+          final returnInvoicePaidAmount = negativePaidAmount - appliedCredit;
+          await (_db.update(_db.invoices)..where((t) => t.id.equals(invoiceId))).write(
+            InvoicesCompanion(paidAmount: drift.Value(returnInvoicePaidAmount))
+          );
+        }
+      }
       
       // 7. Create Payments (Refunds)
       for (final p in request.payments) {

@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:marko_group/src/localization/arb/app_localizations.dart';
 
 import '../../application/settings/settings_service.dart';
-import '../../application/system/sync_service.dart';
+
 
 import 'company_profile_screen.dart';
 import '../../application/backup/backup_service.dart';
@@ -100,24 +100,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ListTile(
               leading: const Icon(Icons.password),
               title: Text(AppLocalizations.of(context)!.changeAdminPin),
-              subtitle: Text(AppLocalizations.of(context)!.updatePersonalPin),
-              onTap: () {
-                _showChangePinDialog(context, ref);
-              },
+              onTap: () => _showChangePinDialog(context, ref),
             ),
+            const Divider(),
           ],
-          const Divider(),
           Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Text(AppLocalizations.of(context)!.preferences, style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+            padding: const EdgeInsets.all(16.0),
+            child: Text(AppLocalizations.of(context)!.preferences, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey)),
           ),
           ListTile(
             leading: const Icon(Icons.palette),
             title: Text(AppLocalizations.of(context)!.theme),
             trailing: DropdownButton<ThemeMode>(
               value: themeMode,
-              onChanged: (mode) {
-                if (mode != null) ref.read(themeModeProvider.notifier).setMode(mode);
+              onChanged: (newMode) {
+                if (newMode != null) ref.read(themeModeProvider.notifier).setTheme(newMode);
               },
               items: [
                 DropdownMenuItem(value: ThemeMode.system, child: Text(AppLocalizations.of(context)!.system)),
@@ -202,18 +199,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           Padding(
             padding: EdgeInsets.all(16.0),
             child: Text(AppLocalizations.of(context)!.systemMaintenance, style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey)),
-          ),
-          ListTile(
-            leading: const Icon(Icons.sync),
-            title: Text(AppLocalizations.of(context)!.forceSync),
-            subtitle: Text(AppLocalizations.of(context)!.pushPendingChanges),
-            onTap: () async {
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.syncing)));
-              await ref.read(syncServiceProvider).processOutbox();
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.syncComplete)));
-              }
-            },
           ),
           const Divider(),
           Padding(
@@ -368,10 +353,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Wrap(
+              spacing: 16,
+              runSpacing: 16,
               children: [
-                Expanded(
+                SizedBox(
+                  width: 350,
                   child: Card(
                     elevation: 2,
                     child: Padding(
@@ -398,8 +385,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
+                SizedBox(
+                  width: 350,
                   child: Card(
                     elevation: 2,
                     child: Padding(
@@ -418,38 +405,36 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           const SizedBox(height: 8),
                           const Text('Arabic Transliteration Map:'),
                           const SizedBox(height: 8),
-                          SingleChildScrollView(
-                            child: Table(
-                              border: TableBorder.all(color: Colors.grey.shade300),
-                              children: [
-                                TableRow(
-                                  decoration: BoxDecoration(color: Colors.grey.shade100),
-                                  children: const [
-                                    Padding(padding: EdgeInsets.all(4), child: Text('Input', style: TextStyle(fontWeight: FontWeight.bold))),
-                                    Padding(padding: EdgeInsets.all(4), child: Text('Arabic', style: TextStyle(fontWeight: FontWeight.bold))),
-                                    Padding(padding: EdgeInsets.all(4), child: Text('Input', style: TextStyle(fontWeight: FontWeight.bold))),
-                                    Padding(padding: EdgeInsets.all(4), child: Text('Arabic', style: TextStyle(fontWeight: FontWeight.bold))),
-                                  ]
-                                ),
-                                _buildRow(['a', 'ا', 'b', 'ب']),
-                                _buildRow(['t', 'ت', 'th / t\'', 'ث']),
-                                _buildRow(['j', 'ج', 'H', 'ح']),
-                                _buildRow(['kh / H\'', 'خ', 'd', 'د']),
-                                _buildRow(['dh / d\'', 'ذ', 'r', 'ر']),
-                                _buildRow(['z', 'ز', 's', 'س']),
-                                _buildRow(['sh / s\'', 'ش', 'S', 'ص']),
-                                _buildRow(['D / S\'', 'ض', 'T', 'ط']),
-                                _buildRow(['Z / T\'', 'ظ', '3 / e / c / g', 'ع']),
-                                _buildRow(['gh / g\'', 'غ', 'f', 'ف']),
-                                _buildRow(['q', 'ق', 'k', 'ك']),
-                                _buildRow(['l', 'ل', 'm', 'م']),
-                                _buildRow(['n', 'ن', 'h', 'ه']),
-                                _buildRow(['w', 'و', 'y', 'ي']),
-                                _buildRow(['-', 'ء', '-a', 'أ']),
-                                _buildRow(['a--', 'إ', 'w--', 'ؤ']),
-                                _buildRow(['y--', 'ئ', 'Y', 'ى']),
-                              ],
-                            )
+                          Table(
+                            border: TableBorder.all(color: Colors.grey.shade300),
+                            children: [
+                              TableRow(
+                                decoration: BoxDecoration(color: Colors.grey.shade100),
+                                children: const [
+                                  Padding(padding: EdgeInsets.all(4), child: Text('Input', style: TextStyle(fontWeight: FontWeight.bold))),
+                                  Padding(padding: EdgeInsets.all(4), child: Text('Arabic', style: TextStyle(fontWeight: FontWeight.bold))),
+                                  Padding(padding: EdgeInsets.all(4), child: Text('Input', style: TextStyle(fontWeight: FontWeight.bold))),
+                                  Padding(padding: EdgeInsets.all(4), child: Text('Arabic', style: TextStyle(fontWeight: FontWeight.bold))),
+                                ]
+                              ),
+                              _buildRow(['a', 'ا', 'b', 'ب']),
+                              _buildRow(['t', 'ت', 'th / t\'', 'ث']),
+                              _buildRow(['j', 'ج', 'H', 'ح']),
+                              _buildRow(['kh / H\'', 'خ', 'd', 'د']),
+                              _buildRow(['dh / d\'', 'ذ', 'r', 'ر']),
+                              _buildRow(['z', 'ز', 's', 'س']),
+                              _buildRow(['sh / s\'', 'ش', 'S', 'ص']),
+                              _buildRow(['D / S\'', 'ض', 'T', 'ط']),
+                              _buildRow(['Z / T\'', 'ظ', '3 / e / c / g', 'ع']),
+                              _buildRow(['gh / g\'', 'غ', 'f', 'ف']),
+                              _buildRow(['q', 'ق', 'k', 'ك']),
+                              _buildRow(['l', 'ل', 'm', 'م']),
+                              _buildRow(['n', 'ن', 'h', 'ه']),
+                              _buildRow(['w', 'و', 'y', 'ي']),
+                              _buildRow(['-', 'ء', '-a', 'أ']),
+                              _buildRow(['a--', 'إ', 'w--', 'ؤ']),
+                              _buildRow(['y--', 'ئ', 'Y', 'ى']),
+                            ],
                           )
                         ],
                       ),

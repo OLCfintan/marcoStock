@@ -218,10 +218,11 @@ class _MetricsGrid extends ConsumerWidget {
     final salesAsync = ref.watch(todaySalesProvider);
     final debtAsync = ref.watch(outstandingDebtProvider);
     final creditAsync = ref.watch(todaysCreditProvider);
+    final paymentsCollectedAsync = ref.watch(paymentsCollectedTodayProvider);
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final crossAxisCount = constraints.maxWidth > 600 ? 3 : 1;
+        final crossAxisCount = constraints.maxWidth > 1000 ? 4 : (constraints.maxWidth > 600 ? 2 : 1);
         return GridView.count(
           crossAxisCount: crossAxisCount,
           shrinkWrap: true,
@@ -240,9 +241,9 @@ class _MetricsGrid extends ConsumerWidget {
                 final db = ref.read(databaseProvider);
                 final now = DateTime.now();
                 final startOfDay = DateTime(now.year, now.month, now.day);
-                final normalClients = await (db.select(db.clients)..where((t) => t.type.equals('NORMAL'))).get();
-                final normalIds = normalClients.map((c) => c.id).toList();
-                final invoices = await (db.select(db.invoices)..where((t) => t.date.isBiggerOrEqualValue(startOfDay) & t.isActive.equals(true) & (t.clientId.isIn(normalIds) | t.clientId.isNull()))).get();
+                final validClients = await (db.select(db.clients)..where((t) => t.showInDashboard.equals(true))).get();
+                final validIds = validClients.map((c) => c.id).toList();
+                final invoices = await (db.select(db.invoices)..where((t) => t.date.isBiggerOrEqualValue(startOfDay) & t.isActive.equals(true) & (t.clientId.isIn(validIds) | t.clientId.isNull()))).get();
                 if (!context.mounted) return;
                 showDialog(
                   context: context,
@@ -255,7 +256,7 @@ class _MetricsGrid extends ConsumerWidget {
                         itemCount: invoices.length,
                         itemBuilder: (context, index) {
                           final inv = invoices[index];
-                          final clientName = inv.clientId == null ? AppLocalizations.of(context)!.walkInClient : normalClients.firstWhere((c) => c.id == inv.clientId, orElse: () => normalClients.first).name;
+                          final clientName = inv.clientId == null ? AppLocalizations.of(context)!.walkInClient : validClients.firstWhere((c) => c.id == inv.clientId, orElse: () => validClients.first).name;
                           return ListTile(
                             title: Text(clientName),
                             subtitle: Text(inv.date.toString()),
@@ -312,9 +313,9 @@ class _MetricsGrid extends ConsumerWidget {
                 final db = ref.read(databaseProvider);
                 final now = DateTime.now();
                 final startOfDay = DateTime(now.year, now.month, now.day);
-                final normalClients = await (db.select(db.clients)..where((t) => t.type.equals('NORMAL'))).get();
-                final normalIds = normalClients.map((c) => c.id).toList();
-                final invoices = await (db.select(db.invoices)..where((t) => t.date.isBiggerOrEqualValue(startOfDay) & t.isActive.equals(true) & (t.clientId.isIn(normalIds) | t.clientId.isNull()))).get();
+                final validClients = await (db.select(db.clients)..where((t) => t.showInDashboard.equals(true))).get();
+                final validIds = validClients.map((c) => c.id).toList();
+                final invoices = await (db.select(db.invoices)..where((t) => t.date.isBiggerOrEqualValue(startOfDay) & t.isActive.equals(true) & (t.clientId.isIn(validIds) | t.clientId.isNull()))).get();
                 
                 final creditInvoices = invoices.where((inv) => (inv.total - inv.paidAmount) > Decimal.zero).toList();
                 
@@ -330,11 +331,54 @@ class _MetricsGrid extends ConsumerWidget {
                         itemCount: creditInvoices.length,
                         itemBuilder: (context, index) {
                           final inv = creditInvoices[index];
-                          final clientName = inv.clientId == null ? AppLocalizations.of(context)!.walkInClient : normalClients.firstWhere((c) => c.id == inv.clientId, orElse: () => normalClients.first).name;
+                          final clientName = inv.clientId == null ? AppLocalizations.of(context)!.walkInClient : validClients.firstWhere((c) => c.id == inv.clientId, orElse: () => validClients.first).name;
                           return ListTile(
                             title: Text(clientName),
                             subtitle: Text(inv.date.toString()),
                             trailing: Text('${inv.total - inv.paidAmount} Dhs (from ${inv.total})'),
+                          );
+                        }
+                      ),
+                    ),
+                  )
+                );
+              },
+            ),
+            _MetricCard(
+              title: 'Credits Paid Today',
+              icon: Icons.payments,
+              color: Colors.blueAccent,
+              asyncValue: paymentsCollectedAsync,
+              prefix: 'Dhs ',
+              onTap: () async {
+                final db = ref.read(databaseProvider);
+                final now = DateTime.now();
+                final startOfDay = DateTime(now.year, now.month, now.day);
+                
+                final payments = await (db.select(db.payments)..where((t) => t.date.isBiggerOrEqualValue(startOfDay) & t.isActive.equals(true) & t.clientId.isNotNull() & t.method.isNotValue('CREDIT'))).get();
+                
+                if (!context.mounted) return;
+                showDialog(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    title: const Text('Credits Paid Today Details'),
+                    content: SizedBox(
+                      width: 400,
+                      height: 400,
+                      child: ListView.builder(
+                        itemCount: payments.length,
+                        itemBuilder: (context, index) {
+                          final p = payments[index];
+                          return FutureBuilder(
+                            future: (db.select(db.clients)..where((t) => t.id.equals(p.clientId!))).getSingleOrNull(),
+                            builder: (ctx, snap) {
+                              final clientName = snap.data?.name ?? 'Unknown';
+                              return ListTile(
+                                title: Text(clientName),
+                                subtitle: Text('${p.method} - ${p.date.toString().split(' ')[1].substring(0, 5)}'),
+                                trailing: Text('${p.amount} Dhs'),
+                              );
+                            }
                           );
                         }
                       ),

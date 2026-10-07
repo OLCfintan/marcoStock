@@ -270,30 +270,6 @@ abstract class AppLocalizations {
   /// **'System Maintenance'**
   String get systemMaintenance;
 
-  /// No description provided for @forceSync.
-  ///
-  /// In en, this message translates to:
-  /// **'Force Sync'**
-  String get forceSync;
-
-  /// No description provided for @pushPendingChanges.
-  ///
-  /// In en, this message translates to:
-  /// **'Push pending changes to cloud'**
-  String get pushPendingChanges;
-
-  /// No description provided for @syncing.
-  ///
-  /// In en, this message translates to:
-  /// **'Syncing...'**
-  String get syncing;
-
-  /// No description provided for @syncComplete.
-  ///
-  /// In en, this message translates to:
-  /// **'Sync Complete'**
-  String get syncComplete;
-
   /// No description provided for @checkForUpdates.
   ///
   /// In en, this message translates to:
@@ -1563,7 +1539,7 @@ abstract class AppLocalizations {
   /// No description provided for @exportMarkoSave.
   ///
   /// In en, this message translates to:
-  /// **'Export Marko-Save'**
+  /// **'Export Local Backup'**
   String get exportMarkoSave;
 
   /// No description provided for @exportFullSystem.
@@ -1587,7 +1563,7 @@ abstract class AppLocalizations {
   /// No description provided for @importMarkoSave.
   ///
   /// In en, this message translates to:
-  /// **'Import Marko-Save'**
+  /// **'Import Local Backup'**
   String get importMarkoSave;
 
   /// No description provided for @restoreDatabaseOrBackup.

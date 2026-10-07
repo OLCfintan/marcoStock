@@ -93,18 +93,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get systemMaintenance => 'System Maintenance';
 
   @override
-  String get forceSync => 'Force Sync';
-
-  @override
-  String get pushPendingChanges => 'Push pending changes to cloud';
-
-  @override
-  String get syncing => 'Syncing...';
-
-  @override
-  String get syncComplete => 'Sync Complete';
-
-  @override
   String get checkForUpdates => 'Check for Updates';
 
   @override
@@ -746,7 +734,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exportImportSystem => 'Export & Import System';
 
   @override
-  String get exportMarkoSave => 'Export Marko-Save';
+  String get exportMarkoSave => 'Export Local Backup';
 
   @override
   String get exportFullSystem =>
@@ -760,7 +748,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exportCompletedSuccessfully => 'Export completed successfully!';
 
   @override
-  String get importMarkoSave => 'Import Marko-Save';
+  String get importMarkoSave => 'Import Local Backup';
 
   @override
   String get restoreDatabaseOrBackup =>

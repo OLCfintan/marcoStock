@@ -220,7 +220,7 @@ class AppDatabase extends _$AppDatabase {
       beforeOpen: (details) async {
         await customStatement('PRAGMA foreign_keys = ON');
         // Force Client Passager to Tier 3 prices always
-        await customStatement("UPDATE clients SET tier = 'Tier 3' WHERE id = 'WALKIN_CLIENT_01'");
+        await customStatement("UPDATE clients SET tier = 'Tier 3', show_in_dashboard = 1, type = 'TEMP' WHERE id = 'WALKIN_CLIENT_01'");
         // Mathematical Clamping: Erase any ghost negative stock from the engine
         await customStatement("UPDATE stock_balances SET quantity = '0' WHERE CAST(quantity AS REAL) < 0");
         // Cleanup: Remove orphaned stock_balances pointing to deleted products

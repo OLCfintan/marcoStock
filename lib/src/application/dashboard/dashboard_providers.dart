@@ -55,20 +55,13 @@ final todaySalesProvider = StreamProvider<Decimal>((ref) {
   final now = DateTime.now();
   final startOfDay = DateTime(now.year, now.month, now.day);
 
-  final query = db.select(db.invoices).join([
-    leftOuterJoin(db.clients, db.clients.id.equalsExp(db.invoices.clientId)),
-  ])..where(
-    db.invoices.date.isBiggerOrEqualValue(startOfDay) &
-        db.invoices.isActive.equals(true) &
-        (db.clients.id.isNull() |
-            (db.clients.type.isIn(['NORMAL', 'TEMP']) &
-                db.clients.showInDashboard.equals(true) &
-                db.clients.id.isNotValue('MAGAZIN_01'))),
+  final query = db.select(db.invoices)..where((t) =>
+    t.date.isBiggerOrEqualValue(startOfDay) &
+    t.isActive.equals(true)
   );
 
   return query.watch().map((rows) {
-    return rows.fold<Decimal>(Decimal.zero, (sum, row) {
-      final inv = row.readTable(db.invoices);
+    return rows.fold<Decimal>(Decimal.zero, (sum, inv) {
       return sum + inv.total;
     });
   });
@@ -80,9 +73,7 @@ final outstandingDebtProvider = StreamProvider<Decimal>((ref) {
   return (db.select(db.clients)..where(
     (t) =>
         t.isActive.equals(true) &
-        t.type.equals('NORMAL') &
-        t.showInDashboard.equals(true) &
-        t.id.isNotValue('MAGAZIN_01'),
+        t.showInDashboard.equals(true),
   )).watch().map(
     (clients) => clients.fold<Decimal>(
       Decimal.zero,
@@ -97,25 +88,18 @@ final todaysCreditProvider = StreamProvider<Decimal>((ref) {
   final now = DateTime.now();
   final startOfDay = DateTime(now.year, now.month, now.day);
 
-  final query = db.select(db.invoices).join([
-    leftOuterJoin(db.clients, db.clients.id.equalsExp(db.invoices.clientId)),
-  ])..where(
-    db.invoices.date.isBiggerOrEqualValue(startOfDay) &
-        db.invoices.isActive.equals(true) &
-        db.invoices.documentType.isNotIn([
-          'COMMANDE',
-          'FACTURE',
-          'FACTURE_DUMMY',
-        ]) &
-        (db.clients.id.isNull() |
-            (db.clients.type.isIn(['NORMAL', 'TEMP']) &
-                db.clients.showInDashboard.equals(true) &
-                db.clients.id.isNotValue('MAGAZIN_01'))),
+  final query = db.select(db.invoices)..where((t) =>
+    t.date.isBiggerOrEqualValue(startOfDay) &
+    t.isActive.equals(true) &
+    t.documentType.isNotIn([
+      'COMMANDE',
+      'FACTURE',
+      'FACTURE_DUMMY',
+    ])
   );
 
   return query.watch().map((rows) {
-    return rows.fold<Decimal>(Decimal.zero, (sum, row) {
-      final inv = row.readTable(db.invoices);
+    return rows.fold<Decimal>(Decimal.zero, (sum, inv) {
       return sum + (inv.total - inv.paidAmount);
     });
   });
@@ -124,24 +108,12 @@ final todaysCreditProvider = StreamProvider<Decimal>((ref) {
 // --- Top Selling Products ---
 final topSellingProductsProvider = StreamProvider<List<TopProduct>>((ref) {
   final db = ref.watch(databaseProvider);
-  return db.select(db.clients).watch().asyncMap((clients) async {
-    final normalIds =
-        clients
-            .where(
-              (c) =>
-                  (c.type == 'NORMAL' || c.type == 'TEMP') && c.showInDashboard,
-            )
-            .map((c) => c.id)
-            .toList();
-    if (normalIds.isEmpty) return [];
-    final invoices =
-        await (db.select(db.invoices)..where(
-          (t) =>
-              t.isActive.equals(true) &
-              t.documentType.isNotIn(['COMMANDE', 'FACTURE', 'FACTURE_DUMMY']) &
-              ((t.clientId.isIn(normalIds) | t.clientId.isNull()) |
-                  t.clientId.isNull()),
-        )).get();
+  
+  return (db.select(db.invoices)..where(
+    (t) =>
+        t.isActive.equals(true) &
+        t.documentType.isNotIn(['COMMANDE', 'FACTURE', 'FACTURE_DUMMY'])
+  )).watch().asyncMap((invoices) async {
     final activeInvoiceIds = invoices.map((i) => i.id).toList();
     final map = <String, TopProduct>{};
     if (activeInvoiceIds.isEmpty) return [];
@@ -185,10 +157,7 @@ final topClientsByRevenueProvider = StreamProvider<List<TopPayer>>((ref) {
   return db.select(db.clients).watch().asyncMap((clients) async {
     final list = <TopPayer>[];
     for (final c in clients) {
-      if (!c.isActive ||
-          c.type != 'NORMAL' ||
-          !c.showInDashboard ||
-          c.id == 'MAGAZIN_01')
+      if (!c.isActive || !c.showInDashboard)
         continue;
       final payments =
           await (db.select(db.payments)..where(
@@ -362,21 +331,14 @@ final salesChartDataProvider = StreamProvider<List<ChartDataPoint>>((ref) {
   final period = ref.watch(salesChartPeriodProvider);
   final db = ref.watch(databaseProvider);
 
-  return (db.select(db.invoices).join([
-    leftOuterJoin(db.clients, db.clients.id.equalsExp(db.invoices.clientId)),
-  ])..where(
-    db.invoices.isActive.equals(true) &
-        db.invoices.documentType.isNotIn([
-          'COMMANDE',
-          'FACTURE',
-          'FACTURE_DUMMY',
-        ]) &
-        (db.clients.id.isNull() |
-            (db.clients.type.isIn(['NORMAL', 'TEMP']) &
-                db.clients.showInDashboard.equals(true) &
-                db.clients.id.isNotValue('MAGAZIN_01'))),
-  )).watch().asyncMap((rows) async {
-    final invoices = rows.map((r) => r.readTable(db.invoices)).toList();
+  return (db.select(db.invoices)..where((t) =>
+    t.isActive.equals(true) &
+    t.documentType.isNotIn([
+      'COMMANDE',
+      'FACTURE',
+      'FACTURE_DUMMY',
+    ])
+  )).watch().asyncMap((invoices) async {
     final now = DateTime.now();
 
     final data = LinkedHashMap<String, Decimal>();
@@ -436,9 +398,7 @@ final topClientsProvider = StreamProvider<List<TopHuman>>((ref) {
   return (db.select(db.clients)..where(
     (t) =>
         t.isActive.equals(true) &
-        t.type.equals('NORMAL') &
-        t.showInDashboard.equals(true) &
-        t.id.isNotValue('MAGAZIN_01'),
+        t.showInDashboard.equals(true),
   )).watch().map((clients) {
     final list = clients.map((c) => TopHuman(c.name, c.balance)).toList();
     list.sort((a, b) => b.balance.compareTo(a.balance));
@@ -576,4 +536,18 @@ final magazinStockPieProvider = StreamProvider<List<StockChartData>>((ref) {
 
         return map.entries.map((e) => StockChartData(e.key, e.value)).toList();
       });
+});
+
+// --- Payments Collected Today ---
+final paymentsCollectedTodayProvider = StreamProvider<Decimal>((ref) {
+  final db = ref.watch(databaseProvider);
+  final now = DateTime.now();
+  final startOfDay = DateTime(now.year, now.month, now.day);
+
+  return (db.select(db.payments)
+        ..where((t) => t.date.isBiggerOrEqualValue(startOfDay) & t.isActive.equals(true) & t.clientId.isNotNull() & t.method.isNotValue('CREDIT')))
+      .watch()
+      .map((payments) {
+    return payments.fold<Decimal>(Decimal.zero, (sum, p) => sum + p.amount);
+  });
 });

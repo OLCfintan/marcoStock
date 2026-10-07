@@ -94,18 +94,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get systemMaintenance => 'صيانة النظام';
 
   @override
-  String get forceSync => 'مزامنة قسرية';
-
-  @override
-  String get pushPendingChanges => 'دفع التغييرات المعلقة إلى السحابة';
-
-  @override
-  String get syncing => 'جاري المزامنة...';
-
-  @override
-  String get syncComplete => 'اكتملت المزامنة';
-
-  @override
   String get checkForUpdates => 'التحقق من التحديثات';
 
   @override
