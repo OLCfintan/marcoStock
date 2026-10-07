@@ -114,7 +114,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             trailing: DropdownButton<ThemeMode>(
               value: themeMode,
               onChanged: (newMode) {
-                if (newMode != null) ref.read(themeModeProvider.notifier).setTheme(newMode);
+                if (newMode != null) ref.read(themeModeProvider.notifier).setMode(newMode);
               },
               items: [
                 DropdownMenuItem(value: ThemeMode.system, child: Text(AppLocalizations.of(context)!.system)),
