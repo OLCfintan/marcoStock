@@ -79,6 +79,23 @@ class SaleLineRequest {
   });
 }
 
+class InsufficientStockException implements Exception {
+  final String productName;
+  final String available;
+  final String requested;
+
+  InsufficientStockException({
+    required this.productName,
+    required this.available,
+    required this.requested,
+  });
+
+  @override
+  String toString() {
+    return 'Insufficient stock for "$productName".\nAvailable: $available\nRequested: $requested';
+  }
+}
+
 class SalesService {
   final AppDatabase _db;
   final _uuid = const Uuid();
@@ -502,7 +519,13 @@ class SalesService {
     
     // Prevent selling stock we don't have, unless we are reversing an operation
     if (!allowNegative && currentQty < actualQuantityToDeduct) {
-        throw Exception('Insufficient stock. Available: ${currentQty.toStringAsFixed(2)}, Requested: ${actualQuantityToDeduct.toStringAsFixed(2)}');
+        final productQuery = await (_db.select(_db.products)..where((t) => t.id.equals(productId))).getSingleOrNull();
+        final productName = productQuery?.name ?? 'Unknown Product';
+        throw InsufficientStockException(
+          productName: productName,
+          available: currentQty.toStringAsFixed(2),
+          requested: actualQuantityToDeduct.toStringAsFixed(2),
+        );
     }
     
     // Mathematically preserve exact balances

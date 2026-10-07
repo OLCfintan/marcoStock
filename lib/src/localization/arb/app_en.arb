@@ -355,5 +355,38 @@
   "modeDeReglement": "Payment Method",
   "letter": "Letter/Draft",
   "invoiceAddress": "Invoice Address",
-  "companyTp": "TP (Taxe Prof.)"
+  "companyTp": "TP (Taxe Prof.)",
+  "ok": "OK",
+  "insufficientStockFor": "Insufficient stock for \"{product}\".\nAvailable: {available}\nRequested: {requested}",
+  "@insufficientStockFor": {
+    "placeholders": {
+      "product": {
+        "type": "String"
+      },
+      "available": {
+        "type": "String"
+      },
+      "requested": {
+        "type": "String"
+      }
+    }
+  },
+  "autoInvoiceGenerator": "Auto Invoice Generator",
+  "targetAmountHt": "Target Amount (HT)",
+  "targetAmountTtc": "Target Amount (TTC)",
+  "numberOfFamilies": "Number of Families (Categories)",
+  "generate": "Generate",
+  "cartNumber": "Cart {number}",
+  "@cartNumber": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "cartTitle": "Cart",
+  "purchaseCart": "Purchase Cart",
+  "add": "Add",
+  "companyBranch": "Company Branch",
+  "ice": "ICE"
 }

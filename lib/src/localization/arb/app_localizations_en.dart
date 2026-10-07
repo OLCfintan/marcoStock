@@ -1095,4 +1095,51 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get companyTp => 'TP (Taxe Prof.)';
+
+  @override
+  String get ok => 'OK';
+
+  @override
+  String insufficientStockFor(
+    String product,
+    String available,
+    String requested,
+  ) {
+    return 'Insufficient stock for \"$product\".\nAvailable: $available\nRequested: $requested';
+  }
+
+  @override
+  String get autoInvoiceGenerator => 'Auto Invoice Generator';
+
+  @override
+  String get targetAmountHt => 'Target Amount (HT)';
+
+  @override
+  String get targetAmountTtc => 'Target Amount (TTC)';
+
+  @override
+  String get numberOfFamilies => 'Number of Families (Categories)';
+
+  @override
+  String get generate => 'Generate';
+
+  @override
+  String cartNumber(String number) {
+    return 'Cart $number';
+  }
+
+  @override
+  String get cartTitle => 'Cart';
+
+  @override
+  String get purchaseCart => 'Purchase Cart';
+
+  @override
+  String get add => 'Add';
+
+  @override
+  String get companyBranch => 'Company Branch';
+
+  @override
+  String get ice => 'ICE';
 }

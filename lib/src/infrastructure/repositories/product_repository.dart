@@ -244,7 +244,13 @@ class ProductRepository {
   }
 
   Future<void> deleteProduct(String id) async {
-    await (_db.update(_db.products)..where((t) => t.id.equals(id))).write(const ProductsCompanion(isActive: drift.Value(false)));
+    final product = await (_db.select(_db.products)..where((t) => t.id.equals(id))).getSingleOrNull();
+    if (product != null) {
+      await (_db.update(_db.products)..where((t) => t.id.equals(id))).write(ProductsCompanion(
+        isActive: const drift.Value(false),
+        reference: drift.Value('${product.reference}-DEL-${DateTime.now().millisecondsSinceEpoch}'),
+      ));
+    }
   }
   Future<void> restoreProduct(String id) async {
     await (_db.update(_db.products)..where((t) => t.id.equals(id))).write(const ProductsCompanion(isActive: drift.Value(true)));

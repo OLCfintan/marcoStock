@@ -2237,6 +2237,88 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'TP (Taxe Prof.)'**
   String get companyTp;
+
+  /// No description provided for @ok.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get ok;
+
+  /// No description provided for @insufficientStockFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Insufficient stock for \"{product}\".\nAvailable: {available}\nRequested: {requested}'**
+  String insufficientStockFor(
+    String product,
+    String available,
+    String requested,
+  );
+
+  /// No description provided for @autoInvoiceGenerator.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto Invoice Generator'**
+  String get autoInvoiceGenerator;
+
+  /// No description provided for @targetAmountHt.
+  ///
+  /// In en, this message translates to:
+  /// **'Target Amount (HT)'**
+  String get targetAmountHt;
+
+  /// No description provided for @targetAmountTtc.
+  ///
+  /// In en, this message translates to:
+  /// **'Target Amount (TTC)'**
+  String get targetAmountTtc;
+
+  /// No description provided for @numberOfFamilies.
+  ///
+  /// In en, this message translates to:
+  /// **'Number of Families (Categories)'**
+  String get numberOfFamilies;
+
+  /// No description provided for @generate.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate'**
+  String get generate;
+
+  /// No description provided for @cartNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Cart {number}'**
+  String cartNumber(String number);
+
+  /// No description provided for @cartTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cart'**
+  String get cartTitle;
+
+  /// No description provided for @purchaseCart.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase Cart'**
+  String get purchaseCart;
+
+  /// No description provided for @add.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get add;
+
+  /// No description provided for @companyBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Company Branch'**
+  String get companyBranch;
+
+  /// No description provided for @ice.
+  ///
+  /// In en, this message translates to:
+  /// **'ICE'**
+  String get ice;
 }
 
 class _AppLocalizationsDelegate

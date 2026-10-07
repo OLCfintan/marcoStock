@@ -1092,4 +1092,51 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get companyTp => 'ضريبة المهنية';
+
+  @override
+  String get ok => 'حسنا';
+
+  @override
+  String insufficientStockFor(
+    String product,
+    String available,
+    String requested,
+  ) {
+    return 'مخزون غير كاف لـ \"$product\".\nالمتاح: $available\nالمطلوب: $requested';
+  }
+
+  @override
+  String get autoInvoiceGenerator => 'مولد الفواتير التلقائي';
+
+  @override
+  String get targetAmountHt => 'المبلغ المستهدف (HT)';
+
+  @override
+  String get targetAmountTtc => 'المبلغ المستهدف (TTC)';
+
+  @override
+  String get numberOfFamilies => 'عدد العائلات (الفئات)';
+
+  @override
+  String get generate => 'توليد';
+
+  @override
+  String cartNumber(String number) {
+    return 'سلة $number';
+  }
+
+  @override
+  String get cartTitle => 'السلة';
+
+  @override
+  String get purchaseCart => 'سلة المشتريات';
+
+  @override
+  String get add => 'إضافة';
+
+  @override
+  String get companyBranch => 'فرع الشركة';
+
+  @override
+  String get ice => 'ICE';
 }

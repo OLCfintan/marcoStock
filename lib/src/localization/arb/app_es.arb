@@ -355,5 +355,18 @@
   "modeDeReglement": "Método de Pago",
   "letter": "Letra",
   "invoiceAddress": "Dirección (Facturas)",
-  "companyTp": "TP"
+  "companyTp": "TP",
+  "ok": "OK",
+  "insufficientStockFor": "Stock insuficiente para \"{product}\".\nDisponible: {available}\nSolicitado: {requested}",
+  "autoInvoiceGenerator": "Generador Automático de Facturas",
+  "targetAmountHt": "Monto Objetivo (HT)",
+  "targetAmountTtc": "Monto Objetivo (TTC)",
+  "numberOfFamilies": "Número de Familias (Categorías)",
+  "generate": "Generar",
+  "cartNumber": "Carrito {number}",
+  "cartTitle": "Carrito",
+  "purchaseCart": "Carrito de Compra",
+  "add": "Agregar",
+  "companyBranch": "Sucursal de la empresa",
+  "ice": "ICE"
 }

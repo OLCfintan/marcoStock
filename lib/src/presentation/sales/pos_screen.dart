@@ -39,6 +39,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   final FocusNode _barcodeFocusNode = FocusNode();
   final FocusNode _clientFocusNode = FocusNode();
   final FocusNode _paymentFocusNode = FocusNode();
+  final FocusNode _searchFocusNode = FocusNode();
+  String _searchQuery = '';
   final ValueNotifier<Set<String>> _multiSelectedProductIds = ValueNotifier({});
   List<String> _localOrder = [];
 
@@ -101,6 +103,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     _clientFocusNode.dispose();
     _paymentFocusNode.dispose();
     // Do NOT dispose _sessions so they survive screen transitions!
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -268,7 +271,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       }
     }
     _barcodeController.clear();
-    _barcodeFocusNode.requestFocus();
+    _searchFocusNode.requestFocus();
   }
 
   Future<void> _processSale() async {
@@ -689,7 +692,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     return CallbackShortcuts(
       bindings: {
         SingleActivator(LogicalKeyboardKey.keyF, control: true): () {
-          _barcodeFocusNode.requestFocus();
+          _searchFocusNode.requestFocus();
         },
         SingleActivator(LogicalKeyboardKey.keyN, control: true): () {
           setState(() {
@@ -795,18 +798,43 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           builder: (context, constraints) {
             final productsWidget = productsAsync.when(
               data: (allProducts) {
-                final products = allProducts.where((p) => p.isActive).toList();
+                var products = allProducts.where((p) => p.isActive).toList();
+                if (_searchQuery.isNotEmpty) {
+                  final q = _searchQuery.toLowerCase();
+                  products = products.where((p) => p.name.toLowerCase().contains(q) || p.reference.toLowerCase().contains(q)).toList();
+                }
                 if (_localOrder.isNotEmpty) {
+                  final orderMap = <String, int>{};
+                  for (int i = 0; i < _localOrder.length; i++) {
+                    orderMap[_localOrder[i]] = i;
+                  }
                   products.sort((a, b) {
-                    final idxA = _localOrder.indexOf(a.id);
-                    final idxB = _localOrder.indexOf(b.id);
-                    if (idxA != -1 && idxB != -1) return idxA.compareTo(idxB);
-                    if (idxA != -1) return -1;
-                    if (idxB != -1) return 1;
+                    final idxA = orderMap[a.id];
+                    final idxB = orderMap[b.id];
+                    if (idxA != null && idxB != null) return idxA.compareTo(idxB);
+                    if (idxA != null) return -1;
+                    if (idxB != null) return 1;
                     return 0;
                   });
                 }
-                return FocusTraversalGroup(
+                return Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: TextField(
+                        focusNode: _searchFocusNode,
+                        decoration: const InputDecoration(
+                          labelText: 'Search Products (Ctrl+F)',
+                          prefixIcon: Icon(Icons.search),
+                          border: OutlineInputBorder(),
+                        ),
+                        onChanged: (val) {
+                          setState(() => _searchQuery = val);
+                        },
+                      ),
+                    ),
+                    Expanded(
+                      child: FocusTraversalGroup(
                   child: ReorderableGridView.builder(
                     onReorder: (oldIndex, newIndex) async {
                       setState(() {
@@ -947,6 +975,9 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                     );
                   },
                 ),
+                ),
+                    ),
+                  ],
                 );
               },
               loading: () => const Center(child: const LogoLoader()),
@@ -1262,26 +1293,38 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: AutocompleteSearchField<Client>(
-                      key: ValueKey(_activeSession.id),
+                    child: InkWell(
                       focusNode: _clientFocusNode,
-                      labelText: 'Select Client',
-                      prefixIcon: const Icon(Icons.person_search),
-                      initialText: _activeSession.selectedClientName,
-                      displayStringForOption: (client) => client.name,
-                      getSuggestions: (query) async {
-                        return ref
-                            .read(clientRepositoryProvider)
-                            .searchClients(query);
+                      onTap: () async {
+                        final selected = await showDialog<Client>(
+                          context: context,
+                          builder: (context) => _ClientSearchDialog(
+                            ref: ref,
+                            initialClientName: _activeSession.selectedClientName,
+                          ),
+                        );
+                        if (selected != null) {
+                          setState(() {
+                            _activeSession.selectedClientId = selected.id;
+                            _activeSession.selectedClientName = selected.name;
+                            _activeSession.selectedClientTier = selected.tier;
+                            _recalculateCartPrices();
+                          });
+                        }
                       },
-                      onSelected: (client) {
-                        setState(() {
-                          _activeSession.selectedClientId = client.id;
-                          _activeSession.selectedClientName = client.name;
-                          _activeSession.selectedClientTier = client.tier;
-                          _recalculateCartPrices();
-                        });
-                      },
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          labelText: 'Select Client',
+                          prefixIcon: const Icon(Icons.person_search),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: Text(
+                          _activeSession.selectedClientName ?? 'Select a client...',
+                          style: TextStyle(
+                            color: _activeSession.selectedClientName == null ? Colors.grey : null,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
 
@@ -1866,5 +1909,90 @@ class PosSession {
     invoiceDateController.dispose();
     customNameController.dispose();
     customIceController.dispose();
+  }
+}
+
+class _ClientSearchDialog extends StatefulWidget {
+  final WidgetRef ref;
+  final String? initialClientName;
+
+  const _ClientSearchDialog({required this.ref, this.initialClientName});
+
+  @override
+  State<_ClientSearchDialog> createState() => _ClientSearchDialogState();
+}
+
+class _ClientSearchDialogState extends State<_ClientSearchDialog> {
+  String _query = '';
+  List<Client> _clients = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadClients();
+  }
+
+  Future<void> _loadClients() async {
+    setState(() => _isLoading = true);
+    final clients = await widget.ref.read(clientRepositoryProvider).searchClients(_query);
+    if (mounted) {
+      setState(() {
+        _clients = clients;
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Select Client'),
+      content: SizedBox(
+        width: double.maxFinite,
+        height: 400,
+        child: Column(
+          children: [
+            TextField(
+              autofocus: true,
+              decoration: const InputDecoration(
+                hintText: 'Search...',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (val) {
+                _query = val;
+                _loadClients();
+              },
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _clients.isEmpty
+                      ? const Center(child: Text('No clients found'))
+                      : ListView.builder(
+                          itemCount: _clients.length,
+                          itemBuilder: (context, index) {
+                            final client = _clients[index];
+                            return ListTile(
+                              leading: const Icon(Icons.person),
+                              title: Text(client.name),
+                              subtitle: client.phone != null ? Text(client.phone!) : null,
+                              onTap: () => Navigator.pop(context, client),
+                            );
+                          },
+                        ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+      ],
+    );
   }
 }

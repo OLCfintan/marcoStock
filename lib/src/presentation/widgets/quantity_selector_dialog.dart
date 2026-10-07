@@ -98,42 +98,51 @@ class _QuantitySelectorDialogState extends State<QuantitySelectorDialog> {
     final l10n = AppLocalizations.of(context);
     return AlertDialog(
       title: Text('${l10n?.adjustQuantity ?? "Adjust Quantity - "}${widget.product.name}'),
-      content: Focus(
-        onKeyEvent: (node, event) {
-          if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.enter || event.logicalKey == LogicalKeyboardKey.numpadEnter)) {
-            _save();
-            return KeyEventResult.handled;
-          }
-          return KeyEventResult.ignored;
+      content: CallbackShortcuts(
+        bindings: {
+          const SingleActivator(LogicalKeyboardKey.enter): _save,
+          const SingleActivator(LogicalKeyboardKey.numpadEnter): _save,
         },
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: _boxesController,
-              decoration: InputDecoration(
-                labelText: '${l10n?.boxes ?? "Boxes"} (x${widget.product.unitsPerBox})',
-                suffixText: l10n?.boxes ?? 'boxes',
+        child: Focus(
+              onKeyEvent: (node, event) {
+                if (event is KeyDownEvent &&
+                    (event.logicalKey == LogicalKeyboardKey.enter ||
+                     event.logicalKey == LogicalKeyboardKey.numpadEnter)) {
+                  _save();
+                  return KeyEventResult.handled;
+                }
+                return KeyEventResult.ignored;
+              },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: _boxesController,
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      labelText: '${l10n?.boxes ?? "Boxes"} (x${widget.product.unitsPerBox})',
+                      suffixText: l10n?.boxes ?? 'boxes',
+                    ),
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    textInputAction: TextInputAction.done,
+                    onChanged: _onBoxesChanged,
+                    onSubmitted: (_) => _save(),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _unitsController,
+                    decoration: InputDecoration(
+                      labelText: 'Total ${l10n?.units ?? "Units"}',
+                      suffixText: l10n?.units ?? 'units',
+                    ),
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    textInputAction: TextInputAction.done,
+                    onChanged: _onUnitsChanged,
+                    onSubmitted: (_) => _save(),
+                  ),
+                ],
               ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              textInputAction: TextInputAction.done,
-              onChanged: _onBoxesChanged,
-              onSubmitted: (_) => _save(),
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _unitsController,
-              decoration: InputDecoration(
-                labelText: 'Total ${l10n?.units ?? "Units"}',
-                suffixText: l10n?.units ?? 'units',
-              ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              textInputAction: TextInputAction.done,
-              onChanged: _onUnitsChanged,
-              onSubmitted: (_) => _save(),
-            ),
-          ],
-        ),
       ),
       actions: [
         TextButton(

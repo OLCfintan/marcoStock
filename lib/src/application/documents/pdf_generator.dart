@@ -73,12 +73,6 @@ class PdfGeneratorService {
                 ? (isFacture ? const pw.EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 16) : const pw.EdgeInsets.all(16))
                 : (isFacture ? const pw.EdgeInsets.only(left: 32, right: 32, top: 16, bottom: 32) : const pw.EdgeInsets.all(32)),
             buildBackground: backgroundBuilder,
-            theme: options.layout == PrintLayout.a5 
-                ? pw.ThemeData.withFont(
-                    base: font,
-                    bold: boldFont,
-                  ).copyWith(defaultTextStyle: pw.TextStyle(fontSize: 8, font: font, fontBold: boldFont, fontFallback: [font]))
-                : null,
           ),
           footer: buildFooter,
           build: (context) => buildContent(),
@@ -150,7 +144,7 @@ class PdfGeneratorService {
       theme: pw.ThemeData.withFont(
         base: font,
         bold: boldFont,
-      ),
+      ).copyWith(defaultTextStyle: pw.TextStyle(font: font, fontSize: options.layout == PrintLayout.a5 ? 8 : 12)),
     );
 
     final logoBytes = companySettings['companyLogoPath'] != null && File(companySettings['companyLogoPath']!).existsSync()
@@ -255,7 +249,7 @@ class PdfGeneratorService {
       theme: pw.ThemeData.withFont(
         base: font,
         bold: boldFont,
-      ),
+      ).copyWith(defaultTextStyle: pw.TextStyle(font: font, fontSize: options.layout == PrintLayout.a5 ? 8 : 12)),
     );
 
     final logoBytes = companySettings['companyLogoPath'] != null && File(companySettings['companyLogoPath']!).existsSync()

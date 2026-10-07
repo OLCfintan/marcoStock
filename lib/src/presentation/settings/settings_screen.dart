@@ -25,6 +25,12 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  TableRow _buildRow(List<String> items) {
+    return TableRow(
+      children: items.map((e) => Padding(padding: const EdgeInsets.all(4.0), child: Text(e))).toList()
+    );
+  }
+
   bool _isCheckingUpdate = false;
 
   void _showChangePinDialog(BuildContext context, WidgetRef ref) {
@@ -392,14 +398,105 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const Divider(),
           Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text('Keyboard Shortcuts', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+            padding: EdgeInsets.all(16.0),
+            child: Text('Keyboard Features', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey)),
           ),
-          ListTile(
-            leading: const Icon(Icons.keyboard),
-            title: const Text('App Shortcuts'),
-            subtitle: const Text('• Tab: Navigation\n• Ctrl+F: Search\n• Ctrl+N: New Cart\n• Ctrl+P: Payment\n• Ctrl+Z: Undo\n• Arabic Search: Type in French to search Arabic'),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Card(
+                    elevation: 2,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Row(
+                            children: [
+                              Icon(Icons.keyboard_command_key, color: Colors.blueGrey),
+                              SizedBox(width: 8),
+                              Text('Shortcuts', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            ],
+                          ),
+                          Divider(),
+                          SizedBox(height: 8),
+                          Text('• Tab / Shift+Tab: Navigate between fields'),
+                          Text('• Ctrl + F: Global Search'),
+                          Text('• Ctrl + N: Open New Cart (POS/Purchases)'),
+                          Text('• Ctrl + P: Jump to Payment Amount'),
+                          Text('• Ctrl + Z: Undo'),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Card(
+                    elevation: 2,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Row(
+                            children: [
+                              Icon(Icons.translate, color: Colors.blueGrey),
+                              SizedBox(width: 8),
+                              Text('Smart Typing', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            ],
+                          ),
+                          Divider(),
+                          SizedBox(height: 8),
+                          Text('Arabic Transliteration Map:'),
+                          SizedBox(height: 8),
+                          Expanded(
+                            child: SingleChildScrollView(
+                              child: Table(
+                                border: TableBorder.all(color: Colors.grey.shade300),
+                                children: [
+                                  TableRow(
+                                    decoration: BoxDecoration(color: Colors.grey.shade100),
+                                    children: [
+                                      Padding(padding: EdgeInsets.all(4), child: Text('Input', style: TextStyle(fontWeight: FontWeight.bold))),
+                                      Padding(padding: EdgeInsets.all(4), child: Text('Arabic', style: TextStyle(fontWeight: FontWeight.bold))),
+                                      Padding(padding: EdgeInsets.all(4), child: Text('Input', style: TextStyle(fontWeight: FontWeight.bold))),
+                                      Padding(padding: EdgeInsets.all(4), child: Text('Arabic', style: TextStyle(fontWeight: FontWeight.bold))),
+                                    ]
+                                  ),
+                                  _buildRow(['a', 'ا', 'b', 'ب']),
+                                  _buildRow(['t', 'ت', 'th / t\'', 'ث']),
+                                  _buildRow(['j', 'ج', 'H', 'ح']),
+                                  _buildRow(['kh / H\'', 'خ', 'd', 'د']),
+                                  _buildRow(['dh / d\'', 'ذ', 'r', 'ر']),
+                                  _buildRow(['z', 'ز', 's', 'س']),
+                                  _buildRow(['sh / s\'', 'ش', 'S', 'ص']),
+                                  _buildRow(['D / S\'', 'ض', 'T', 'ط']),
+                                  _buildRow(['Z / T\'', 'ظ', '3 / e / c / g', 'ع']),
+                                  _buildRow(['gh / g\'', 'غ', 'f', 'ف']),
+                                  _buildRow(['q', 'ق', 'k', 'ك']),
+                                  _buildRow(['l', 'ل', 'm', 'م']),
+                                  _buildRow(['n', 'ن', 'h', 'ه']),
+                                  _buildRow(['w', 'و', 'y', 'ي']),
+                                  _buildRow(['-', 'ء', '-a', 'أ']),
+                                  _buildRow(['a--', 'إ', 'w--', 'ؤ']),
+                                  _buildRow(['y--', 'ئ', 'Y', 'ى']),
+                                ],
+                              )
+                            )
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
+          const SizedBox(height: 16),
 
         ],
       ),

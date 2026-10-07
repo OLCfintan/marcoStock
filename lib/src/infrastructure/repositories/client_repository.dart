@@ -117,6 +117,15 @@ class ClientRepository {
     );
   }
 
+  Future<void> updateClientDashboardStatus(String id, bool showInDashboard) async {
+    await (_db.update(_db.clients)..where((t) => t.id.equals(id))).write(
+      ClientsCompanion(
+        showInDashboard: drift.Value(showInDashboard),
+        updatedAt: drift.Value(DateTime.now()),
+      ),
+    );
+  }
+
   Future<void> deleteClient(String id) async {
     await (_db.update(_db.clients)..where((t) => t.id.equals(id))).write(const ClientsCompanion(isActive: drift.Value(false)));
   }

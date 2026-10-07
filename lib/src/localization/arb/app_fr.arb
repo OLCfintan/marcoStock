@@ -355,5 +355,18 @@
   "modeDeReglement": "Mode de Règlement",
   "letter": "Traite",
   "invoiceAddress": "Adresse (Factures)",
-  "companyTp": "TP"
+  "companyTp": "TP",
+  "ok": "OK",
+  "insufficientStockFor": "Stock insuffisant pour \"{product}\".\nDisponible: {available}\nDemandé: {requested}",
+  "autoInvoiceGenerator": "Générateur de Facture Auto",
+  "targetAmountHt": "Montant Cible (HT)",
+  "targetAmountTtc": "Montant Cible (TTC)",
+  "numberOfFamilies": "Nombre de Familles (Catégories)",
+  "generate": "Générer",
+  "cartNumber": "Panier {number}",
+  "cartTitle": "Panier",
+  "purchaseCart": "Panier d'Achat",
+  "add": "Ajouter",
+  "companyBranch": "Succursale de l'entreprise",
+  "ice": "ICE"
 }

@@ -65,6 +65,23 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
               tooltip: AppLocalizations.of(context)!.clearSelectedStockAdmin,
               onPressed: () async {
                 if (_selectedIds.isEmpty) return;
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text('Confirm'),
+                    content: Text('Are you sure you want to clear the selected stock?'),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+                      ElevatedButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                        child: const Text('Delete'),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirm != true) return;
+                
                 for (final id in _selectedIds) {
                   final parts = id.split('|');
                   if (parts.length == 2) {

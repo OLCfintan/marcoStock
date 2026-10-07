@@ -66,7 +66,7 @@ final invoicesStreamProvider =
       final db = ref.watch(databaseProvider);
 
       final query = (db.select(db.invoices)
-        ..where((t) => t.isActive.equals(true) & t.documentType.isNotIn(['FACTURE', 'FACTURE_DUMMY', 'COMMANDE']))).join([
+        ..where((t) => t.isActive.equals(true))).join([
         drift.leftOuterJoin(
           db.clients,
           db.clients.id.equalsExp(db.invoices.clientId),
@@ -229,11 +229,9 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
                           final aq = ArabicTransliterator.transliterate(
                             _searchQuery,
                           );
-                          return i.invoice.invoiceNumber.toLowerCase().contains(
-                                q,
-                              ) ||
-                              (i.client?.name.toLowerCase().contains(q) ??
-                                  false) ||
+                          return i.invoice.invoiceNumber.toLowerCase().contains(q) ||
+                              i.invoice.documentType.toLowerCase().contains(q) ||
+                              (i.client?.name.toLowerCase().contains(q) ?? false) ||
                               (i.client?.name.contains(aq) ?? false);
                         }).toList();
 

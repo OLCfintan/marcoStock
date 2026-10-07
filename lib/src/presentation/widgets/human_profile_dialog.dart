@@ -257,15 +257,14 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
                         Consumer(builder: (context, ref, child) {
                           final c = ref.watch(clientsStreamProvider).value?.where((e) => e.id == widget.id).firstOrNull;
                           if (c == null) return const SizedBox.shrink();
+                          if (c.type == 'SPECIAL') return const SizedBox.shrink();
                           return Row(
                             children: [
                               const Text('Show in Dashboard', style: TextStyle(fontSize: 12)),
                               Switch(
                                 value: c.showInDashboard,
                                 onChanged: (val) async {
-                                  await ref.read(clientRepositoryProvider).updateClient(
-                                    c.id, c.name, showInDashboard: val,
-                                  );
+                                  await ref.read(clientRepositoryProvider).updateClientDashboardStatus(c.id, val);
                                 },
                               ),
                             ],
@@ -281,9 +280,7 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
                               Switch(
                                 value: s.showInDashboard,
                                 onChanged: (val) async {
-                                  await ref.read(supplierRepositoryProvider).updateSupplier(
-                                    s.id, s.name, showInDashboard: val,
-                                  );
+                                  await ref.read(supplierRepositoryProvider).updateSupplierDashboardStatus(s.id, val);
                                 },
                               ),
                             ],
@@ -358,7 +355,7 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
   Widget _buildTransactionsList(AppDatabase db) {
     if (widget.type == HumanType.client) {
       return StreamBuilder<List<InvoiceEntity>>(
-        stream: (db.select(db.invoices)..where((t) => t.clientId.equals(widget.id) & t.isActive.equals(true) & t.documentType.isNotIn(['FACTURE', 'FACTURE_DUMMY', 'COMMANDE']))..orderBy([(t) => drift.OrderingTerm(expression: t.date, mode: drift.OrderingMode.desc)])).watch(),
+        stream: (db.select(db.invoices)..where((t) => t.clientId.equals(widget.id) & t.isActive.equals(true))..orderBy([(t) => drift.OrderingTerm(expression: t.date, mode: drift.OrderingMode.desc)])).watch(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) return const Center(child: const LogoLoader());
           var items = snapshot.data!;
@@ -428,7 +425,7 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
       );
     } else if (widget.type == HumanType.supplier) {
       return StreamBuilder<List<PurchaseEntity>>(
-        stream: (db.select(db.purchases)..where((t) => t.supplierId.equals(widget.id) & t.isActive.equals(true) & t.documentType.isNotIn(['FACTURE', 'FACTURE_DUMMY', 'COMMANDE']))..orderBy([(t) => drift.OrderingTerm(expression: t.date, mode: drift.OrderingMode.desc)])).watch(),
+        stream: (db.select(db.purchases)..where((t) => t.supplierId.equals(widget.id) & t.isActive.equals(true))..orderBy([(t) => drift.OrderingTerm(expression: t.date, mode: drift.OrderingMode.desc)])).watch(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) return const Center(child: const LogoLoader());
           var items = snapshot.data!;

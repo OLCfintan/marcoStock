@@ -59,8 +59,13 @@ final todaySalesProvider = StreamProvider<Decimal>((ref) {
   ])..where(
       db.invoices.date.isBiggerOrEqualValue(startOfDay) &
       db.invoices.isActive.equals(true) &
-      db.invoices.documentType.isNotIn(['COMMANDE', 'FACTURE', 'FACTURE_DUMMY']) &
-      (db.clients.type.isNull() | db.clients.type.isIn(['NORMAL', 'TEMP']))
+      (
+        db.clients.id.isNull() | 
+        (
+          db.clients.type.isIn(['NORMAL', 'TEMP']) & 
+          db.clients.showInDashboard.equals(true)
+        )
+      )
   );
   
   return query.watch().map((rows) {
@@ -91,7 +96,13 @@ final todaysCreditProvider = StreamProvider<Decimal>((ref) {
       db.invoices.date.isBiggerOrEqualValue(startOfDay) &
       db.invoices.isActive.equals(true) &
       db.invoices.documentType.isNotIn(['COMMANDE', 'FACTURE', 'FACTURE_DUMMY']) &
-      (db.clients.type.isNull() | db.clients.type.isIn(['NORMAL', 'TEMP']))
+      (
+        db.clients.id.isNull() | 
+        (
+          db.clients.type.isIn(['NORMAL', 'TEMP']) & 
+          db.clients.showInDashboard.equals(true)
+        )
+      )
   );
   
   return query.watch().map((rows) {
@@ -106,7 +117,7 @@ final todaysCreditProvider = StreamProvider<Decimal>((ref) {
 final topSellingProductsProvider = StreamProvider<List<TopProduct>>((ref) {
   final db = ref.watch(databaseProvider);
   return db.select(db.clients).watch().asyncMap((clients) async {
-    final normalIds = clients.where((c) => c.type == 'NORMAL').map((c) => c.id).toList();
+    final normalIds = clients.where((c) => (c.type == 'NORMAL' || c.type == 'TEMP') && c.showInDashboard).map((c) => c.id).toList();
     if (normalIds.isEmpty) return [];
     final invoices = await (db.select(db.invoices)..where((t) => t.isActive.equals(true) & t.documentType.isNotIn(['COMMANDE', 'FACTURE', 'FACTURE_DUMMY']) & ((t.clientId.isIn(normalIds) | t.clientId.isNull()) | t.clientId.isNull()))).get();
     final activeInvoiceIds = invoices.map((i) => i.id).toList();
@@ -144,7 +155,7 @@ final topClientsByRevenueProvider = StreamProvider<List<TopPayer>>((ref) {
   return db.select(db.clients).watch().asyncMap((clients) async {
     final list = <TopPayer>[];
     for (final c in clients) {
-      if (!c.isActive || c.type != 'NORMAL') continue;
+      if (!c.isActive || c.type != 'NORMAL' || !c.showInDashboard) continue;
       final payments = await (db.select(db.payments)..where((t) => t.clientId.equals(c.id) & t.isActive.equals(true))).get();
       final total = payments.fold(Decimal.zero, (sum, p) => sum + p.amount);
       if (total > Decimal.zero) {
@@ -161,7 +172,7 @@ final topSuppliersByRevenueProvider = StreamProvider<List<TopPayer>>((ref) {
   return db.select(db.suppliers).watch().asyncMap((suppliers) async {
     final list = <TopPayer>[];
     for (final s in suppliers) {
-      if (!s.isActive) continue;
+      if (!s.isActive || !s.showInDashboard) continue;
       final payments = await (db.select(db.payments)..where((t) => t.supplierId.equals(s.id) & t.isActive.equals(true))).get();
       final total = payments.fold(Decimal.zero, (sum, p) => sum + p.amount);
       if (total > Decimal.zero) {
@@ -255,7 +266,20 @@ final salesChartDataProvider = StreamProvider<List<ChartDataPoint>>((ref) {
   final period = ref.watch(salesChartPeriodProvider);
   final db = ref.watch(databaseProvider);
   
-  return (db.select(db.invoices)..where((t) => t.isActive.equals(true) & t.documentType.isNotIn(['COMMANDE', 'FACTURE', 'FACTURE_DUMMY']))).watch().asyncMap((invoices) async {
+  return (db.select(db.invoices).join([
+    leftOuterJoin(db.clients, db.clients.id.equalsExp(db.invoices.clientId)),
+  ])..where(
+      db.invoices.isActive.equals(true) &
+      db.invoices.documentType.isNotIn(['COMMANDE', 'FACTURE', 'FACTURE_DUMMY']) &
+      (
+        db.clients.id.isNull() | 
+        (
+          db.clients.type.isIn(['NORMAL', 'TEMP']) & 
+          db.clients.showInDashboard.equals(true)
+        )
+      )
+  )).watch().asyncMap((rows) async {
+    final invoices = rows.map((r) => r.readTable(db.invoices)).toList();
     final now = DateTime.now();
     
     final data = LinkedHashMap<String, Decimal>();

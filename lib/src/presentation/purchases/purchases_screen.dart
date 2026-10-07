@@ -51,6 +51,10 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
 
   PurchaseSession get _activeSession => _sessions[_activeSessionIndex];
 
+  final FocusNode _supplierFocusNode = FocusNode();
+  final FocusNode _paymentFocusNode = FocusNode();
+  final FocusNode _searchFocusNode = FocusNode();
+  String _searchQuery = '';
   @override
   void initState() {
     super.initState();
@@ -67,6 +71,9 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
   @override
   void dispose() {
     // Do NOT dispose _sessions so they survive screen transitions!
+    _supplierFocusNode.dispose();
+    _paymentFocusNode.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -360,20 +367,52 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
             }
           }
         }
-        final products = familyBases.values.toList();
+        var products = familyBases.values.toList();
+        if (_searchQuery.isNotEmpty) {
+          final q = _searchQuery.toLowerCase();
+          final aq = ArabicTransliterator.transliterate(_searchQuery);
+          products = products.where((p) {
+            return p.name.toLowerCase().contains(q) ||
+                   p.name.contains(aq) ||
+                   p.reference.toLowerCase().contains(q);
+          }).toList();
+        }
 
         if (_localOrder.isNotEmpty) {
+          final orderMap = <String, int>{};
+          for (int i = 0; i < _localOrder.length; i++) {
+            orderMap[_localOrder[i]] = i;
+          }
           products.sort((a, b) {
-            final idxA = _localOrder.indexOf(a.id);
-            final idxB = _localOrder.indexOf(b.id);
-            if (idxA != -1 && idxB != -1) return idxA.compareTo(idxB);
-            if (idxA != -1) return -1;
-            if (idxB != -1) return 1;
+            final idxA = orderMap[a.id];
+            final idxB = orderMap[b.id];
+            if (idxA != null && idxB != null) return idxA.compareTo(idxB);
+            if (idxA != null) return -1;
+            if (idxB != null) return 1;
             return 0;
           });
         }
 
-        return ReorderableGridView.builder(
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8.0, left: 8.0, right: 8.0),
+              child: TextField(
+                focusNode: _searchFocusNode,
+                decoration: InputDecoration(
+                  hintText: 'Search...',
+                  prefixIcon: const Icon(Icons.search),
+                  border: const OutlineInputBorder(),
+                ),
+                onChanged: (val) {
+                  setState(() {
+                    _searchQuery = val;
+                  });
+                },
+              ),
+            ),
+            Expanded(
+              child: ReorderableGridView.builder(
           onReorder: (oldIndex, newIndex) async {
             setState(() {
               final p = products.removeAt(oldIndex);
@@ -477,6 +516,9 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
               ),
             );
           },
+        ),
+            ),
+          ],
         );
       },
       loading: () => const Center(child: const LogoLoader()),
@@ -581,6 +623,7 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
             child: suppliersAsync.when(
               data:
                   (suppliers) => AutocompleteSearchField<Supplier>(
+                        focusNode: _supplierFocusNode,
                     key: ValueKey(_activeSession.id),
                     initialValue:
                         suppliers
@@ -778,6 +821,7 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
                               flex: 3,
                               child: TextField(
                                 controller: p.amountController,
+                                focusNode: idx == 0 ? _paymentFocusNode : null,
                                 decoration: const InputDecoration(
                                   labelText: 'Amount',
                                   prefixIcon: Icon(
@@ -861,7 +905,32 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
       ),
     );
 
-    return Scaffold(
+    return CallbackShortcuts(
+      bindings: {
+        SingleActivator(LogicalKeyboardKey.keyF, control: true): () {
+          _searchFocusNode.requestFocus();
+        },
+        SingleActivator(LogicalKeyboardKey.keyN, control: true): () {
+          setState(() {
+            _sessions.add(
+              PurchaseSession(
+                id: DateTime.now().millisecondsSinceEpoch.toString(),
+                title: 'Cart ${_sessions.length + 1}',
+              ),
+            );
+            _activeSessionIndex = _sessions.length - 1;
+          });
+          Future.delayed(const Duration(milliseconds: 100), () {
+            _supplierFocusNode.requestFocus();
+          });
+        },
+        SingleActivator(LogicalKeyboardKey.keyP, control: true): () {
+          _paymentFocusNode.requestFocus();
+        },
+      },
+      child: Focus(
+        autofocus: true,
+        child: Scaffold(
       appBar: AppBar(
         title: Text(
           l10n?.purchases ??
@@ -920,6 +989,8 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
           },
         ),
       ),
+    ),
+      ),
     );
   }
 }
@@ -941,5 +1012,74 @@ class PurchaseSession {
     for (var p in payments) {
       p.amountController.dispose();
     }
+  }
+}
+
+class _SupplierSearchDialog extends StatefulWidget {
+  final List<Supplier> suppliers;
+  final String? initialSupplierId;
+
+  const _SupplierSearchDialog({required this.suppliers, this.initialSupplierId});
+
+  @override
+  State<_SupplierSearchDialog> createState() => _SupplierSearchDialogState();
+}
+
+class _SupplierSearchDialogState extends State<_SupplierSearchDialog> {
+  String _query = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final filtered = widget.suppliers.where((s) {
+      if (_query.isEmpty) return true;
+      final q = _query.toLowerCase();
+      final aq = ArabicTransliterator.transliterate(_query);
+      return s.name.toLowerCase().contains(q) || s.name.contains(aq);
+    }).toList();
+
+    return AlertDialog(
+      title: const Text('Select Supplier'),
+      content: SizedBox(
+        width: double.maxFinite,
+        height: 400,
+        child: Column(
+          children: [
+            TextField(
+              autofocus: true,
+              decoration: const InputDecoration(
+                hintText: 'Search...',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (val) {
+                setState(() => _query = val);
+              },
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: filtered.isEmpty
+                  ? const Center(child: Text('No suppliers found'))
+                  : ListView.builder(
+                      itemCount: filtered.length,
+                      itemBuilder: (context, index) {
+                        final supplier = filtered[index];
+                        return ListTile(
+                          leading: const Icon(Icons.business),
+                          title: Text('${supplier.name} (${supplier.type})'),
+                          onTap: () => Navigator.pop(context, supplier),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+      ],
+    );
   }
 }

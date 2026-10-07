@@ -80,6 +80,7 @@ class SettingsService {
 
   Future<void> setStockEngineEnabled(bool enabled) async {
     await _prefs.setBool('stockEngineEnabled', enabled);
+    await setSetting('stockEngineEnabled', enabled ? 'true' : 'false');
   }
 
   Future<String?> getSetting(String key) async {

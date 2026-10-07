@@ -355,5 +355,18 @@
   "modeDeReglement": "طريقة الدفع",
   "letter": "كمبيالة",
   "invoiceAddress": "عنوان الفاتورة",
-  "companyTp": "ضريبة المهنية"
+  "companyTp": "ضريبة المهنية",
+  "ok": "حسنا",
+  "insufficientStockFor": "مخزون غير كاف لـ \"{product}\".\nالمتاح: {available}\nالمطلوب: {requested}",
+  "autoInvoiceGenerator": "مولد الفواتير التلقائي",
+  "targetAmountHt": "المبلغ المستهدف (HT)",
+  "targetAmountTtc": "المبلغ المستهدف (TTC)",
+  "numberOfFamilies": "عدد العائلات (الفئات)",
+  "generate": "توليد",
+  "cartNumber": "سلة {number}",
+  "cartTitle": "السلة",
+  "purchaseCart": "سلة المشتريات",
+  "add": "إضافة",
+  "companyBranch": "فرع الشركة",
+  "ice": "ICE"
 }

@@ -100,6 +100,15 @@ class SupplierRepository {
     );
   }
 
+  Future<void> updateSupplierDashboardStatus(String id, bool showInDashboard) async {
+    await (_db.update(_db.suppliers)..where((t) => t.id.equals(id))).write(
+      SuppliersCompanion(
+        showInDashboard: drift.Value(showInDashboard),
+        updatedAt: drift.Value(DateTime.now()),
+      ),
+    );
+  }
+
   Future<void> deleteSupplier(String id) async {
     await (_db.update(_db.suppliers)..where((t) => t.id.equals(id))).write(const SuppliersCompanion(isActive: drift.Value(false)));
   }

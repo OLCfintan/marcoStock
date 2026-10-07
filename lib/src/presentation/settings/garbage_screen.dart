@@ -21,6 +21,25 @@ class GarbageScreen extends ConsumerStatefulWidget {
 }
 
 class _GarbageScreenState extends ConsumerState<GarbageScreen> {
+  Future<bool> _confirmDelete(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
+    return await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Confirm Delete'),
+        content: const Text('Are you sure you want to permanently delete? This cannot be undone.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n?.cancel ?? 'Cancel')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n?.deleteStr ?? 'Delete', style: const TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    ) ?? false;
+  }
+
   final Set<String> _selectedIds = {};
   String _searchQuery = '';
 
@@ -37,6 +56,7 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
               icon: const Icon(Icons.restore, color: Colors.green),
               tooltip: AppLocalizations.of(context)!.restoreSelected,
               onPressed: () async {
+                if (!await _confirmDelete(context)) return;
                 final db = ref.read(databaseProvider);
                 final userId = ref.read(currentUserProvider)?.id ?? '';
                 final salesSvc = ref.read(salesServiceProvider);
@@ -89,6 +109,7 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
               icon: const Icon(Icons.delete_forever, color: Colors.red),
               tooltip: AppLocalizations.of(context)!.permanentlyDeleteSelected,
               onPressed: () async {
+                if (!await _confirmDelete(context)) return;
                 final db = ref.read(databaseProvider);
                 await db.transaction(() async {
                   for (final id in _selectedIds.toList()) {
@@ -187,7 +208,7 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
                   'Deleted Products',
                   (db.select(db.products)
                         ..where((t) => t.isActive.equals(false))
-                        ..limit(50))
+                        )
                       .watch(),
                   (product) => product.id,
                   (product) => product.name,
@@ -208,7 +229,7 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
                   AppLocalizations.of(context)!.deletedInvoicesBons,
                   (db.select(db.invoices)
                         ..where((t) => t.isActive.equals(false))
-                        ..limit(50))
+                        )
                       .watch(),
                   (invoice) => invoice.id,
                   (invoice) =>
@@ -270,7 +291,7 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
                   AppLocalizations.of(context)!.deletedPurchases,
                   (db.select(db.purchases)
                         ..where((t) => t.isActive.equals(false))
-                        ..limit(50))
+                        )
                       .watch(),
                   (purchase) => purchase.id,
                   (purchase) =>
@@ -330,7 +351,7 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
                   AppLocalizations.of(context)!.deletedPaymentsChecks,
                   (db.select(db.payments)
                         ..where((t) => t.isActive.equals(false))
-                        ..limit(50))
+                        )
                       .watch(),
                   (payment) => payment.id,
                   (payment) =>
@@ -383,8 +404,18 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
               if (_searchQuery.isEmpty) return true;
               final q = _searchQuery.toLowerCase();
               final aq = ArabicTransliterator.transliterate(_searchQuery);
-              return getName(item).toLowerCase().contains(q) ||
-                  getName(item).contains(aq);
+              
+              String searchable = getName(item);
+              if (item is ProductEntity) {
+                searchable += ' ${item.reference} ${item.sellingPrice}';
+              } else if (item is InvoiceEntity) {
+                searchable += ' ${item.documentType} ${item.invoiceNumber}';
+              } else if (item is PurchaseEntity) {
+                searchable += ' ${item.total}';
+              }
+              searchable = searchable.toLowerCase();
+              
+              return searchable.contains(q) || searchable.contains(aq);
             }).toList();
 
         if (items.isEmpty) return const SizedBox.shrink();

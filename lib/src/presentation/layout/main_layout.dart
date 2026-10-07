@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:marko_group/src/localization/arb/app_localizations.dart';
 import '../../application/auth/auth_service.dart';
+import '../../application/system/shortcuts_provider.dart';
+import 'package:flutter/services.dart';
 
 class MainLayout extends ConsumerWidget {
   final Widget child;
@@ -83,7 +85,26 @@ class MainLayout extends ConsumerWidget {
       );
     }
 
-    return LayoutBuilder(
+    return CallbackShortcuts(
+      bindings: {
+        SingleActivator(LogicalKeyboardKey.keyN, control: true): () {
+          final currentPath = GoRouterState.of(context).matchedLocation;
+          if (currentPath == '/purchases') {
+            ref.read(newPurchaseCartTriggerProvider.notifier).state++;
+          } else {
+            ref.read(newSaleCartTriggerProvider.notifier).state++;
+            if (currentPath != '/pos') {
+              context.go('/pos');
+            }
+          }
+        },
+      },
+      child: Focus(
+        autofocus: true,
+        canRequestFocus: true,
+        onFocusChange: (f) {},
+        descendantsAreFocusable: true,
+        child: LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth < 800) {
           return Scaffold(
@@ -116,6 +137,8 @@ class MainLayout extends ConsumerWidget {
           );
         }
       },
+    ),
+    ),
     );
   }
 

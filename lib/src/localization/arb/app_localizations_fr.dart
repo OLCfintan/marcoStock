@@ -1111,4 +1111,51 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get companyTp => 'TP';
+
+  @override
+  String get ok => 'OK';
+
+  @override
+  String insufficientStockFor(
+    String product,
+    String available,
+    String requested,
+  ) {
+    return 'Stock insuffisant pour \"$product\".\nDisponible: $available\nDemandé: $requested';
+  }
+
+  @override
+  String get autoInvoiceGenerator => 'Générateur de Facture Auto';
+
+  @override
+  String get targetAmountHt => 'Montant Cible (HT)';
+
+  @override
+  String get targetAmountTtc => 'Montant Cible (TTC)';
+
+  @override
+  String get numberOfFamilies => 'Nombre de Familles (Catégories)';
+
+  @override
+  String get generate => 'Générer';
+
+  @override
+  String cartNumber(String number) {
+    return 'Panier $number';
+  }
+
+  @override
+  String get cartTitle => 'Panier';
+
+  @override
+  String get purchaseCart => 'Panier d\'Achat';
+
+  @override
+  String get add => 'Ajouter';
+
+  @override
+  String get companyBranch => 'Succursale de l\'entreprise';
+
+  @override
+  String get ice => 'ICE';
 }
