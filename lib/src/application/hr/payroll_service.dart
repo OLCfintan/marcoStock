@@ -65,6 +65,18 @@ class PayrollService {
         updatedAt: DateTime.now(),
       ));
 
+      // Create Payment record for actual cash outflow
+      if (type == 'ADVANCE' || type == 'PAYMENT') {
+        await _db.into(_db.payments).insert(PaymentsCompanion.insert(
+          id: _uuid.v4(),
+          employeeId: drift.Value(employeeId),
+          amount: amount,
+          method: 'CASH', // default
+          date: DateTime.now(),
+          status: 'CLEARED',
+        ));
+      }
+
       // 5. Audit Log
       await _db.into(_db.auditLogs).insert(AuditLogsCompanion.insert(
         id: _uuid.v4(),

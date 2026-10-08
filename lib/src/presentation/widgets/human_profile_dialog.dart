@@ -27,6 +27,7 @@ import 'view_payments_dialog.dart';
 import '../../application/documents/pdf_generator.dart';
 import 'payment_ledger_dialog.dart';
 import '../../application/hr/payroll_service.dart';
+import '../clients/client_details_screen.dart';
 
 enum HumanType {
   client,
@@ -73,7 +74,8 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    int tabsCount = widget.type == HumanType.client ? 3 : 2;
+    _tabController = TabController(length: tabsCount, vsync: this);
   }
 
   @override
@@ -298,12 +300,38 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
                     Text('${currentBalance.toStringAsFixed(2)} Dhs', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: balanceColor)),
                   ],
                 ),
+                if (widget.type == HumanType.client) ...[
+                  const SizedBox(width: 24),
+                  Consumer(builder: (context, ref, child) {
+                    final db = ref.watch(databaseProvider);
+                    final query = db.select(db.invoices)
+                      ..where((t) => t.clientId.equals(widget.id) & t.documentType.equals('BON') & t.isActive.equals(true));
+                    return StreamBuilder<List<InvoiceEntity>>(
+                      stream: query.watch(),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) return const SizedBox.shrink();
+                        final docs = snapshot.data!;
+                        Decimal totalRev = Decimal.zero;
+                        for (final inv in docs) {
+                          totalRev += inv.total;
+                        }
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            const Text('Total Revenue', style: TextStyle(fontSize: 14, color: Colors.grey)),
+                            Text('${totalRev.toStringAsFixed(2)} Dhs', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blueAccent)),
+                          ],
+                        );
+                      },
+                    );
+                  }),
+                ],
                 const SizedBox(width: 16),
                 Builder(
                   builder: (ctx) {
                     String qrData = '';
                     if (widget.type == HumanType.client) {
-                      qrData = 'TYPE: CLIENT\nNAME: ${widget.name}\nPHONE: ${widget.phone ?? ''}\nEMAIL: ${widget.email ?? ''}\nTIER: ${widget.clientTier ?? ''}';
+                      qrData = 'BEGIN:VCARD\nVERSION:3.0\nFN:${widget.name}\nTEL:${widget.phone ?? ''}\nNOTE:ICE: \nEND:VCARD';
                     } else if (widget.type == HumanType.supplier) {
                       qrData = 'TYPE: SUPPLIER\nNAME: ${widget.name}\nPHONE: ${widget.phone ?? ''}\nEMAIL: ${widget.email ?? ''}';
                     } else {
@@ -340,9 +368,11 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
             controller: _tabController,
             labelColor: Theme.of(context).primaryColor,
             unselectedLabelColor: Colors.grey,
-            tabs: const [
-              Tab(text: 'Transaction History'),
-              Tab(text: 'Payments & Checks'),
+            tabs: [
+              Tab(text: widget.type == HumanType.employee ? 'Payroll Records' : 'Transaction History'),
+              const Tab(text: 'Payments & Checks'),
+              if (widget.type == HumanType.client)
+                const Tab(text: 'Remaining Products'),
             ],
           ),
           Expanded(
@@ -354,6 +384,10 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
                 
                 // Tab 2: Payments
                 _buildPaymentsTab(db),
+
+                // Tab 3: Remaining Products
+                if (widget.type == HumanType.client)
+                  RemainingProductsSection(clientId: widget.id),
               ],
             ),
           ),
@@ -529,6 +563,29 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
                     ],
                   ),
                 ),
+              );
+            },
+          );
+        },
+      );
+    } else if (widget.type == HumanType.employee) {
+      return StreamBuilder<List<PayrollRecordEntity>>(
+        stream: (db.select(db.payrollRecords)..where((t) => t.employeeId.equals(widget.id))..orderBy([(t) => drift.OrderingTerm(expression: t.date, mode: drift.OrderingMode.desc)])).watch(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) return const Center(child: LogoLoader());
+          final items = snapshot.data!;
+          if (items.isEmpty) return const Center(child: Text('No payroll records'));
+          return ListView.builder(
+            itemCount: items.length,
+            itemBuilder: (context, i) {
+              final rec = items[i];
+              return ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: ['SALARY', 'BONUS'].contains(rec.type) ? Colors.green : Colors.red,
+                  child: Icon(['SALARY', 'BONUS'].contains(rec.type) ? Icons.add : Icons.remove, color: Colors.white),
+                ),
+                title: Text('${rec.type}: ${rec.amount.toStringAsFixed(2)} Dhs'),
+                subtitle: Text('Date: ${rec.date.toString().split('.')[0]}${rec.notes != null ? ' - ${rec.notes}' : ''}'),
               );
             },
           );

@@ -9,6 +9,7 @@ class Invoices extends Table {
   TextColumn get clientId => text().nullable()();
   
   DateTimeColumn get date => dateTime()();
+  DateTimeColumn get scheduledDate => dateTime().nullable()();
   
   TextColumn get subtotal => text().map(const DecimalConverter())();
   TextColumn get taxes => text().map(const DecimalConverter())();
@@ -63,6 +64,8 @@ class Payments extends Table {
   
   BoolColumn get isActive => boolean().withDefault(const Constant(true))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  BoolColumn get isSalePayment => boolean().withDefault(const Constant(false))();
 
   @override
   Set<Column> get primaryKey => {id};

@@ -104,6 +104,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     _paymentFocusNode.dispose();
     // Do NOT dispose _sessions so they survive screen transitions!
     _searchFocusNode.dispose();
+    _multiSelectedProductIds.dispose();
     super.dispose();
   }
 
@@ -334,6 +335,22 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       }
     }
 
+    DateTime? scheduledDate;
+    if (_activeSession.selectedDocumentType == 'BON') {
+      final sdText = _activeSession.scheduledDateController.text.trim();
+      if (sdText.isNotEmpty) {
+        final parts = sdText.split('/');
+        if (parts.length == 3) {
+          final day = int.tryParse(parts[0]);
+          final month = int.tryParse(parts[1]);
+          final year = int.tryParse(parts[2]);
+          if (day != null && month != null && year != null) {
+            scheduledDate = DateTime(year, month, day);
+          }
+        }
+      }
+    }
+
     final req = SaleRequest(
       documentType: _activeSession.selectedDocumentType,
       clientId: _activeSession.selectedClientId!,
@@ -346,6 +363,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
               ? _activeSession.invoiceCounterController.text.trim()
               : null,
       customDate: customDate,
+      scheduledDate: scheduledDate,
       customClientName:
           _activeSession.selectedDocumentType == 'FACTURE'
               ? (_activeSession.customNameController.text.trim().isEmpty
@@ -1200,6 +1218,22 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                       },
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  if (_activeSession.selectedDocumentType == 'BON')
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: TextFormField(
+                        controller: _activeSession.scheduledDateController,
+                        decoration: InputDecoration(
+                          labelText: 'Scheduled Date (Optional)',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          hintText: 'DD/MM/YYYY',
+                          prefixIcon: const Icon(Icons.calendar_today),
+                        ),
+                      ),
+                    ),
                   if (_activeSession.selectedDocumentType == 'FACTURE') ...[
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -1389,42 +1423,27 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                           color: Colors.blueGrey,
                                         ),
                                         onPressed: () {
-                                          final qtyCtrl = TextEditingController(
-                                            text: line.quantity.toString(),
-                                          );
-                                          final priceCtrl =
-                                              TextEditingController(
-                                                text: line.unitPrice
-                                                    .toStringAsFixed(2),
-                                              );
+                                          String newQtyStr = line.quantity.toString();
+                                          String newPriceStr = line.unitPrice.toStringAsFixed(2);
 
                                           showDialog(
                                             context: context,
                                             builder: (ctx) {
                                               void saveEdit() {
                                                 final newQty =
-                                                    Decimal.tryParse(
-                                                      qtyCtrl.text,
-                                                    ) ??
-                                                    line.quantity;
+                                                    Decimal.tryParse(newQtyStr) ?? line.quantity;
                                                 final newPrice =
-                                                    Decimal.tryParse(
-                                                      priceCtrl.text,
-                                                    ) ??
-                                                    line.unitPrice;
+                                                    Decimal.tryParse(newPriceStr) ?? line.unitPrice;
                                                 setState(() {
                                                   if (newQty <= Decimal.zero) {
-                                                    _activeSession.cart
-                                                        .removeAt(index);
+                                                    _activeSession.cart.removeAt(index);
                                                   } else {
-                                                    _activeSession.cart[index] =
-                                                        SaleLineRequest(
-                                                          productId: product.id,
-                                                          quantity: newQty,
-                                                          unitPrice: newPrice,
-                                                          discount:
-                                                              line.discount,
-                                                        );
+                                                    _activeSession.cart[index] = SaleLineRequest(
+                                                      productId: product.id,
+                                                      quantity: newQty,
+                                                      unitPrice: newPrice,
+                                                      discount: line.discount,
+                                                    );
                                                   }
                                                 });
                                                 Navigator.pop(ctx);
@@ -1437,76 +1456,47 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                                 content: Focus(
                                                   onKeyEvent: (node, event) {
                                                     if (event is KeyDownEvent &&
-                                                        (event.logicalKey ==
-                                                                LogicalKeyboardKey
-                                                                    .enter ||
-                                                            event.logicalKey ==
-                                                                LogicalKeyboardKey
-                                                                    .numpadEnter)) {
+                                                        (event.logicalKey == LogicalKeyboardKey.enter ||
+                                                            event.logicalKey == LogicalKeyboardKey.numpadEnter)) {
                                                       saveEdit();
-                                                      return KeyEventResult
-                                                          .handled;
+                                                      return KeyEventResult.handled;
                                                     }
-                                                    return KeyEventResult
-                                                        .ignored;
+                                                    return KeyEventResult.ignored;
                                                   },
                                                   child: Column(
-                                                    mainAxisSize:
-                                                        MainAxisSize.min,
+                                                    mainAxisSize: MainAxisSize.min,
                                                     children: [
                                                       TextFormField(
-                                                        controller: qtyCtrl,
+                                                        initialValue: newQtyStr,
                                                         decoration: InputDecoration(
-                                                          labelText:
-                                                              AppLocalizations.of(
-                                                                context,
-                                                              )!.quantity,
+                                                          labelText: AppLocalizations.of(context)!.quantity,
                                                         ),
                                                         textInputAction: TextInputAction.done,
-                                                  keyboardType:
-                                                            const TextInputType.numberWithOptions(
-                                                              decimal: true,
-                                                            ),
-                                                        onFieldSubmitted:
-                                                            (_) => saveEdit(),
+                                                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                                        onChanged: (val) => newQtyStr = val,
+                                                        onFieldSubmitted: (_) => saveEdit(),
                                                       ),
                                                       TextFormField(
-                                                        controller: priceCtrl,
+                                                        initialValue: newPriceStr,
                                                         decoration: InputDecoration(
-                                                          labelText:
-                                                              AppLocalizations.of(
-                                                                context,
-                                                              )!.unitPrice,
+                                                          labelText: AppLocalizations.of(context)!.unitPrice,
                                                         ),
                                                         textInputAction: TextInputAction.done,
-                                                  keyboardType:
-                                                            const TextInputType.numberWithOptions(
-                                                              decimal: true,
-                                                            ),
-                                                        onFieldSubmitted:
-                                                            (_) => saveEdit(),
+                                                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                                        onChanged: (val) => newPriceStr = val,
+                                                        onFieldSubmitted: (_) => saveEdit(),
                                                       ),
                                                     ],
                                                   ),
                                                 ),
                                                 actions: [
                                                   TextButton(
-                                                    onPressed:
-                                                        () =>
-                                                            Navigator.pop(ctx),
-                                                    child: Text(
-                                                      AppLocalizations.of(
-                                                        context,
-                                                      )!.cancel,
-                                                    ),
+                                                    onPressed: () => Navigator.pop(ctx),
+                                                    child: Text(AppLocalizations.of(context)!.cancel),
                                                   ),
-                                                  TextButton(
+                                                  ElevatedButton(
                                                     onPressed: saveEdit,
-                                                    child: Text(
-                                                      AppLocalizations.of(
-                                                        context,
-                                                      )!.save,
-                                                    ),
+                                                    child: Text(AppLocalizations.of(context)!.save),
                                                   ),
                                                 ],
                                               );
@@ -1891,6 +1881,7 @@ class PosSession {
   final TextEditingController invoiceCounterController =
       TextEditingController();
   final TextEditingController invoiceDateController = TextEditingController();
+  final TextEditingController scheduledDateController = TextEditingController();
   final TextEditingController customNameController = TextEditingController();
   final TextEditingController customIceController = TextEditingController();
 
@@ -1907,6 +1898,7 @@ class PosSession {
     }
     invoiceCounterController.dispose();
     invoiceDateController.dispose();
+    scheduledDateController.dispose();
     customNameController.dispose();
     customIceController.dispose();
   }

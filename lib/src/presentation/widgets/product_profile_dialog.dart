@@ -112,7 +112,14 @@ class _ProductProfileDialogState extends ConsumerState<ProductProfileDialog> wit
                 const SizedBox(width: 16),
                 Builder(
                   builder: (ctx) {
-                    final qrData = 'TYPE: PRODUCT\nNAME: ${p.name}\nREFERENCE: ${p.reference}\nNAME_AR: ${p.nameAr ?? ''}\nNAME_FR: ${p.nameFr ?? ''}\nNAME_ES: ${p.nameEs ?? ''}\nUNIT: ${p.unit}\nUNIT_SIZE: ${p.unitSize}\nUNITS_PER_BOX: ${p.unitsPerBox ?? ''}\nPURCHASE_PRICE: ${p.purchasePrice}\nSELLING_PRICE: ${p.sellingPrice}\nTIER2_PRICE: ${p.tier2Price ?? ''}\nTIER3_PRICE: ${p.tier3Price ?? ''}\nMIN_STOCK: ${p.minimumStock}\nBASE_MIN_STOCK: ${p.baseMinimumStock}\nMAGAZIN_MIN_STOCK: ${p.magazinMinimumStock}\nPACKAGING: ${p.packagingType ?? ''}';
+                    final qrData = '''Product / المنتج: ${p.name} ${p.nameAr != null ? ' - ${p.nameAr}' : ''}
+Reference / المرجع: ${p.reference}
+Category / الفئة: ${p.category ?? 'N/A'}
+Unit / الوحدة: ${p.unitSize} ${p.unit}
+Packaging / التعبئة: ${p.packagingType ?? 'N/A'} (Units/Box: ${p.unitsPerBox})
+Min Stock (Base) / الحد الأدنى (الرئيسي): ${p.baseMinimumStock}
+Min Stock (Magazin) / الحد الأدنى (المخزن): ${p.magazinMinimumStock}
+Description / الوصف: ${p.description ?? 'N/A'}''';
                     return InkWell(
                       onTap: () async {
                         await Clipboard.setData(ClipboardData(text: qrData));
@@ -128,7 +135,7 @@ class _ProductProfileDialogState extends ConsumerState<ProductProfileDialog> wit
                           child: QrImageView(
                             data: qrData,
                             version: QrVersions.auto,
-                            size: 80.0,
+                            size: 140.0,
                             backgroundColor: Colors.white,
                           ),
                         ),

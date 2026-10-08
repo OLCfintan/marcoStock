@@ -20,7 +20,6 @@ class _AddEmployeeScreenState extends ConsumerState<AddEmployeeScreen> {
   final _formKey = GlobalKey<FormState>();
 
   final _nameController = TextEditingController();
-  final _positionController = TextEditingController();
   final _phoneController = TextEditingController();
   final _pinCodeController = TextEditingController();
   String _selectedRole = 'CASHIER';
@@ -35,7 +34,6 @@ class _AddEmployeeScreenState extends ConsumerState<AddEmployeeScreen> {
     super.initState();
     if (widget.employeeToEdit != null) {
       _nameController.text = widget.employeeToEdit!.name;
-      _positionController.text = widget.employeeToEdit!.position;
       _phoneController.text = widget.employeeToEdit!.phone ?? '';
       _emailController.text = widget.employeeToEdit!.email ?? '';
       _baseSalaryController.text = widget.employeeToEdit!.baseSalary.toStringAsFixed(2);
@@ -49,7 +47,6 @@ class _AddEmployeeScreenState extends ConsumerState<AddEmployeeScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    _positionController.dispose();
     _phoneController.dispose();
     _pinCodeController.dispose();
     _emailController.dispose();
@@ -76,7 +73,7 @@ class _AddEmployeeScreenState extends ConsumerState<AddEmployeeScreen> {
 
     await repo.createEmployee(
       _nameController.text.trim(),
-      _positionController.text.trim(),
+      _selectedRole,
       phone: _phoneController.text.trim(),
       email: _emailController.text.trim(),
       imagePath: _imagePath,
@@ -156,12 +153,6 @@ class _AddEmployeeScreenState extends ConsumerState<AddEmployeeScreen> {
                       
                     ),
                     const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _positionController,
-                      decoration: _inputDecoration('Position / Role'),
-                      
-                    ),
-                    const SizedBox(height: 16),
                     ImagePickerField(
                       label: 'Profile Image',
                       onChanged: (val) => setState(() => _imagePath = val),
@@ -206,17 +197,19 @@ class _AddEmployeeScreenState extends ConsumerState<AddEmployeeScreen> {
                     DropdownButtonFormField<String>(
                       value: _selectedRole,
                       items: (ref.watch(currentUserProvider)?.role == 'ADMIN' 
-                          ? ['ADMIN', 'GERANT', 'CASHIER'] 
-                          : ['GERANT', 'CASHIER'])
+                          ? ['ADMIN', 'GERANT', 'CASHIER', 'MAGAZINIER'] 
+                          : ['GERANT', 'CASHIER', 'MAGAZINIER'])
                           .map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
                       onChanged: (val) => setState(() => _selectedRole = val!),
                       decoration: _inputDecoration('Role'),
                     ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _pinCodeController,
-                      decoration: _inputDecoration('Login PIN Code (Required)'),
-                    ),
+                    if (_selectedRole != 'MAGAZINIER') ...[
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _pinCodeController,
+                        decoration: _inputDecoration('Login PIN Code (Required)'),
+                      ),
+                    ],
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _baseSalaryController,

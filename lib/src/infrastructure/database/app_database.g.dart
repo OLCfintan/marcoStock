@@ -4781,6 +4781,18 @@ class $InvoicesTable extends Invoices
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _scheduledDateMeta = const VerificationMeta(
+    'scheduledDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> scheduledDate =
+      GeneratedColumn<DateTime>(
+        'scheduled_date',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
   @override
   late final GeneratedColumnWithTypeConverter<Decimal, String> subtotal =
       GeneratedColumn<String>(
@@ -4915,6 +4927,7 @@ class $InvoicesTable extends Invoices
     documentType,
     clientId,
     date,
+    scheduledDate,
     subtotal,
     taxes,
     total,
@@ -4978,6 +4991,15 @@ class $InvoicesTable extends Invoices
       );
     } else if (isInserting) {
       context.missing(_dateMeta);
+    }
+    if (data.containsKey('scheduled_date')) {
+      context.handle(
+        _scheduledDateMeta,
+        scheduledDate.isAcceptableOrUnknown(
+          data['scheduled_date']!,
+          _scheduledDateMeta,
+        ),
+      );
     }
     if (data.containsKey('status')) {
       context.handle(
@@ -5074,6 +5096,10 @@ class $InvoicesTable extends Invoices
             DriftSqlType.dateTime,
             data['${effectivePrefix}date'],
           )!,
+      scheduledDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}scheduled_date'],
+      ),
       subtotal: $InvoicesTable.$convertersubtotal.fromSql(
         attachedDatabase.typeMapping.read(
           DriftSqlType.string,
@@ -5157,6 +5183,7 @@ class InvoiceEntity extends DataClass implements Insertable<InvoiceEntity> {
   final String documentType;
   final String? clientId;
   final DateTime date;
+  final DateTime? scheduledDate;
   final Decimal subtotal;
   final Decimal taxes;
   final Decimal total;
@@ -5175,6 +5202,7 @@ class InvoiceEntity extends DataClass implements Insertable<InvoiceEntity> {
     required this.documentType,
     this.clientId,
     required this.date,
+    this.scheduledDate,
     required this.subtotal,
     required this.taxes,
     required this.total,
@@ -5198,6 +5226,9 @@ class InvoiceEntity extends DataClass implements Insertable<InvoiceEntity> {
       map['client_id'] = Variable<String>(clientId);
     }
     map['date'] = Variable<DateTime>(date);
+    if (!nullToAbsent || scheduledDate != null) {
+      map['scheduled_date'] = Variable<DateTime>(scheduledDate);
+    }
     {
       map['subtotal'] = Variable<String>(
         $InvoicesTable.$convertersubtotal.toSql(subtotal),
@@ -5249,6 +5280,10 @@ class InvoiceEntity extends DataClass implements Insertable<InvoiceEntity> {
               ? const Value.absent()
               : Value(clientId),
       date: Value(date),
+      scheduledDate:
+          scheduledDate == null && nullToAbsent
+              ? const Value.absent()
+              : Value(scheduledDate),
       subtotal: Value(subtotal),
       taxes: Value(taxes),
       total: Value(total),
@@ -5288,6 +5323,7 @@ class InvoiceEntity extends DataClass implements Insertable<InvoiceEntity> {
       documentType: serializer.fromJson<String>(json['documentType']),
       clientId: serializer.fromJson<String?>(json['clientId']),
       date: serializer.fromJson<DateTime>(json['date']),
+      scheduledDate: serializer.fromJson<DateTime?>(json['scheduledDate']),
       subtotal: serializer.fromJson<Decimal>(json['subtotal']),
       taxes: serializer.fromJson<Decimal>(json['taxes']),
       total: serializer.fromJson<Decimal>(json['total']),
@@ -5315,6 +5351,7 @@ class InvoiceEntity extends DataClass implements Insertable<InvoiceEntity> {
       'documentType': serializer.toJson<String>(documentType),
       'clientId': serializer.toJson<String?>(clientId),
       'date': serializer.toJson<DateTime>(date),
+      'scheduledDate': serializer.toJson<DateTime?>(scheduledDate),
       'subtotal': serializer.toJson<Decimal>(subtotal),
       'taxes': serializer.toJson<Decimal>(taxes),
       'total': serializer.toJson<Decimal>(total),
@@ -5336,6 +5373,7 @@ class InvoiceEntity extends DataClass implements Insertable<InvoiceEntity> {
     String? documentType,
     Value<String?> clientId = const Value.absent(),
     DateTime? date,
+    Value<DateTime?> scheduledDate = const Value.absent(),
     Decimal? subtotal,
     Decimal? taxes,
     Decimal? total,
@@ -5354,6 +5392,8 @@ class InvoiceEntity extends DataClass implements Insertable<InvoiceEntity> {
     documentType: documentType ?? this.documentType,
     clientId: clientId.present ? clientId.value : this.clientId,
     date: date ?? this.date,
+    scheduledDate:
+        scheduledDate.present ? scheduledDate.value : this.scheduledDate,
     subtotal: subtotal ?? this.subtotal,
     taxes: taxes ?? this.taxes,
     total: total ?? this.total,
@@ -5388,6 +5428,10 @@ class InvoiceEntity extends DataClass implements Insertable<InvoiceEntity> {
               : this.documentType,
       clientId: data.clientId.present ? data.clientId.value : this.clientId,
       date: data.date.present ? data.date.value : this.date,
+      scheduledDate:
+          data.scheduledDate.present
+              ? data.scheduledDate.value
+              : this.scheduledDate,
       subtotal: data.subtotal.present ? data.subtotal.value : this.subtotal,
       taxes: data.taxes.present ? data.taxes.value : this.taxes,
       total: data.total.present ? data.total.value : this.total,
@@ -5424,6 +5468,7 @@ class InvoiceEntity extends DataClass implements Insertable<InvoiceEntity> {
           ..write('documentType: $documentType, ')
           ..write('clientId: $clientId, ')
           ..write('date: $date, ')
+          ..write('scheduledDate: $scheduledDate, ')
           ..write('subtotal: $subtotal, ')
           ..write('taxes: $taxes, ')
           ..write('total: $total, ')
@@ -5447,6 +5492,7 @@ class InvoiceEntity extends DataClass implements Insertable<InvoiceEntity> {
     documentType,
     clientId,
     date,
+    scheduledDate,
     subtotal,
     taxes,
     total,
@@ -5469,6 +5515,7 @@ class InvoiceEntity extends DataClass implements Insertable<InvoiceEntity> {
           other.documentType == this.documentType &&
           other.clientId == this.clientId &&
           other.date == this.date &&
+          other.scheduledDate == this.scheduledDate &&
           other.subtotal == this.subtotal &&
           other.taxes == this.taxes &&
           other.total == this.total &&
@@ -5489,6 +5536,7 @@ class InvoicesCompanion extends UpdateCompanion<InvoiceEntity> {
   final Value<String> documentType;
   final Value<String?> clientId;
   final Value<DateTime> date;
+  final Value<DateTime?> scheduledDate;
   final Value<Decimal> subtotal;
   final Value<Decimal> taxes;
   final Value<Decimal> total;
@@ -5508,6 +5556,7 @@ class InvoicesCompanion extends UpdateCompanion<InvoiceEntity> {
     this.documentType = const Value.absent(),
     this.clientId = const Value.absent(),
     this.date = const Value.absent(),
+    this.scheduledDate = const Value.absent(),
     this.subtotal = const Value.absent(),
     this.taxes = const Value.absent(),
     this.total = const Value.absent(),
@@ -5528,6 +5577,7 @@ class InvoicesCompanion extends UpdateCompanion<InvoiceEntity> {
     this.documentType = const Value.absent(),
     this.clientId = const Value.absent(),
     required DateTime date,
+    this.scheduledDate = const Value.absent(),
     required Decimal subtotal,
     required Decimal taxes,
     required Decimal total,
@@ -5555,6 +5605,7 @@ class InvoicesCompanion extends UpdateCompanion<InvoiceEntity> {
     Expression<String>? documentType,
     Expression<String>? clientId,
     Expression<DateTime>? date,
+    Expression<DateTime>? scheduledDate,
     Expression<String>? subtotal,
     Expression<String>? taxes,
     Expression<String>? total,
@@ -5575,6 +5626,7 @@ class InvoicesCompanion extends UpdateCompanion<InvoiceEntity> {
       if (documentType != null) 'document_type': documentType,
       if (clientId != null) 'client_id': clientId,
       if (date != null) 'date': date,
+      if (scheduledDate != null) 'scheduled_date': scheduledDate,
       if (subtotal != null) 'subtotal': subtotal,
       if (taxes != null) 'taxes': taxes,
       if (total != null) 'total': total,
@@ -5598,6 +5650,7 @@ class InvoicesCompanion extends UpdateCompanion<InvoiceEntity> {
     Value<String>? documentType,
     Value<String?>? clientId,
     Value<DateTime>? date,
+    Value<DateTime?>? scheduledDate,
     Value<Decimal>? subtotal,
     Value<Decimal>? taxes,
     Value<Decimal>? total,
@@ -5618,6 +5671,7 @@ class InvoicesCompanion extends UpdateCompanion<InvoiceEntity> {
       documentType: documentType ?? this.documentType,
       clientId: clientId ?? this.clientId,
       date: date ?? this.date,
+      scheduledDate: scheduledDate ?? this.scheduledDate,
       subtotal: subtotal ?? this.subtotal,
       taxes: taxes ?? this.taxes,
       total: total ?? this.total,
@@ -5651,6 +5705,9 @@ class InvoicesCompanion extends UpdateCompanion<InvoiceEntity> {
     }
     if (date.present) {
       map['date'] = Variable<DateTime>(date.value);
+    }
+    if (scheduledDate.present) {
+      map['scheduled_date'] = Variable<DateTime>(scheduledDate.value);
     }
     if (subtotal.present) {
       map['subtotal'] = Variable<String>(
@@ -5710,6 +5767,7 @@ class InvoicesCompanion extends UpdateCompanion<InvoiceEntity> {
           ..write('documentType: $documentType, ')
           ..write('clientId: $clientId, ')
           ..write('date: $date, ')
+          ..write('scheduledDate: $scheduledDate, ')
           ..write('subtotal: $subtotal, ')
           ..write('taxes: $taxes, ')
           ..write('total: $total, ')
@@ -6352,6 +6410,21 @@ class $PaymentsTable extends Payments
     requiredDuringInsert: false,
     defaultValue: currentDateAndTime,
   );
+  static const VerificationMeta _isSalePaymentMeta = const VerificationMeta(
+    'isSalePayment',
+  );
+  @override
+  late final GeneratedColumn<bool> isSalePayment = GeneratedColumn<bool>(
+    'is_sale_payment',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_sale_payment" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -6368,6 +6441,7 @@ class $PaymentsTable extends Payments
     status,
     isActive,
     createdAt,
+    isSalePayment,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -6467,6 +6541,15 @@ class $PaymentsTable extends Payments
         createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
       );
     }
+    if (data.containsKey('is_sale_payment')) {
+      context.handle(
+        _isSalePaymentMeta,
+        isSalePayment.isAcceptableOrUnknown(
+          data['is_sale_payment']!,
+          _isSalePaymentMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -6540,6 +6623,11 @@ class $PaymentsTable extends Payments
             DriftSqlType.dateTime,
             data['${effectivePrefix}created_at'],
           )!,
+      isSalePayment:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.bool,
+            data['${effectivePrefix}is_sale_payment'],
+          )!,
     );
   }
 
@@ -6567,6 +6655,7 @@ class PaymentEntity extends DataClass implements Insertable<PaymentEntity> {
   final String status;
   final bool isActive;
   final DateTime createdAt;
+  final bool isSalePayment;
   const PaymentEntity({
     required this.id,
     this.clientId,
@@ -6582,6 +6671,7 @@ class PaymentEntity extends DataClass implements Insertable<PaymentEntity> {
     required this.status,
     required this.isActive,
     required this.createdAt,
+    required this.isSalePayment,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -6618,6 +6708,7 @@ class PaymentEntity extends DataClass implements Insertable<PaymentEntity> {
     map['status'] = Variable<String>(status);
     map['is_active'] = Variable<bool>(isActive);
     map['created_at'] = Variable<DateTime>(createdAt);
+    map['is_sale_payment'] = Variable<bool>(isSalePayment);
     return map;
   }
 
@@ -6658,6 +6749,7 @@ class PaymentEntity extends DataClass implements Insertable<PaymentEntity> {
       status: Value(status),
       isActive: Value(isActive),
       createdAt: Value(createdAt),
+      isSalePayment: Value(isSalePayment),
     );
   }
 
@@ -6681,6 +6773,7 @@ class PaymentEntity extends DataClass implements Insertable<PaymentEntity> {
       status: serializer.fromJson<String>(json['status']),
       isActive: serializer.fromJson<bool>(json['isActive']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      isSalePayment: serializer.fromJson<bool>(json['isSalePayment']),
     );
   }
   @override
@@ -6701,6 +6794,7 @@ class PaymentEntity extends DataClass implements Insertable<PaymentEntity> {
       'status': serializer.toJson<String>(status),
       'isActive': serializer.toJson<bool>(isActive),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'isSalePayment': serializer.toJson<bool>(isSalePayment),
     };
   }
 
@@ -6719,6 +6813,7 @@ class PaymentEntity extends DataClass implements Insertable<PaymentEntity> {
     String? status,
     bool? isActive,
     DateTime? createdAt,
+    bool? isSalePayment,
   }) => PaymentEntity(
     id: id ?? this.id,
     clientId: clientId.present ? clientId.value : this.clientId,
@@ -6735,6 +6830,7 @@ class PaymentEntity extends DataClass implements Insertable<PaymentEntity> {
     status: status ?? this.status,
     isActive: isActive ?? this.isActive,
     createdAt: createdAt ?? this.createdAt,
+    isSalePayment: isSalePayment ?? this.isSalePayment,
   );
   PaymentEntity copyWithCompanion(PaymentsCompanion data) {
     return PaymentEntity(
@@ -6758,6 +6854,10 @@ class PaymentEntity extends DataClass implements Insertable<PaymentEntity> {
       status: data.status.present ? data.status.value : this.status,
       isActive: data.isActive.present ? data.isActive.value : this.isActive,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      isSalePayment:
+          data.isSalePayment.present
+              ? data.isSalePayment.value
+              : this.isSalePayment,
     );
   }
 
@@ -6777,7 +6877,8 @@ class PaymentEntity extends DataClass implements Insertable<PaymentEntity> {
           ..write('date: $date, ')
           ..write('status: $status, ')
           ..write('isActive: $isActive, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('isSalePayment: $isSalePayment')
           ..write(')'))
         .toString();
   }
@@ -6798,6 +6899,7 @@ class PaymentEntity extends DataClass implements Insertable<PaymentEntity> {
     status,
     isActive,
     createdAt,
+    isSalePayment,
   );
   @override
   bool operator ==(Object other) =>
@@ -6816,7 +6918,8 @@ class PaymentEntity extends DataClass implements Insertable<PaymentEntity> {
           other.date == this.date &&
           other.status == this.status &&
           other.isActive == this.isActive &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.isSalePayment == this.isSalePayment);
 }
 
 class PaymentsCompanion extends UpdateCompanion<PaymentEntity> {
@@ -6834,6 +6937,7 @@ class PaymentsCompanion extends UpdateCompanion<PaymentEntity> {
   final Value<String> status;
   final Value<bool> isActive;
   final Value<DateTime> createdAt;
+  final Value<bool> isSalePayment;
   final Value<int> rowid;
   const PaymentsCompanion({
     this.id = const Value.absent(),
@@ -6850,6 +6954,7 @@ class PaymentsCompanion extends UpdateCompanion<PaymentEntity> {
     this.status = const Value.absent(),
     this.isActive = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.isSalePayment = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   PaymentsCompanion.insert({
@@ -6867,6 +6972,7 @@ class PaymentsCompanion extends UpdateCompanion<PaymentEntity> {
     required String status,
     this.isActive = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.isSalePayment = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        amount = Value(amount),
@@ -6888,6 +6994,7 @@ class PaymentsCompanion extends UpdateCompanion<PaymentEntity> {
     Expression<String>? status,
     Expression<bool>? isActive,
     Expression<DateTime>? createdAt,
+    Expression<bool>? isSalePayment,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -6905,6 +7012,7 @@ class PaymentsCompanion extends UpdateCompanion<PaymentEntity> {
       if (status != null) 'status': status,
       if (isActive != null) 'is_active': isActive,
       if (createdAt != null) 'created_at': createdAt,
+      if (isSalePayment != null) 'is_sale_payment': isSalePayment,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -6924,6 +7032,7 @@ class PaymentsCompanion extends UpdateCompanion<PaymentEntity> {
     Value<String>? status,
     Value<bool>? isActive,
     Value<DateTime>? createdAt,
+    Value<bool>? isSalePayment,
     Value<int>? rowid,
   }) {
     return PaymentsCompanion(
@@ -6941,6 +7050,7 @@ class PaymentsCompanion extends UpdateCompanion<PaymentEntity> {
       status: status ?? this.status,
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
+      isSalePayment: isSalePayment ?? this.isSalePayment,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -6992,6 +7102,9 @@ class PaymentsCompanion extends UpdateCompanion<PaymentEntity> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (isSalePayment.present) {
+      map['is_sale_payment'] = Variable<bool>(isSalePayment.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -7015,6 +7128,7 @@ class PaymentsCompanion extends UpdateCompanion<PaymentEntity> {
           ..write('status: $status, ')
           ..write('isActive: $isActive, ')
           ..write('createdAt: $createdAt, ')
+          ..write('isSalePayment: $isSalePayment, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -12105,6 +12219,373 @@ class EmployeeActivitiesCompanion
   }
 }
 
+class $ClientBackordersTable extends ClientBackorders
+    with TableInfo<$ClientBackordersTable, ClientBackorder> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ClientBackordersTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _clientIdMeta = const VerificationMeta(
+    'clientId',
+  );
+  @override
+  late final GeneratedColumn<String> clientId = GeneratedColumn<String>(
+    'client_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _productIdMeta = const VerificationMeta(
+    'productId',
+  );
+  @override
+  late final GeneratedColumn<String> productId = GeneratedColumn<String>(
+    'product_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _quantityMeta = const VerificationMeta(
+    'quantity',
+  );
+  @override
+  late final GeneratedColumn<double> quantity = GeneratedColumn<double>(
+    'quantity',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    clientId,
+    productId,
+    quantity,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'client_backorders';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ClientBackorder> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('client_id')) {
+      context.handle(
+        _clientIdMeta,
+        clientId.isAcceptableOrUnknown(data['client_id']!, _clientIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_clientIdMeta);
+    }
+    if (data.containsKey('product_id')) {
+      context.handle(
+        _productIdMeta,
+        productId.isAcceptableOrUnknown(data['product_id']!, _productIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_productIdMeta);
+    }
+    if (data.containsKey('quantity')) {
+      context.handle(
+        _quantityMeta,
+        quantity.isAcceptableOrUnknown(data['quantity']!, _quantityMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_quantityMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ClientBackorder map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ClientBackorder(
+      id:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}id'],
+          )!,
+      clientId:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}client_id'],
+          )!,
+      productId:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}product_id'],
+          )!,
+      quantity:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.double,
+            data['${effectivePrefix}quantity'],
+          )!,
+      createdAt:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.dateTime,
+            data['${effectivePrefix}created_at'],
+          )!,
+    );
+  }
+
+  @override
+  $ClientBackordersTable createAlias(String alias) {
+    return $ClientBackordersTable(attachedDatabase, alias);
+  }
+}
+
+class ClientBackorder extends DataClass implements Insertable<ClientBackorder> {
+  final String id;
+  final String clientId;
+  final String productId;
+  final double quantity;
+  final DateTime createdAt;
+  const ClientBackorder({
+    required this.id,
+    required this.clientId,
+    required this.productId,
+    required this.quantity,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['client_id'] = Variable<String>(clientId);
+    map['product_id'] = Variable<String>(productId);
+    map['quantity'] = Variable<double>(quantity);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  ClientBackordersCompanion toCompanion(bool nullToAbsent) {
+    return ClientBackordersCompanion(
+      id: Value(id),
+      clientId: Value(clientId),
+      productId: Value(productId),
+      quantity: Value(quantity),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory ClientBackorder.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ClientBackorder(
+      id: serializer.fromJson<String>(json['id']),
+      clientId: serializer.fromJson<String>(json['clientId']),
+      productId: serializer.fromJson<String>(json['productId']),
+      quantity: serializer.fromJson<double>(json['quantity']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'clientId': serializer.toJson<String>(clientId),
+      'productId': serializer.toJson<String>(productId),
+      'quantity': serializer.toJson<double>(quantity),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  ClientBackorder copyWith({
+    String? id,
+    String? clientId,
+    String? productId,
+    double? quantity,
+    DateTime? createdAt,
+  }) => ClientBackorder(
+    id: id ?? this.id,
+    clientId: clientId ?? this.clientId,
+    productId: productId ?? this.productId,
+    quantity: quantity ?? this.quantity,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  ClientBackorder copyWithCompanion(ClientBackordersCompanion data) {
+    return ClientBackorder(
+      id: data.id.present ? data.id.value : this.id,
+      clientId: data.clientId.present ? data.clientId.value : this.clientId,
+      productId: data.productId.present ? data.productId.value : this.productId,
+      quantity: data.quantity.present ? data.quantity.value : this.quantity,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ClientBackorder(')
+          ..write('id: $id, ')
+          ..write('clientId: $clientId, ')
+          ..write('productId: $productId, ')
+          ..write('quantity: $quantity, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, clientId, productId, quantity, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ClientBackorder &&
+          other.id == this.id &&
+          other.clientId == this.clientId &&
+          other.productId == this.productId &&
+          other.quantity == this.quantity &&
+          other.createdAt == this.createdAt);
+}
+
+class ClientBackordersCompanion extends UpdateCompanion<ClientBackorder> {
+  final Value<String> id;
+  final Value<String> clientId;
+  final Value<String> productId;
+  final Value<double> quantity;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const ClientBackordersCompanion({
+    this.id = const Value.absent(),
+    this.clientId = const Value.absent(),
+    this.productId = const Value.absent(),
+    this.quantity = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ClientBackordersCompanion.insert({
+    required String id,
+    required String clientId,
+    required String productId,
+    required double quantity,
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       clientId = Value(clientId),
+       productId = Value(productId),
+       quantity = Value(quantity),
+       createdAt = Value(createdAt);
+  static Insertable<ClientBackorder> custom({
+    Expression<String>? id,
+    Expression<String>? clientId,
+    Expression<String>? productId,
+    Expression<double>? quantity,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (clientId != null) 'client_id': clientId,
+      if (productId != null) 'product_id': productId,
+      if (quantity != null) 'quantity': quantity,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ClientBackordersCompanion copyWith({
+    Value<String>? id,
+    Value<String>? clientId,
+    Value<String>? productId,
+    Value<double>? quantity,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return ClientBackordersCompanion(
+      id: id ?? this.id,
+      clientId: clientId ?? this.clientId,
+      productId: productId ?? this.productId,
+      quantity: quantity ?? this.quantity,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (clientId.present) {
+      map['client_id'] = Variable<String>(clientId.value);
+    }
+    if (productId.present) {
+      map['product_id'] = Variable<String>(productId.value);
+    }
+    if (quantity.present) {
+      map['quantity'] = Variable<double>(quantity.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ClientBackordersCompanion(')
+          ..write('id: $id, ')
+          ..write('clientId: $clientId, ')
+          ..write('productId: $productId, ')
+          ..write('quantity: $quantity, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $SettingsTable extends Settings
     with TableInfo<$SettingsTable, SettingEntity> {
   @override
@@ -12350,6 +12831,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $PayrollRecordsTable payrollRecords = $PayrollRecordsTable(this);
   late final $EmployeeActivitiesTable employeeActivities =
       $EmployeeActivitiesTable(this);
+  late final $ClientBackordersTable clientBackorders = $ClientBackordersTable(
+    this,
+  );
   late final $SettingsTable settings = $SettingsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
@@ -12376,6 +12860,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     employees,
     payrollRecords,
     employeeActivities,
+    clientBackorders,
     settings,
   ];
 }
@@ -14859,6 +15344,7 @@ typedef $$InvoicesTableCreateCompanionBuilder =
       Value<String> documentType,
       Value<String?> clientId,
       required DateTime date,
+      Value<DateTime?> scheduledDate,
       required Decimal subtotal,
       required Decimal taxes,
       required Decimal total,
@@ -14880,6 +15366,7 @@ typedef $$InvoicesTableUpdateCompanionBuilder =
       Value<String> documentType,
       Value<String?> clientId,
       Value<DateTime> date,
+      Value<DateTime?> scheduledDate,
       Value<Decimal> subtotal,
       Value<Decimal> taxes,
       Value<Decimal> total,
@@ -14926,6 +15413,11 @@ class $$InvoicesTableFilterComposer
 
   ColumnFilters<DateTime> get date => $composableBuilder(
     column: $table.date,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get scheduledDate => $composableBuilder(
+    column: $table.scheduledDate,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -15028,6 +15520,11 @@ class $$InvoicesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<DateTime> get scheduledDate => $composableBuilder(
+    column: $table.scheduledDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get subtotal => $composableBuilder(
     column: $table.subtotal,
     builder: (column) => ColumnOrderings(column),
@@ -15117,6 +15614,11 @@ class $$InvoicesTableAnnotationComposer
   GeneratedColumn<DateTime> get date =>
       $composableBuilder(column: $table.date, builder: (column) => column);
 
+  GeneratedColumn<DateTime> get scheduledDate => $composableBuilder(
+    column: $table.scheduledDate,
+    builder: (column) => column,
+  );
+
   GeneratedColumnWithTypeConverter<Decimal, String> get subtotal =>
       $composableBuilder(column: $table.subtotal, builder: (column) => column);
 
@@ -15201,6 +15703,7 @@ class $$InvoicesTableTableManager
                 Value<String> documentType = const Value.absent(),
                 Value<String?> clientId = const Value.absent(),
                 Value<DateTime> date = const Value.absent(),
+                Value<DateTime?> scheduledDate = const Value.absent(),
                 Value<Decimal> subtotal = const Value.absent(),
                 Value<Decimal> taxes = const Value.absent(),
                 Value<Decimal> total = const Value.absent(),
@@ -15220,6 +15723,7 @@ class $$InvoicesTableTableManager
                 documentType: documentType,
                 clientId: clientId,
                 date: date,
+                scheduledDate: scheduledDate,
                 subtotal: subtotal,
                 taxes: taxes,
                 total: total,
@@ -15241,6 +15745,7 @@ class $$InvoicesTableTableManager
                 Value<String> documentType = const Value.absent(),
                 Value<String?> clientId = const Value.absent(),
                 required DateTime date,
+                Value<DateTime?> scheduledDate = const Value.absent(),
                 required Decimal subtotal,
                 required Decimal taxes,
                 required Decimal total,
@@ -15260,6 +15765,7 @@ class $$InvoicesTableTableManager
                 documentType: documentType,
                 clientId: clientId,
                 date: date,
+                scheduledDate: scheduledDate,
                 subtotal: subtotal,
                 taxes: taxes,
                 total: total,
@@ -15586,6 +16092,7 @@ typedef $$PaymentsTableCreateCompanionBuilder =
       required String status,
       Value<bool> isActive,
       Value<DateTime> createdAt,
+      Value<bool> isSalePayment,
       Value<int> rowid,
     });
 typedef $$PaymentsTableUpdateCompanionBuilder =
@@ -15604,6 +16111,7 @@ typedef $$PaymentsTableUpdateCompanionBuilder =
       Value<String> status,
       Value<bool> isActive,
       Value<DateTime> createdAt,
+      Value<bool> isSalePayment,
       Value<int> rowid,
     });
 
@@ -15686,6 +16194,11 @@ class $$PaymentsTableFilterComposer
     column: $table.createdAt,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<bool> get isSalePayment => $composableBuilder(
+    column: $table.isSalePayment,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$PaymentsTableOrderingComposer
@@ -15766,6 +16279,11 @@ class $$PaymentsTableOrderingComposer
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get isSalePayment => $composableBuilder(
+    column: $table.isSalePayment,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$PaymentsTableAnnotationComposer
@@ -15826,6 +16344,11 @@ class $$PaymentsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get isSalePayment => $composableBuilder(
+    column: $table.isSalePayment,
+    builder: (column) => column,
+  );
 }
 
 class $$PaymentsTableTableManager
@@ -15873,6 +16396,7 @@ class $$PaymentsTableTableManager
                 Value<String> status = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<bool> isSalePayment = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PaymentsCompanion(
                 id: id,
@@ -15889,6 +16413,7 @@ class $$PaymentsTableTableManager
                 status: status,
                 isActive: isActive,
                 createdAt: createdAt,
+                isSalePayment: isSalePayment,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -15907,6 +16432,7 @@ class $$PaymentsTableTableManager
                 required String status,
                 Value<bool> isActive = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<bool> isSalePayment = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PaymentsCompanion.insert(
                 id: id,
@@ -15923,6 +16449,7 @@ class $$PaymentsTableTableManager
                 status: status,
                 isActive: isActive,
                 createdAt: createdAt,
+                isSalePayment: isSalePayment,
                 rowid: rowid,
               ),
           withReferenceMapper:
@@ -18630,6 +19157,232 @@ typedef $$EmployeeActivitiesTableProcessedTableManager =
       EmployeeActivityEntity,
       PrefetchHooks Function()
     >;
+typedef $$ClientBackordersTableCreateCompanionBuilder =
+    ClientBackordersCompanion Function({
+      required String id,
+      required String clientId,
+      required String productId,
+      required double quantity,
+      required DateTime createdAt,
+      Value<int> rowid,
+    });
+typedef $$ClientBackordersTableUpdateCompanionBuilder =
+    ClientBackordersCompanion Function({
+      Value<String> id,
+      Value<String> clientId,
+      Value<String> productId,
+      Value<double> quantity,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+class $$ClientBackordersTableFilterComposer
+    extends Composer<_$AppDatabase, $ClientBackordersTable> {
+  $$ClientBackordersTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get clientId => $composableBuilder(
+    column: $table.clientId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get productId => $composableBuilder(
+    column: $table.productId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get quantity => $composableBuilder(
+    column: $table.quantity,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ClientBackordersTableOrderingComposer
+    extends Composer<_$AppDatabase, $ClientBackordersTable> {
+  $$ClientBackordersTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get clientId => $composableBuilder(
+    column: $table.clientId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get productId => $composableBuilder(
+    column: $table.productId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get quantity => $composableBuilder(
+    column: $table.quantity,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ClientBackordersTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ClientBackordersTable> {
+  $$ClientBackordersTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get clientId =>
+      $composableBuilder(column: $table.clientId, builder: (column) => column);
+
+  GeneratedColumn<String> get productId =>
+      $composableBuilder(column: $table.productId, builder: (column) => column);
+
+  GeneratedColumn<double> get quantity =>
+      $composableBuilder(column: $table.quantity, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$ClientBackordersTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ClientBackordersTable,
+          ClientBackorder,
+          $$ClientBackordersTableFilterComposer,
+          $$ClientBackordersTableOrderingComposer,
+          $$ClientBackordersTableAnnotationComposer,
+          $$ClientBackordersTableCreateCompanionBuilder,
+          $$ClientBackordersTableUpdateCompanionBuilder,
+          (
+            ClientBackorder,
+            BaseReferences<
+              _$AppDatabase,
+              $ClientBackordersTable,
+              ClientBackorder
+            >,
+          ),
+          ClientBackorder,
+          PrefetchHooks Function()
+        > {
+  $$ClientBackordersTableTableManager(
+    _$AppDatabase db,
+    $ClientBackordersTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer:
+              () =>
+                  $$ClientBackordersTableFilterComposer($db: db, $table: table),
+          createOrderingComposer:
+              () => $$ClientBackordersTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer:
+              () => $$ClientBackordersTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> clientId = const Value.absent(),
+                Value<String> productId = const Value.absent(),
+                Value<double> quantity = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ClientBackordersCompanion(
+                id: id,
+                clientId: clientId,
+                productId: productId,
+                quantity: quantity,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String clientId,
+                required String productId,
+                required double quantity,
+                required DateTime createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => ClientBackordersCompanion.insert(
+                id: id,
+                clientId: clientId,
+                productId: productId,
+                quantity: quantity,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper:
+              (p0) =>
+                  p0
+                      .map(
+                        (e) => (
+                          e.readTable<$ClientBackordersTable, ClientBackorder>(
+                            table,
+                          ),
+                          BaseReferences<
+                            _$AppDatabase,
+                            $ClientBackordersTable,
+                            ClientBackorder
+                          >(db, table, e),
+                        ),
+                      )
+                      .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ClientBackordersTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ClientBackordersTable,
+      ClientBackorder,
+      $$ClientBackordersTableFilterComposer,
+      $$ClientBackordersTableOrderingComposer,
+      $$ClientBackordersTableAnnotationComposer,
+      $$ClientBackordersTableCreateCompanionBuilder,
+      $$ClientBackordersTableUpdateCompanionBuilder,
+      (
+        ClientBackorder,
+        BaseReferences<_$AppDatabase, $ClientBackordersTable, ClientBackorder>,
+      ),
+      ClientBackorder,
+      PrefetchHooks Function()
+    >;
 typedef $$SettingsTableCreateCompanionBuilder =
     SettingsCompanion Function({
       required String key,
@@ -18824,6 +19577,8 @@ class $AppDatabaseManager {
       $$PayrollRecordsTableTableManager(_db, _db.payrollRecords);
   $$EmployeeActivitiesTableTableManager get employeeActivities =>
       $$EmployeeActivitiesTableTableManager(_db, _db.employeeActivities);
+  $$ClientBackordersTableTableManager get clientBackorders =>
+      $$ClientBackordersTableTableManager(_db, _db.clientBackorders);
   $$SettingsTableTableManager get settings =>
       $$SettingsTableTableManager(_db, _db.settings);
 }

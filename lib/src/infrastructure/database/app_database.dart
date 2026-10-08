@@ -18,6 +18,7 @@ import 'tables/suppliers.dart';
 import 'tables/purchases.dart';
 import 'tables/hr.dart';
 import 'tables/system.dart';
+import 'tables/client_backorders.dart';
 
 import '../../utils/decimal_converter.dart';
 import 'package:decimal/decimal.dart';
@@ -45,6 +46,7 @@ part 'app_database.g.dart';
   Employees,
   PayrollRecords,
   EmployeeActivities,
+  ClientBackorders,
   Settings,
 ])
 class AppDatabase extends _$AppDatabase {
@@ -85,7 +87,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 25;
+  int get schemaVersion => 28;
   
   @override
   MigrationStrategy get migration {
@@ -109,6 +111,15 @@ class AppDatabase extends _$AppDatabase {
         ));
       },
       onUpgrade: (Migrator m, int from, int to) async {
+        if (from < 28) {
+          await m.addColumn(invoices, invoices.scheduledDate);
+        }
+        if (from < 27) {
+          await m.addColumn(payments, payments.isSalePayment);
+        }
+        if (from < 26) {
+          await m.createTable(clientBackorders);
+        }
         if (from < 25) {
           await m.addColumn(purchases, purchases.paymentMethod);
           await m.addColumn(purchases, purchases.companyBranch);

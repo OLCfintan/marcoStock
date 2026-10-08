@@ -219,6 +219,7 @@ class PurchaseService {
             checkImagePath: drift.Value(p.checkImagePath),
             date: date,
             status: 'CLEARED',
+            isSalePayment: const drift.Value(true),
           ));
         }
       }

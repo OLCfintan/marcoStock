@@ -8,6 +8,7 @@ import 'package:fl_chart/fl_chart.dart';
 import '../widgets/logo_loader.dart';
 import '../../application/auth/auth_service.dart';
 import '../../application/dashboard/dashboard_providers.dart';
+import '../../application/sales/sales_service.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -197,6 +198,13 @@ class DashboardScreen extends ConsumerWidget {
               },
             ),
             const SizedBox(height: 32),
+            const Text(
+              'Scheduled Invoices',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            const _ScheduledInvoicesList(),
+            const SizedBox(height: 32),
             Text(
               AppLocalizations.of(context)!.lowStockAlerts,
               style: Theme.of(context).textTheme.titleLarge,
@@ -355,7 +363,7 @@ class _MetricsGrid extends ConsumerWidget {
                 final now = DateTime.now();
                 final startOfDay = DateTime(now.year, now.month, now.day);
                 
-                final payments = await (db.select(db.payments)..where((t) => t.date.isBiggerOrEqualValue(startOfDay) & t.isActive.equals(true) & t.clientId.isNotNull() & t.method.isNotValue('CREDIT'))).get();
+                final payments = await (db.select(db.payments)..where((t) => t.date.isBiggerOrEqualValue(startOfDay) & t.isActive.equals(true) & t.clientId.isNotNull() & t.method.isNotValue('CREDIT') & t.isSalePayment.equals(false))).get();
                 
                 if (!context.mounted) return;
                 showDialog(
@@ -1037,6 +1045,99 @@ class _TopSuppliersByRevenueList extends ConsumerWidget {
         error: (err, stack) => Padding(
           padding: const EdgeInsets.all(32.0),
           child: Center(child: Text('${AppLocalizations.of(context)!.failedToLoad}: $err')),
+        ),
+      ),
+    );
+  }
+}
+
+class _ScheduledInvoicesList extends ConsumerWidget {
+  const _ScheduledInvoicesList();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scheduledAsync = ref.watch(scheduledInvoicesProvider);
+    return Card(
+      child: scheduledAsync.when(
+        data: (invoices) {
+          if (invoices.isEmpty) {
+            return const Padding(
+              padding: EdgeInsets.all(32.0),
+              child: Center(child: Text('No scheduled invoices')),
+            );
+          }
+          final today = DateTime.now();
+          final startOfToday = DateTime(today.year, today.month, today.day);
+          
+          return ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: invoices.length,
+            separatorBuilder: (context, index) => const Divider(height: 1),
+            itemBuilder: (context, index) {
+              final invoice = invoices[index];
+              final isForToday = invoice.scheduledDate != null && 
+                  !invoice.scheduledDate!.isAfter(startOfToday.add(const Duration(hours: 23, minutes: 59, seconds: 59)));
+                  
+              final label = isForToday ? 'For today' : 'Incoming';
+              final color = isForToday ? Colors.red : Colors.orange;
+
+              return GestureDetector(
+                onDoubleTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (dContext) => AlertDialog(
+                      title: const Text('Confirm Scheduled Invoice'),
+                      content: const Text('Do you want to confirm this invoice now? This will deduct stock and update client balances.'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(dContext),
+                          child: Text(AppLocalizations.of(context)!.cancel),
+                        ),
+                        ElevatedButton(
+                          onPressed: () async {
+                            Navigator.pop(dContext);
+                            final currentUser = ref.read(currentUserProvider);
+                            if (currentUser != null) {
+                              await ref.read(salesServiceProvider).confirmScheduledInvoice(invoice.id, currentUser.id);
+                            }
+                          },
+                          child: const Text('Confirm'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: color.withValues(alpha: 0.2),
+                    child: Icon(Icons.schedule, color: color),
+                  ),
+                  title: Text('BON - ${invoice.total} Dhs'),
+                  subtitle: Text('Scheduled for: ${invoice.scheduledDate?.toString().split(' ')[0]}'),
+                  trailing: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      label,
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              );
+            },
+          );
+        },
+        loading: () => const Padding(
+          padding: EdgeInsets.all(32.0),
+          child: Center(child: LogoLoader()),
+        ),
+        error: (err, stack) => Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Center(child: Text('Error: $err')),
         ),
       ),
     );

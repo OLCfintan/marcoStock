@@ -57,7 +57,8 @@ final todaySalesProvider = StreamProvider<Decimal>((ref) {
 
   final query = db.select(db.invoices)..where((t) =>
     t.date.isBiggerOrEqualValue(startOfDay) &
-    t.isActive.equals(true)
+    t.isActive.equals(true) &
+    t.status.isNotValue('SCHEDULED')
   );
 
   return query.watch().asyncMap((rows) async {
@@ -94,6 +95,7 @@ final todaysCreditProvider = StreamProvider<Decimal>((ref) {
   final query = db.select(db.invoices)..where((t) =>
     t.date.isBiggerOrEqualValue(startOfDay) &
     t.isActive.equals(true) &
+    t.status.isNotValue('SCHEDULED') &
     t.documentType.isNotIn([
       'COMMANDE',
       'FACTURE',
@@ -429,6 +431,13 @@ final topSuppliersProvider = StreamProvider<List<TopHuman>>((ref) {
   });
 });
 
+final scheduledInvoicesProvider = StreamProvider<List<InvoiceEntity>>((ref) {
+  final db = ref.watch(databaseProvider);
+  return (db.select(db.invoices)
+    ..where((t) => t.isActive.equals(true) & t.status.equals('SCHEDULED')))
+  .watch();
+});
+
 class ReminderInfo {
   final String title;
   final String subtitle;
@@ -556,7 +565,7 @@ final paymentsCollectedTodayProvider = StreamProvider<Decimal>((ref) {
   final startOfDay = DateTime(now.year, now.month, now.day);
 
   return (db.select(db.payments)
-        ..where((t) => t.date.isBiggerOrEqualValue(startOfDay) & t.isActive.equals(true) & t.clientId.isNotNull() & t.method.isNotValue('CREDIT')))
+        ..where((t) => t.date.isBiggerOrEqualValue(startOfDay) & t.isActive.equals(true) & t.clientId.isNotNull() & t.method.isNotValue('CREDIT') & t.isSalePayment.equals(false)))
       .watch()
       .map((payments) {
     return payments.fold<Decimal>(Decimal.zero, (sum, p) => sum + p.amount);

@@ -33,6 +33,7 @@ class SaleRequest {
   final List<SalePaymentRequest> payments;
   final String? customInvoiceNumber;
   final DateTime? customDate;
+  final DateTime? scheduledDate;
   final String? customClientName;
   final String? customClientIce;
   final String companyBranch;
@@ -45,6 +46,7 @@ class SaleRequest {
     this.payments = const [],
     this.customInvoiceNumber,
     this.customDate,
+    this.scheduledDate,
     this.customClientName,
     this.customClientIce,
     this.companyBranch = 'MARKO_GROUP',
@@ -174,7 +176,7 @@ class SalesService {
       Decimal subtotal = Decimal.zero;
 
       // 2. Create Invoice Lines & Compute Totals
-      bool isDummyDoc = request.documentType == 'COMMANDE' || request.documentType == 'FACTURE' || request.documentType == 'FACTURE_DUMMY';
+      bool isDummyDoc = request.documentType == 'COMMANDE' || request.documentType == 'FACTURE' || request.documentType == 'FACTURE_DUMMY' || request.scheduledDate != null;
 
       for (final line in request.lines) {
         final lineId = _uuid.v4();
@@ -228,7 +230,7 @@ class SalesService {
       final total = subtotal + taxes;
       Decimal paidAmount = Decimal.zero;
       
-      if (!isDummyDoc) {
+      if (!isDummyDoc && request.scheduledDate == null) {
         for (final p in request.payments) {
           if (p.method != 'CREDIT') {
             paidAmount += p.amount;
@@ -236,9 +238,11 @@ class SalesService {
         }
       }
       
-      final status = isDummyDoc
-          ? 'PENDING' 
-          : (paidAmount >= total ? 'PAID' : (paidAmount > Decimal.zero ? 'PARTIAL' : 'UNPAID'));
+      final status = request.scheduledDate != null 
+          ? 'SCHEDULED'
+          : (isDummyDoc
+              ? 'PENDING' 
+              : (paidAmount >= total ? 'PAID' : (paidAmount > Decimal.zero ? 'PARTIAL' : 'UNPAID')));
       
       // 5. Update Client Balance (Debt)
       if (!isDummyDoc) {
@@ -261,6 +265,7 @@ class SalesService {
         clientNameOverride: drift.Value(request.customClientName),
         clientIceOverride: drift.Value(request.customClientIce),
         date: date,
+        scheduledDate: drift.Value(request.scheduledDate),
         subtotal: subtotal,
         taxes: taxes,
         total: total,
@@ -271,7 +276,7 @@ class SalesService {
       ));
       
       // 7. Create Payments
-      if (!isDummyDoc) {
+      if (!isDummyDoc && request.scheduledDate == null) {
         for (final p in request.payments) {
           if (p.amount > Decimal.zero || p.method == 'CREDIT') {
             await _db.into(_db.payments).insert(PaymentsCompanion.insert(
@@ -283,6 +288,7 @@ class SalesService {
               checkImagePath: drift.Value(p.checkImagePath),
               date: date,
               status: 'CLEARED',
+              isSalePayment: const drift.Value(true),
             ));
           }
         }
@@ -847,7 +853,7 @@ class SalesService {
       final locationId = (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL') ? AppLocations.baseWarehouse : AppLocations.magazin;
 
       // Reverse old lines
-      if (invoice.documentType != 'COMMANDE' && invoice.documentType != 'FACTURE_DUMMY' && invoice.documentType != 'FACTURE') {
+      if (invoice.documentType != 'COMMANDE' && invoice.documentType != 'FACTURE_DUMMY' && invoice.documentType != 'FACTURE' && invoice.status != 'SCHEDULED') {
         for (final line in oldLines) {
           await _restoreStock(
             productId: line.productId,
@@ -891,7 +897,7 @@ class SalesService {
 
       // Apply new lines
       Decimal subtotal = Decimal.zero;
-      bool isDummyDoc = invoice.documentType == 'COMMANDE' || invoice.documentType == 'FACTURE' || invoice.documentType == 'FACTURE_DUMMY';
+      bool isDummyDoc = invoice.documentType == 'COMMANDE' || invoice.documentType == 'FACTURE' || invoice.documentType == 'FACTURE_DUMMY' || request.scheduledDate != null;
 
       for (final line in request.lines) {
         final lineId = _uuid.v4();
@@ -942,9 +948,11 @@ class SalesService {
       final taxes = Decimal.zero;
       final total = subtotal + taxes;
       
-      final status = isDummyDoc
-          ? 'PENDING' 
-          : (invoice.paidAmount >= total ? 'PAID' : (invoice.paidAmount > Decimal.zero ? 'PARTIAL' : 'UNPAID'));
+      final status = request.scheduledDate != null 
+          ? 'SCHEDULED'
+          : (isDummyDoc
+              ? 'PENDING' 
+              : (invoice.paidAmount >= total ? 'PAID' : (invoice.paidAmount > Decimal.zero ? 'PARTIAL' : 'UNPAID')));
           
       if (!isDummyDoc) {
         final newDebt = total - invoice.paidAmount;
@@ -963,6 +971,7 @@ class SalesService {
         subtotal: subtotal,
         total: total,
         status: status,
+        scheduledDate: drift.Value(request.scheduledDate),
       ));
       
       await _db.into(_db.auditLogs).insert(AuditLogsCompanion.insert(
@@ -972,6 +981,72 @@ class SalesService {
         entityType: 'INVOICE',
         entityId: existingInvoiceId,
         details: jsonEncode({'total': total.toString(), 'clientId': request.clientId}),
+      ));
+    });
+  }
+
+  Future<void> confirmScheduledInvoice(String invoiceId, String currentUserId) async {
+    await _db.transaction(() async {
+      final invoice = await (_db.select(_db.invoices)..where((t) => t.id.equals(invoiceId))).getSingleOrNull();
+      if (invoice == null || invoice.status != 'SCHEDULED') return;
+
+      final lines = await (_db.select(_db.invoiceLines)..where((t) => t.invoiceId.equals(invoiceId))).get();
+      ClientEntity? client;
+      if (invoice.clientId != null) {
+        client = await (_db.select(_db.clients)..where((t) => t.id.equals(invoice.clientId!))).getSingleOrNull();
+      }
+      final locationId = (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL') ? AppLocations.baseWarehouse : AppLocations.magazin;
+
+      for (final line in lines) {
+        await _deductStock(
+          productId: line.productId, 
+          quantity: line.quantity, 
+          reason: 'SALE_CONFIRMED',
+          referenceOperationId: invoiceId,
+          userId: currentUserId,
+          locationId: locationId,
+        );
+        
+        if (client?.type == 'MAGAZIN' || client?.type == 'SPECIAL') {
+          await _restoreStock(
+            productId: line.productId,
+            quantity: line.quantity,
+            reason: 'TRANSFER_IN_CONFIRMED',
+            referenceOperationId: invoiceId,
+            userId: currentUserId,
+            locationId: AppLocations.magazin,
+          );
+        }
+        
+        await _deductConsumables(
+          productId: line.productId,
+          quantity: line.quantity,
+          referenceOperationId: invoiceId,
+          userId: currentUserId,
+          locationId: locationId,
+        );
+      }
+
+      final debt = invoice.total - invoice.paidAmount;
+      final newStatus = invoice.paidAmount >= invoice.total ? 'PAID' : (invoice.paidAmount > Decimal.zero ? 'PARTIAL' : 'UNPAID');
+
+      if (debt > Decimal.zero && client != null && client.type != 'TEMP') {
+        final newBalance = client.balance + debt;
+        await _db.update(_db.clients).replace(client.copyWith(balance: newBalance, updatedAt: DateTime.now()));
+      }
+
+      await _db.update(_db.invoices).replace(invoice.copyWith(
+        status: newStatus,
+        scheduledDate: const drift.Value.absent(), // effectively clearing it if we wanted, but let's keep the date for history, but since we rely on status != 'SCHEDULED', keeping the date is fine.
+      ));
+      
+      await _db.into(_db.auditLogs).insert(AuditLogsCompanion.insert(
+        id: const Uuid().v4(),
+        userId: currentUserId,
+        action: 'CONFIRM_SCHEDULED_SALE',
+        entityType: 'INVOICE',
+        entityId: invoiceId,
+        details: jsonEncode({'total': invoice.total.toString(), 'clientId': invoice.clientId}),
       ));
     });
   }
