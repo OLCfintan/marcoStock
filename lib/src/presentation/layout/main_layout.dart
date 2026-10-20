@@ -5,6 +5,7 @@ import 'package:marko_group/src/localization/arb/app_localizations.dart';
 import '../../application/auth/auth_service.dart';
 import '../../application/system/shortcuts_provider.dart';
 import 'package:flutter/services.dart';
+import '../widgets/quick_command_palette.dart';
 
 class MainLayout extends ConsumerWidget {
   final Widget child;
@@ -16,6 +17,21 @@ class MainLayout extends ConsumerWidget {
     final currentUser = ref.watch(currentUserProvider);
     final isAdmin = currentUser?.role == 'ADMIN';
 
+    Widget buildSectionTitle(String title) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
+        child: Text(
+          title,
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.2,
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
+          ),
+        ),
+      );
+    }
+
     Widget buildSidebar() {
       return Container(
         width: 250,
@@ -23,7 +39,7 @@ class MainLayout extends ConsumerWidget {
         child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
               width: double.infinity,
               color: const Color(0xff0f172a),
               child: SafeArea(
@@ -33,18 +49,47 @@ class MainLayout extends ConsumerWidget {
                   children: [
                     Row(
                       children: [
-                        ClipOval(clipBehavior: Clip.antiAliasWithSaveLayer, child: Image.asset('assets/images/logo.jpeg', width: 32, height: 32, fit: BoxFit.cover, filterQuality: FilterQuality.high)),
-                        const SizedBox(width: 8),
-                        Text(
-                          l10n?.appTitle ?? 'Marko Group',
-                          style: const TextStyle( fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                        ClipOval(
+                          clipBehavior: Clip.antiAliasWithSaveLayer,
+                          child: Image.asset(
+                            'assets/images/logo.jpeg',
+                            width: 32,
+                            height: 32,
+                            fit: BoxFit.cover,
+                            filterQuality: FilterQuality.high,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            l10n?.appTitle ?? 'Marko Group',
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      '${currentUser?.name ?? ''} (${currentUser?.role ?? ''})',
-                      style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${currentUser?.name ?? ''} (${currentUser?.role ?? ''})',
+                          style: TextStyle(color: Colors.white.withValues(alpha: 0.75), fontSize: 11),
+                        ),
+                        InkWell(
+                          onTap: () => QuickCommandPalette.show(context),
+                          borderRadius: BorderRadius.circular(4),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text('Ctrl+K', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -52,30 +97,36 @@ class MainLayout extends ConsumerWidget {
             ),
             Expanded(
               child: ListView(
-                padding: EdgeInsets.zero,
+                padding: const EdgeInsets.symmetric(vertical: 4),
                 children: [
-                  _buildNavItem(context, Icons.dashboard, l10n?.dashboard ?? 'Dashboard', '/'),
-                  _buildNavItem(context, Icons.inventory_2, l10n?.products ?? 'Products', '/products'),
-                  _buildNavItem(context, Icons.store, l10n?.stock ?? 'Stock', '/stock'),
-                  _buildNavItem(context, Icons.people, l10n?.clients ?? 'Clients', '/clients'),
-                  _buildNavItem(context, Icons.point_of_sale, l10n?.salesPos ?? 'Sales (POS)', '/pos'),
-                  _buildNavItem(context, Icons.assignment_return, l10n?.returns ?? 'Returns', '/returns'),
-                  _buildNavItem(context, Icons.folder_open, l10n?.archiveDocs ?? 'Archive & Docs', '/documents'),
-                  
-                  if (isAdmin) ...[
-                    const Divider(height: 32),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                      child: Text(l10n?.administration ?? 'ADMINISTRATION', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
-                    ),
-                    _buildNavItem(context, Icons.local_shipping, l10n?.suppliers ?? 'Suppliers', '/suppliers'),
-                    _buildNavItem(context, Icons.shopping_cart, l10n?.purchases ?? 'Purchases', '/purchases'),
+                  // Overview
+                  _buildNavItem(context, Icons.dashboard_outlined, l10n?.dashboard ?? 'Dashboard', '/'),
 
-                    _buildNavItem(context, Icons.badge, l10n?.employeesHr ?? 'Employees (HR)', '/employees'),
+                  // Commerce Section (Hick's Law grouping)
+                  buildSectionTitle('COMMERCE'),
+                  _buildNavItem(context, Icons.point_of_sale_outlined, l10n?.salesPos ?? 'Sales (POS)', '/pos'),
+                  _buildNavItem(context, Icons.people_outline, l10n?.clients ?? 'Clients', '/clients'),
+                  _buildNavItem(context, Icons.folder_open_outlined, l10n?.archiveDocs ?? 'Archive & Docs', '/documents'),
+                  _buildNavItem(context, Icons.assignment_return_outlined, l10n?.returns ?? 'Returns', '/returns'),
+
+                  // Stock Section (Hick's Law grouping)
+                  buildSectionTitle('STOCK'),
+                  _buildNavItem(context, Icons.store_outlined, l10n?.stock ?? 'Stock', '/stock'),
+                  _buildNavItem(context, Icons.inventory_2_outlined, l10n?.products ?? 'Products', '/products'),
+
+                  // Finance & Purchasing (Hick's Law grouping)
+                  if (isAdmin) ...[
+                    buildSectionTitle('FINANCE & PURCHASES'),
+                    _buildNavItem(context, Icons.shopping_cart_outlined, l10n?.purchases ?? 'Purchases', '/purchases'),
+                    _buildNavItem(context, Icons.local_shipping_outlined, l10n?.suppliers ?? 'Suppliers', '/suppliers'),
                   ],
-                  const Divider(height: 32),
+
+                  // Administration (Hick's Law grouping)
+                  buildSectionTitle(l10n?.administration ?? 'ADMINISTRATION'),
+                  if (isAdmin)
+                    _buildNavItem(context, Icons.badge_outlined, l10n?.employeesHr ?? 'Employees (HR)', '/employees'),
                   _buildNavItem(context, Icons.delete_outline, l10n?.garbage ?? 'Garbage / Deleted', '/garbage'),
-                  _buildNavItem(context, Icons.settings, l10n?.settings ?? 'Settings', '/settings'),
+                  _buildNavItem(context, Icons.settings_outlined, l10n?.settings ?? 'Settings', '/settings'),
                   const SizedBox(height: 24),
                 ],
               ),
@@ -98,47 +149,60 @@ class MainLayout extends ConsumerWidget {
             }
           }
         },
+        SingleActivator(LogicalKeyboardKey.keyK, control: true): () {
+          QuickCommandPalette.show(context);
+        },
       },
       child: Focus(
         autofocus: true,
         canRequestFocus: true,
-        onFocusChange: (f) {},
         descendantsAreFocusable: true,
         child: LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth < 800) {
-          return Scaffold(
-            appBar: AppBar(
-              title: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ClipOval(clipBehavior: Clip.antiAliasWithSaveLayer, child: Image.asset('assets/images/logo.jpeg', width: 28, height: 28, fit: BoxFit.cover, filterQuality: FilterQuality.high)),
-                  const SizedBox(width: 8),
-                  Text(l10n?.appTitle ?? 'Marko Group'),
-                ],
-              ),
-              
-            ),
-            drawer: Drawer(
-              child: buildSidebar(),
-            ),
-            body: child,
-          );
-        } else {
-          return Scaffold(
-            body: Row(
-              children: [
-                buildSidebar(),
-                Expanded(
-                  child: child,
+          builder: (context, constraints) {
+            if (constraints.maxWidth < 800) {
+              return Scaffold(
+                appBar: AppBar(
+                  title: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ClipOval(
+                        clipBehavior: Clip.antiAliasWithSaveLayer,
+                        child: Image.asset(
+                          'assets/images/logo.jpeg',
+                          width: 28,
+                          height: 28,
+                          fit: BoxFit.cover,
+                          filterQuality: FilterQuality.high,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(l10n?.appTitle ?? 'Marko Group'),
+                    ],
+                  ),
+                  actions: [
+                    IconButton(
+                      icon: const Icon(Icons.search),
+                      tooltip: 'Quick Command (Ctrl+K)',
+                      onPressed: () => QuickCommandPalette.show(context),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          );
-        }
-      },
-    ),
-    ),
+                drawer: Drawer(child: buildSidebar()),
+                body: child,
+              );
+            } else {
+              return Scaffold(
+                body: Row(
+                  children: [
+                    buildSidebar(),
+                    Expanded(child: child),
+                  ],
+                ),
+              );
+            }
+          },
+        ),
+      ),
     );
   }
 
@@ -157,44 +221,18 @@ class _HoverNavItem extends StatefulWidget {
   State<_HoverNavItem> createState() => _HoverNavItemState();
 }
 
-class _HoverNavItemState extends State<_HoverNavItem> with SingleTickerProviderStateMixin {
+class _HoverNavItemState extends State<_HoverNavItem> {
   bool _isHovered = false;
-  late AnimationController _rotationCtrl;
-  bool _wasSelected = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _rotationCtrl = AnimationController(vsync: this, duration: const Duration(seconds: 4));
-  }
-  
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final currentPath = GoRouterState.of(context).matchedLocation;
-    final isSelected = currentPath == widget.routePath;
-    if (isSelected && !_rotationCtrl.isAnimating) {
-       _rotationCtrl.repeat();
-    } else if (!isSelected && _rotationCtrl.isAnimating) {
-       _rotationCtrl.stop();
-       _rotationCtrl.reset();
-    }
-  }
-
-  @override
-  void dispose() {
-    _rotationCtrl.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     final currentPath = GoRouterState.of(context).matchedLocation;
     final isSelected = currentPath == widget.routePath;
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 2.0),
       child: MouseRegion(
         onEnter: (_) => setState(() => _isHovered = true),
         onExit: (_) => setState(() => _isHovered = false),
@@ -203,7 +241,7 @@ class _HoverNavItemState extends State<_HoverNavItem> with SingleTickerProviderS
             if (MediaQuery.of(context).size.width < 800) {
               Navigator.of(context).pop();
               Future.microtask(() {
-                 if (context.mounted) context.go(widget.routePath);
+                if (context.mounted) context.go(widget.routePath);
               });
             } else {
               context.go(widget.routePath);
@@ -211,30 +249,58 @@ class _HoverNavItemState extends State<_HoverNavItem> with SingleTickerProviderS
           },
           borderRadius: BorderRadius.circular(8),
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
+            duration: const Duration(milliseconds: 150),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
-              color: isSelected ? colorScheme.primaryContainer : Colors.transparent,
-              boxShadow: _isHovered ? [
-                BoxShadow(color: Colors.green.withValues(alpha: 0.4), blurRadius: 12, spreadRadius: 2),
-                BoxShadow(color: Colors.purple.withValues(alpha: 0.4), blurRadius: 12, spreadRadius: 2),
-              ] : [],
-              gradient: _isHovered ? LinearGradient(colors: [Colors.green.withValues(alpha: 0.2), Colors.purple.withValues(alpha: 0.2)]) : null,
+              color: isSelected
+                  ? colorScheme.primaryContainer
+                  : (_isHovered
+                      ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.8)
+                      : Colors.transparent),
+              border: isSelected
+                  ? Border(left: BorderSide(color: colorScheme.primary, width: 4))
+                  : null,
             ),
-            child: ListTile(
-              hoverColor: Colors.transparent,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              leading: RotationTransition(
-                turns: _rotationCtrl,
-                child: Icon(widget.icon, color: isSelected ? colorScheme.primary : (_isHovered ? Colors.white : colorScheme.onSurfaceVariant)),
-              ),
-              title: Text(
-                widget.title,
-                style: TextStyle(
-                  color: isSelected ? colorScheme.primary : (_isHovered ? Colors.white : colorScheme.onSurfaceVariant),
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            child: Row(
+              children: [
+                // Circle icon with hover color effect
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isSelected
+                        ? colorScheme.primary.withValues(alpha: 0.15)
+                        : (_isHovered
+                            ? colorScheme.primary.withValues(alpha: 0.1)
+                            : Colors.transparent),
+                  ),
+                  child: Center(
+                    child: Icon(
+                      widget.icon,
+                      size: 18,
+                      color: isSelected
+                          ? colorScheme.primary
+                          : (_isHovered ? colorScheme.primary : colorScheme.onSurfaceVariant),
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    widget.title,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                      color: isSelected
+                          ? colorScheme.primary
+                          : (_isHovered ? colorScheme.onSurface : colorScheme.onSurfaceVariant),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -242,4 +308,3 @@ class _HoverNavItemState extends State<_HoverNavItem> with SingleTickerProviderS
     );
   }
 }
-

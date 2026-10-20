@@ -26,6 +26,7 @@ class AddProductScreen extends ConsumerStatefulWidget {
 
 class _AddProductScreenState extends ConsumerState<AddProductScreen> {
   final _formKey = GlobalKey<FormState>();
+  bool _isSaving = false;
 
   final _nameController = TextEditingController();
   final _nameArController = TextEditingController();
@@ -153,6 +154,8 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
   }
 
   Future<void> _submit() async {
+    if (_isSaving) return;
+    setState(() => _isSaving = true);
     final db = ref.read(databaseProvider);
     final refToCheck = _referenceController.text.trim();
     final allRefs = await (db.select(db.products)..where((t) => t.reference.equals(refToCheck))).get();
@@ -318,6 +321,10 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
             content: Text('${AppLocalizations.of(context)!.errorSaving}$e'),
           ),
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
       }
     }
   }
@@ -532,6 +539,28 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                             ],
                           ),
                           const SizedBox(height: 16),
+                          ImagePickerField(
+                            label: 'Product Image',
+                            onChanged:
+                                (val) => setState(() => _imagePath = val),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  _buildSectionHeader(
+                    'Packaging & Units',
+                    Icons.inventory_2_outlined,
+                  ),
+                  Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        children: [
                           LayoutBuilder(
                             builder: (context, constraints) {
                               final isMobile = constraints.maxWidth < 600;
@@ -549,7 +578,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                                   validator: _validateOptionalNumber,
                                 ),
                                 DropdownButtonFormField<String>(
-                                  value: _unit,
+                                  initialValue: _unit,
                                   decoration: _inputDecoration(
                                     AppLocalizations.of(context)!.unit,
                                   ),
@@ -573,12 +602,13 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                                         );
                                       }).toList(),
                                   onChanged: (String? newValue) {
-                                    if (newValue != null)
+                                    if (newValue != null) {
                                       setState(() => _unit = newValue);
+                                    }
                                   },
                                 ),
                                 DropdownButtonFormField<String>(
-                                  value: _packagingType,
+                                  initialValue: _packagingType,
                                   decoration: _inputDecoration(
                                     'Packaging Type',
                                   ),
@@ -600,8 +630,9 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                                         );
                                       }).toList(),
                                   onChanged: (String? newValue) {
-                                    if (newValue != null)
+                                    if (newValue != null) {
                                       setState(() => _packagingType = newValue);
+                                    }
                                   },
                                 ),
                               ];
@@ -644,22 +675,18 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                             onFieldSubmitted: (_) => _submit(),
                             controller: _unitsPerBoxController,
                             decoration: _inputDecoration(
-                              'Units Per Box (For Inventory Math)',
+                              'Units Per Box (Packaging Multiplier for Stock Math)',
                             ),
                             keyboardType: TextInputType.number,
                             validator: (value) {
-                              if (value == null || value.isEmpty)
+                              if (value == null || value.isEmpty) {
                                 return 'Required';
-                              if (int.tryParse(value) == null)
+                              }
+                              if (int.tryParse(value) == null) {
                                 return 'Must be integer';
+                              }
                               return null;
                             },
-                          ),
-                          const SizedBox(height: 16),
-                          ImagePickerField(
-                            label: 'Product Image',
-                            onChanged:
-                                (val) => setState(() => _imagePath = val),
                           ),
                         ],
                       ),
@@ -667,8 +694,8 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                   ),
                   const SizedBox(height: 24),
                   _buildSectionHeader(
-                    'Pricing & Inventory',
-                    Icons.attach_money,
+                    'Pricing Structure & Tiers',
+                    Icons.payments_outlined,
                   ),
                   Card(
                     shape: RoundedRectangleBorder(
@@ -676,108 +703,168 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        children: [
-                          LayoutBuilder(
-                            builder: (context, constraints) {
-                              final isMobile = constraints.maxWidth < 600;
-                              final fields = [
-                                TextFormField(
-                                  onFieldSubmitted: (_) => _submit(),
-                                  controller: _sellingPriceController,
-                                  decoration: _inputDecoration(
-                                    'Tier 1 Price (Base)',
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isMobile = constraints.maxWidth < 600;
+                          final priceFields = [
+                            TextFormField(
+                              onFieldSubmitted: (_) => _submit(),
+                              controller: _sellingPriceController,
+                              decoration: _inputDecoration(
+                                'Tier 1 Price (Base / Retail)',
+                              ),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
                                   ),
-                                  keyboardType:
-                                      const TextInputType.numberWithOptions(
-                                        decimal: true,
-                                      ),
-                                  validator: _validateOptionalNumber,
-                                ),
-                                TextFormField(
-                                  onFieldSubmitted: (_) => _submit(),
-                                  controller: _tier2PriceController,
-                                  decoration: _inputDecoration(
-                                    'Tier 2 Price (Opt)',
+                              validator: _validateOptionalNumber,
+                            ),
+                            TextFormField(
+                              onFieldSubmitted: (_) => _submit(),
+                              controller: _tier2PriceController,
+                              decoration: _inputDecoration(
+                                'Tier 2 Price (Wholesale / VIP)',
+                              ),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
                                   ),
-                                  keyboardType:
-                                      const TextInputType.numberWithOptions(
-                                        decimal: true,
-                                      ),
-                                  validator: _validateOptionalNumber,
-                                ),
-                                TextFormField(
-                                  onFieldSubmitted: (_) => _submit(),
-                                  controller: _tier3PriceController,
-                                  decoration: _inputDecoration(
-                                    'Tier 3 Price (Opt)',
+                              validator: _validateOptionalNumber,
+                            ),
+                            TextFormField(
+                              onFieldSubmitted: (_) => _submit(),
+                              controller: _tier3PriceController,
+                              decoration: _inputDecoration(
+                                'Tier 3 Price (Distributor / Bulk)',
+                              ),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
                                   ),
-                                  keyboardType:
-                                      const TextInputType.numberWithOptions(
-                                        decimal: true,
-                                      ),
-                                  validator: _validateOptionalNumber,
-                                ),
-                                TextFormField(
-                                  onFieldSubmitted: (_) => _submit(),
-                                  controller: _baseMinimumStockController,
-                                  decoration: _inputDecoration(
-                                    'Base Min Stock',
-                                  ),
-                                  keyboardType:
-                                      const TextInputType.numberWithOptions(
-                                        decimal: true,
-                                      ),
-                                  validator: _validateOptionalNumber,
-                                ),
-                                TextFormField(
-                                  onFieldSubmitted: (_) => _submit(),
-                                  controller: _magazinMinimumStockController,
-                                  decoration: _inputDecoration(
-                                    'Magazin Min Stock',
-                                  ),
-                                  keyboardType:
-                                      const TextInputType.numberWithOptions(
-                                        decimal: true,
-                                      ),
-                                  validator: _validateOptionalNumber,
-                                ),
-                              ];
+                              validator: _validateOptionalNumber,
+                            ),
+                          ];
 
-                              if (isMobile) {
-                                return Column(
-                                  children:
-                                      fields
-                                          .map(
-                                            (f) => Padding(
-                                              padding: const EdgeInsets.only(
-                                                bottom: 16,
-                                              ),
-                                              child: f,
+                          if (isMobile) {
+                            return Column(
+                              children:
+                                  priceFields
+                                      .map(
+                                        (f) => Padding(
+                                          padding: const EdgeInsets.only(
+                                            bottom: 16,
+                                          ),
+                                          child: f,
+                                        ),
+                                      )
+                                      .toList(),
+                            );
+                          } else {
+                            return Row(
+                              children:
+                                  priceFields
+                                      .map(
+                                        (f) => Expanded(
+                                          child: Padding(
+                                            padding: const EdgeInsets.only(
+                                              right: 12,
                                             ),
-                                          )
-                                          .toList(),
-                                );
-                              } else {
-                                return Row(
-                                  children:
-                                      fields
-                                          .map(
-                                            (f) => Expanded(
-                                              child: Padding(
-                                                padding: const EdgeInsets.only(
-                                                  right: 16,
-                                                ),
-                                                child: f,
-                                              ),
+                                            child: f,
+                                          ),
+                                        ),
+                                      )
+                                      .toList(),
+                            );
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  _buildSectionHeader(
+                    'Inventory Thresholds & Minimum Stock',
+                    Icons.warehouse_outlined,
+                  ),
+                  Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isMobile = constraints.maxWidth < 600;
+                          final stockFields = [
+                            TextFormField(
+                              onFieldSubmitted: (_) => _submit(),
+                              controller: _baseMinimumStockController,
+                              decoration: _inputDecoration(
+                                'Base Warehouse Min Stock',
+                              ),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                              validator: _validateOptionalNumber,
+                            ),
+                            TextFormField(
+                              onFieldSubmitted: (_) => _submit(),
+                              controller: _magazinMinimumStockController,
+                              decoration: _inputDecoration(
+                                'Magazin / Store Min Stock',
+                              ),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                              validator: _validateOptionalNumber,
+                            ),
+                            TextFormField(
+                              onFieldSubmitted: (_) => _submit(),
+                              controller: _minimumStockController,
+                              decoration: _inputDecoration(
+                                'Global Min Stock Alert',
+                              ),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                              validator: _validateOptionalNumber,
+                            ),
+                          ];
+
+                          if (isMobile) {
+                            return Column(
+                              children:
+                                  stockFields
+                                      .map(
+                                        (f) => Padding(
+                                          padding: const EdgeInsets.only(
+                                            bottom: 16,
+                                          ),
+                                          child: f,
+                                        ),
+                                      )
+                                      .toList(),
+                            );
+                          } else {
+                            return Row(
+                              children:
+                                  stockFields
+                                      .map(
+                                        (f) => Expanded(
+                                          child: Padding(
+                                            padding: const EdgeInsets.only(
+                                              right: 12,
                                             ),
-                                          )
-                                          .toList(),
-                                );
-                              }
-                            },
-                          ),
-                        ],
+                                            child: f,
+                                          ),
+                                        ),
+                                      )
+                                      .toList(),
+                            );
+                          }
+                        },
                       ),
                     ),
                   ),
@@ -891,7 +978,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                                       },
                                       loading:
                                           () => const Center(
-                                            child: const LogoLoader(),
+                                            child: LogoLoader(),
                                           ),
                                       error:
                                           (e, s) => Text(
@@ -941,6 +1028,32 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                             ),
                           ),
                         ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton.icon(
+                      onPressed: _isSaving ? null : _submit,
+                      icon: _isSaving
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            )
+                          : const Icon(Icons.check, size: 22),
+                      label: Text(
+                        _isSaving
+                            ? 'SAVING...'
+                            : (widget.productToEdit != null ? 'SAVE CHANGES' : 'CREATE PRODUCT'),
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                     ),
                   ),

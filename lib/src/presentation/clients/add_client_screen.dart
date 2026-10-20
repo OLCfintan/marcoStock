@@ -157,7 +157,7 @@ class _AddClientScreenState extends ConsumerState<AddClientScreen> {
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
-                      value: _selectedType,
+                      initialValue: _selectedType,
                       items: const [
                         DropdownMenuItem(value: 'NORMAL', child: Text('Normal Client (Magazin Stock)')),
                         DropdownMenuItem(value: 'SPECIAL', child: Text('Special Client (Base Stock)')),
@@ -167,7 +167,7 @@ class _AddClientScreenState extends ConsumerState<AddClientScreen> {
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
-                      value: _selectedTier,
+                      initialValue: _selectedTier,
                       items: ['Tier 1', 'Tier 2', 'Tier 3'].map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
                       onChanged: (val) => setState(() => _selectedTier = val!),
                       decoration: _inputDecoration('Client Tier Pricing'),

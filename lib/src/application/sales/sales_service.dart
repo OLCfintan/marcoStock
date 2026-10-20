@@ -149,8 +149,9 @@ class SalesService {
       } else {
         final yearMonth = '${date.year}-${date.month.toString().padLeft(2, '0')}';
         String prefix = '';
-        if (request.documentType == 'BON') prefix = 'BON-$yearMonth';
-        else if (request.documentType == 'COMMANDE') prefix = 'CMD-$yearMonth';
+        if (request.documentType == 'BON') {
+          prefix = 'BON-$yearMonth';
+        } else if (request.documentType == 'COMMANDE') prefix = 'CMD-$yearMonth';
         else prefix = 'FAC-$yearMonth';
         
         final seqQuery = _db.select(_db.documentSequences)
@@ -677,10 +678,10 @@ class SalesService {
       ));
 
       // 6.5 Cross-cancel return credit with older unpaid invoices
-      if (debt < Decimal.zero && request.clientId != null && client?.type != 'TEMP') {
+      if (debt < Decimal.zero && client?.type != 'TEMP') {
         Decimal creditToApply = -debt;
         final unpaidInvoices = await (_db.select(_db.invoices)
-          ..where((t) => t.clientId.equals(request.clientId!) & t.isActive.equals(true) & t.status.isNotIn(['PAID', 'CANCELLED']) & t.id.isNotValue(invoiceId))
+          ..where((t) => t.clientId.equals(request.clientId) & t.isActive.equals(true) & t.status.isNotIn(['PAID', 'CANCELLED']) & t.id.isNotValue(invoiceId))
           ..orderBy([(t) => drift.OrderingTerm(expression: t.date, mode: drift.OrderingMode.asc)])
         ).get();
 

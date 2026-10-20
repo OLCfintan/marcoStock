@@ -6,28 +6,31 @@ import '../../domain/products/product.dart';
 /// Checks [Product.imagePath] and renders the actual image if it exists on disk.
 /// Falls back to a themed icon if no image is available.
 class ProductImage extends StatelessWidget {
-  final Product product;
+  final Product? product;
+  final String? imagePath;
   final double size;
   final BoxFit fit;
   final BorderRadius? borderRadius;
 
   const ProductImage({
     super.key,
-    required this.product,
+    this.product,
+    this.imagePath,
     this.size = 48,
     this.fit = BoxFit.contain,
     this.borderRadius,
   });
 
   bool get _hasImage {
-    final path = product.imagePath;
+    final path = imagePath ?? product?.imagePath;
     if (path == null || path.isEmpty) return false;
     return File(path).existsSync();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_hasImage) {
+    final path = imagePath ?? product?.imagePath;
+    if (_hasImage && path != null) {
       return ClipRRect(
         borderRadius: borderRadius ?? BorderRadius.circular(8),
         clipBehavior: Clip.antiAliasWithSaveLayer,
@@ -36,7 +39,7 @@ class ProductImage extends StatelessWidget {
           height: size == double.infinity ? double.infinity : size,
           color: Theme.of(context).colorScheme.surface,
           child: Image.file(
-            File(product.imagePath!),
+            File(path),
             fit: fit,
             filterQuality: FilterQuality.high,
           ),
@@ -72,18 +75,20 @@ class ProductImage extends StatelessWidget {
 
 /// Circle avatar version for list tiles.
 class ProductAvatarImage extends StatelessWidget {
-  final Product product;
+  final Product? product;
+  final String? imagePath;
   final double radius;
 
   const ProductAvatarImage({
     super.key,
-    required this.product,
+    this.product,
+    this.imagePath,
     this.radius = 20,
   });
 
   @override
   Widget build(BuildContext context) {
-    final path = product.imagePath;
+    final path = imagePath ?? product?.imagePath;
     final hasImage = path != null && path.isNotEmpty && File(path).existsSync();
     
     if (hasImage) {
@@ -94,8 +99,8 @@ class ProductAvatarImage extends StatelessWidget {
           height: radius * 2,
           color: Colors.white,
           child: Image.file(
-            File(path!),
-            fit: BoxFit.contain,
+            File(path),
+            fit: BoxFit.cover,
             filterQuality: FilterQuality.high,
           ),
         ),
@@ -109,7 +114,13 @@ class ProductAvatarImage extends StatelessWidget {
         shape: BoxShape.circle,
         color: Theme.of(context).colorScheme.primaryContainer,
       ),
-      child: hasImage ? null : Center(child: Icon(Icons.inventory_2_outlined, size: radius, color: Theme.of(context).colorScheme.primary)),
+      child: Center(
+        child: Icon(
+          Icons.inventory_2_outlined,
+          size: radius,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+      ),
     );
   }
 }

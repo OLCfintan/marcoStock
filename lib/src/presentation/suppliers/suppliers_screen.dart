@@ -251,7 +251,7 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
                 ],
               );
             },
-              loading: () => const Center(child: const LogoLoader()),
+              loading: () => const Center(child: LogoLoader()),
               error: (e, st) => Center(child: Text('${(AppLocalizations.of(context)?.errorStr ?? 'Error: ')}$e')),
             ),
           ),

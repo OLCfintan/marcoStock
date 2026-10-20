@@ -235,13 +235,14 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
                               (i.client?.name.contains(aq) ?? false);
                         }).toList();
 
-                    if (invoices.isEmpty)
+                    if (invoices.isEmpty) {
                       return Center(
                         child: Text(
                           AppLocalizations.of(context)!.noInvoicesFound,
                           style: const TextStyle(color: Colors.grey),
                         ),
                       );
+                    }
                     return Column(
                       children: [
                         Padding(
@@ -539,7 +540,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
                       ],
                     );
                   },
-                  loading: () => const Center(child: const LogoLoader()),
+                  loading: () => const Center(child: LogoLoader()),
                   error:
                       (e, s) => Center(
                         child: Text(
@@ -567,13 +568,14 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
                               (p.supplier?.name.contains(aq) ?? false);
                         }).toList();
 
-                    if (purchases.isEmpty)
+                    if (purchases.isEmpty) {
                       return Center(
                         child: Text(
                           AppLocalizations.of(context)!.noPurchasesFound,
                           style: const TextStyle(color: Colors.grey),
                         ),
                       );
+                    }
                     return Column(
                       children: [
                         Padding(
@@ -836,7 +838,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen>
                       ],
                     );
                   },
-                  loading: () => const Center(child: const LogoLoader()),
+                  loading: () => const Center(child: LogoLoader()),
                   error:
                       (e, s) => Center(
                         child: Text(

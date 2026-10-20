@@ -217,7 +217,7 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen> {
                   },
                 );
               },
-              loading: () => const Center(child: const LogoLoader()),
+              loading: () => const Center(child: LogoLoader()),
               error: (err, stack) => Center(child: Text('Error: $err')),
           );
           
@@ -432,7 +432,7 @@ class _ReturnsScreenState extends ConsumerState<ReturnsScreen> {
                                     Expanded(
                                       flex: 2,
                                       child: DropdownButtonFormField<String>(
-                                        value: p.method,
+                                        initialValue: p.method,
                                         isExpanded: true,
                                         decoration: const InputDecoration(
                                           labelText: 'Method',

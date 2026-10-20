@@ -1,4 +1,3 @@
-import 'dart:collection';
 import "package:drift/drift.dart";
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/constants/locations.dart';
@@ -165,8 +164,9 @@ final topClientsByRevenueProvider = StreamProvider<List<TopPayer>>((ref) {
   return db.select(db.clients).watch().asyncMap((clients) async {
     final list = <TopPayer>[];
     for (final c in clients) {
-      if (!c.isActive || !c.showInDashboard)
+      if (!c.isActive || !c.showInDashboard) {
         continue;
+      }
       final payments =
           await (db.select(db.payments)..where(
             (t) => t.clientId.equals(c.id) & t.isActive.equals(true),
@@ -243,8 +243,9 @@ final lowStockAlertsProvider = StreamProvider<List<LowStockAlert>>((ref) {
                 p,
                 rootProduct,
               );
-              if (pBaseMinSI > familyBaseMinInSI)
+              if (pBaseMinSI > familyBaseMinInSI) {
                 familyBaseMinInSI = pBaseMinSI;
+              }
             }
 
             // 3. Evaluate Magazin Stock INDIVIDUALLY for each variant (because Magazin tracks physical variants directly)
@@ -349,7 +350,7 @@ final salesChartDataProvider = StreamProvider<List<ChartDataPoint>>((ref) {
   )).watch().asyncMap((invoices) async {
     final now = DateTime.now();
 
-    final data = LinkedHashMap<String, Decimal>();
+    final data = <String, Decimal>{};
 
     if (period == SalesChartPeriod.daily) {
       for (int i = 6; i >= 0; i--) {

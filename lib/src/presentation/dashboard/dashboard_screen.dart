@@ -9,6 +9,7 @@ import '../widgets/logo_loader.dart';
 import '../../application/auth/auth_service.dart';
 import '../../application/dashboard/dashboard_providers.dart';
 import '../../application/sales/sales_service.dart';
+import 'package:go_router/go_router.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -597,14 +598,40 @@ class _LowStockList extends ConsumerWidget {
             itemBuilder: (context, index) {
               final alert = alerts[index];
               return ListTile(
-                leading: const Icon(Icons.warning, color: Colors.red),
-                title: Text(alert.productName),
-                subtitle: Text(AppLocalizations.of(context)!.currentStockMin(alert.currentStock.toString(), alert.minimumStock.toString())),
-                trailing: TextButton(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 24),
+                ),
+                title: Text(
+                  alert.productName,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                subtitle: Text(
+                  AppLocalizations.of(context)!.currentStockMin(
+                    alert.currentStock.toString(),
+                    alert.minimumStock.toString(),
+                  ),
+                  style: TextStyle(
+                    color: Colors.red.shade700,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                trailing: ElevatedButton.icon(
                   onPressed: () {
-                    // Placeholder for navigation
+                    context.go('/purchases');
                   },
-                  child: Text(AppLocalizations.of(context)!.restock),
+                  icon: const Icon(Icons.shopping_cart, size: 16),
+                  label: Text(AppLocalizations.of(context)!.restock),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red.shade700,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  ),
                 ),
               );
             },

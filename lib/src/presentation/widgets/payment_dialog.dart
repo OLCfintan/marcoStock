@@ -186,7 +186,7 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
-            value: _methodController.text,
+            initialValue: _methodController.text,
             items: ['CASH', 'CARD', 'CHECK', 'TRANSFER'].map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
             onChanged: (v) {
               if (v != null) setState(() => _methodController.text = v);
@@ -207,7 +207,7 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
         TextButton(onPressed: () => Navigator.pop(context), child: Text(AppLocalizations.of(context)!.cancelStr)),
         ElevatedButton(
           onPressed: _isSubmitting ? null : _submit,
-          child: _isSubmitting ? const SizedBox(width: 16, height: 16, child: const LogoLoader(size: 32.0)) : Text(AppLocalizations.of(context)!.recordBtn),
+          child: _isSubmitting ? const SizedBox(width: 16, height: 16, child: LogoLoader(size: 32.0)) : Text(AppLocalizations.of(context)!.recordBtn),
         ),
       ],
     );

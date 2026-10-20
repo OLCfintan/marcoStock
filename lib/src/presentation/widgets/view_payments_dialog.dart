@@ -36,13 +36,13 @@ class ViewPaymentsDialog extends ConsumerWidget {
         child: StreamBuilder<List<PaymentEntity>>(
           stream: paymentsStream,
           builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: const LogoLoader());
+            if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: LogoLoader());
             final payments = snapshot.data ?? [];
             if (payments.isEmpty) return Center(child: Text(AppLocalizations.of(context)!.noPaymentsRecorded));
             
             return ListView.separated(
               itemCount: payments.length,
-              separatorBuilder: (_, __) => const Divider(),
+              separatorBuilder: (_, _) => const Divider(),
               itemBuilder: (context, index) {
                 final p = payments[index];
                 return ListTile(

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:decimal/decimal.dart';
 import 'package:uuid/uuid.dart';
 import 'package:drift/drift.dart' as drift;
 
@@ -128,7 +127,7 @@ class _AddBackorderDialogState extends ConsumerState<_AddBackorderDialog> {
         children: [
           productsAsync.when(
             data: (products) => DropdownButtonFormField<String>(
-              value: _selectedProductId,
+              initialValue: _selectedProductId,
               items: products.map((p) => DropdownMenuItem(value: p.id, child: Text('${p.name} (${p.unitSize} ${p.unit})'))).toList(),
               onChanged: (val) => setState(() => _selectedProductId = val),
               decoration: const InputDecoration(labelText: 'Product'),

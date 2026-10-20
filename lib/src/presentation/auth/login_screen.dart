@@ -236,7 +236,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           ),
                           child: _isLoading 
-                              ? const SizedBox(height: 24, width: 24, child: const LogoLoader(size: 32.0)) 
+                              ? const SizedBox(height: 24, width: 24, child: LogoLoader(size: 32.0)) 
                               : Text('LOGIN', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
                         ),
                       ),

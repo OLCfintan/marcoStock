@@ -17,7 +17,13 @@ import '../../infrastructure/repositories/client_repository.dart';
 import '../../domain/products/product.dart';
 import '../widgets/image_picker_field.dart';
 import "../widgets/quantity_selector_dialog.dart";
-import '../widgets/autocomplete_search_field.dart';
+import '../widgets/status_badge.dart';
+import '../widgets/print_dialog.dart';
+import '../documents/pdf_preview_screen.dart';
+import '../../application/documents/pdf_generator.dart';
+import '../../infrastructure/database/app_database.dart';
+import '../../infrastructure/database/providers.dart';
+import 'package:drift/drift.dart' as drift;
 
 final List<PosSession> globalPosSessions = [];
 int globalPosActiveSessionIndex = 0;
@@ -29,6 +35,7 @@ class PosScreen extends ConsumerStatefulWidget {
 }
 
 class _PosScreenState extends ConsumerState<PosScreen> {
+  bool _isProcessing = false;
   List<PosSession> get _sessions => globalPosSessions;
   int get _activeSessionIndex => globalPosActiveSessionIndex;
   set _activeSessionIndex(int val) => globalPosActiveSessionIndex = val;
@@ -276,6 +283,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   }
 
   Future<void> _processSale() async {
+    if (_isProcessing) return;
     if (_activeSession.selectedClientId == null ||
         _activeSession.cart.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -287,6 +295,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       );
       return;
     }
+    setState(() => _isProcessing = true);
 
     final paymentRequests =
         _activeSession.payments.map((p) {
@@ -311,6 +320,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     if (paidAmount > total &&
         _activeSession.selectedDocumentType != 'COMMANDE' &&
         _activeSession.selectedDocumentType != 'FACTURE') {
+      setState(() => _isProcessing = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context)!.paymentExceedsTotal),
@@ -379,21 +389,20 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     );
 
     try {
+      final db = ref.read(databaseProvider);
+      InvoiceEntity? createdInvoice;
       if (_activeSession.editingId != null) {
         await ref
             .read(salesServiceProvider)
             .updateSale(req, _activeSession.editingId!);
+        createdInvoice = await (db.select(db.invoices)..where((t) => t.id.equals(_activeSession.editingId!))).getSingleOrNull();
       } else {
         await ref.read(salesServiceProvider).executeSale(req);
+        final invoices = await (db.select(db.invoices)..where((t) => t.clientId.equals(req.clientId))..orderBy([(t) => drift.OrderingTerm(expression: t.date, mode: drift.OrderingMode.desc)])).get();
+        createdInvoice = invoices.firstOrNull;
       }
+
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              AppLocalizations.of(context)!.saleCompletedSuccessfully,
-            ),
-          ),
-        );
         setState(() {
           _activeSession.dispose();
           _sessions.removeAt(_activeSessionIndex);
@@ -409,9 +418,73 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             _activeSessionIndex = _sessions.length - 1;
           }
         });
+
+        // Peak-End Rule: Clear, reassuring completion summary modal
+        if (createdInvoice != null) {
+          final invoiceToPrint = createdInvoice;
+          await showDialog(
+            context: context,
+            barrierDismissible: true,
+            builder: (ctx) => AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.green, size: 28),
+                  const SizedBox(width: 10),
+                  Text(AppLocalizations.of(context)!.saleCompletedSuccessfully),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${invoiceToPrint.documentType} #${invoiceToPrint.invoiceNumber}',
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text('Total: ${invoiceToPrint.total.toStringAsFixed(2)} Dhs'),
+                  Text('Paid: ${invoiceToPrint.paidAmount.toStringAsFixed(2)} Dhs'),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      const Text('Status: ', style: TextStyle(fontWeight: FontWeight.w600)),
+                      StatusBadge(status: invoiceToPrint.status),
+                    ],
+                  ),
+                ],
+              ),
+              actions: [
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    Navigator.pop(ctx);
+                    final options = await PrintDialog.show(context, defaultLanguageCode: Localizations.localeOf(context).languageCode);
+                    if (options != null && mounted) {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => PdfPreviewScreen(title: "Invoice ${invoiceToPrint.invoiceNumber}", buildPdf: () => ref.read(pdfGeneratorProvider).generateInvoicePdf(invoiceToPrint.id, options))));
+                    }
+                  },
+                  icon: const Icon(Icons.print),
+                  label: Text(AppLocalizations.of(context)?.printDocument ?? 'Print Document'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(context)!.saleCompletedSuccessfully,
+              ),
+            ),
+          );
+        }
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -419,6 +492,9 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             ),
           ),
         );
+      }
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
     }
   }
 
@@ -893,16 +969,17 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                     )
                                     : null,
                             child: InkWell(
-                              focusColor: Colors.blue.withOpacity(0.3),
+                              focusColor: Colors.blue.withValues(alpha: 0.3),
                               onTap: () {
                                 if (_multiSelectedProductIds.value.isNotEmpty) {
                                   final newSet = Set<String>.from(
                                     _multiSelectedProductIds.value,
                                   );
-                                  if (isSelected)
+                                  if (isSelected) {
                                     newSet.remove(p.id);
-                                  else
+                                  } else {
                                     newSet.add(p.id);
+                                  }
                                   _multiSelectedProductIds.value = newSet;
                                 } else {
                                   _addToCart(p);
@@ -962,11 +1039,11 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                     activeColor: Colors.orange,
                                     checkColor: Colors.green,
                                     fillColor:
-                                        MaterialStateProperty.resolveWith((
+                                        WidgetStateProperty.resolveWith((
                                           states,
                                         ) {
                                           if (states.contains(
-                                            MaterialState.selected,
+                                            WidgetState.selected,
                                           )) {
                                             return Colors.orange;
                                           }
@@ -977,10 +1054,11 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                       final newSet = Set<String>.from(
                                         _multiSelectedProductIds.value,
                                       );
-                                      if (val == true)
+                                      if (val == true) {
                                         newSet.add(p.id);
-                                      else
+                                      } else {
                                         newSet.remove(p.id);
+                                      }
                                       _multiSelectedProductIds.value = newSet;
                                     },
                                   ),
@@ -998,7 +1076,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   ],
                 );
               },
-              loading: () => const Center(child: const LogoLoader()),
+              loading: () => const Center(child: LogoLoader()),
               error:
                   (err, stack) => Center(
                     child: Text(
@@ -1056,7 +1134,9 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                               child: Row(
                                 children: [
                                   Text(
-                                    session.title,
+                                    session.cart.isNotEmpty
+                                        ? '${session.title} (${session.cart.length})'
+                                        : session.title,
                                     style: TextStyle(
                                       fontWeight:
                                           isActive
@@ -1117,7 +1197,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: DropdownButtonFormField<String>(
-                      value: _activeSession.selectedDocumentType,
+                      initialValue: _activeSession.selectedDocumentType,
                       decoration: InputDecoration(
                         labelText: AppLocalizations.of(context)!.documentType,
                         border: OutlineInputBorder(
@@ -1157,7 +1237,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: DropdownButtonFormField<String>(
-                      value: _activeSession.selectedPaymentMethod,
+                      initialValue: _activeSession.selectedPaymentMethod,
                       decoration: InputDecoration(
                         labelText:
                             AppLocalizations.of(context)!.modeDeReglement,
@@ -1181,10 +1261,11 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                         ),
                       ],
                       onChanged: (val) {
-                        if (val != null)
+                        if (val != null) {
                           setState(
                             () => _activeSession.selectedPaymentMethod = val,
                           );
+                        }
                       },
                     ),
                   ),
@@ -1192,7 +1273,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: DropdownButtonFormField<String>(
-                      value: _activeSession.selectedCompanyBranch,
+                      initialValue: _activeSession.selectedCompanyBranch,
                       decoration: InputDecoration(
                         labelText: 'Company Branch',
                         border: OutlineInputBorder(
@@ -1211,10 +1292,11 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                         ),
                       ],
                       onChanged: (val) {
-                        if (val != null)
+                        if (val != null) {
                           setState(
                             () => _activeSession.selectedCompanyBranch = val,
                           );
+                        }
                       },
                     ),
                   ),
@@ -1643,7 +1725,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                                 child: DropdownButtonFormField<
                                                   String
                                                 >(
-                                                  value: p.method,
+                                                  initialValue: p.method,
                                                   isExpanded: true,
                                                   decoration: InputDecoration(
                                                     labelText:
@@ -1789,7 +1871,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                   width: double.infinity,
                                   height: 56,
                                   child: ElevatedButton(
-                                    onPressed: _processSale,
+                                    onPressed: _isProcessing ? null : _processSale,
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor:
                                           theme.colorScheme.primary,
@@ -1799,14 +1881,20 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                     ),
-                                    child: Text(
-                                      AppLocalizations.of(context)!.confirmSale,
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        letterSpacing: 1.5,
-                                      ),
-                                    ),
+                                    child: _isProcessing
+                                        ? const SizedBox(
+                                            width: 24,
+                                            height: 24,
+                                            child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                                          )
+                                        : Text(
+                                            AppLocalizations.of(context)!.confirmSale,
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                              letterSpacing: 1.5,
+                                            ),
+                                          ),
                                   ),
                                 ),
                               ],

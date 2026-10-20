@@ -451,11 +451,9 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
                   buildSubtitle: (purchase) {
                     return FutureBuilder<SupplierEntity?>(
                       future:
-                          purchase.supplierId != null
-                              ? (db.select(db.suppliers)..where(
-                                (t) => t.id.equals(purchase.supplierId!),
-                              )).getSingleOrNull()
-                              : Future.value(null),
+                          (db.select(db.suppliers)..where(
+                                (t) => t.id.equals(purchase.supplierId),
+                              )).getSingleOrNull(),
                       builder: (ctx, snap) {
                         final supplierName =
                             snap.data?.name ??
@@ -515,8 +513,9 @@ class _GarbageScreenState extends ConsumerState<GarbageScreen> {
     return StreamBuilder<List<T>>(
       stream: stream,
       builder: (context, snapshot) {
-        if (!snapshot.hasData || snapshot.data!.isEmpty)
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return const SizedBox.shrink();
+        }
 
         final items =
             snapshot.data!.where((item) {

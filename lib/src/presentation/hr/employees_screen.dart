@@ -118,7 +118,7 @@ class _EmployeesScreenState extends ConsumerState<EmployeesScreen> {
                       ),
                       const CircleAvatar(
                         backgroundColor: Colors.indigo,
-                        child: Icon(Icons.badge, color: const Color(0xff64748b)),
+                        child: Icon(Icons.badge, color: Color(0xff64748b)),
                       ),
                     ],
                   ),
@@ -201,7 +201,7 @@ class _EmployeesScreenState extends ConsumerState<EmployeesScreen> {
             ],
           );
         },
-        loading: () => const Center(child: const LogoLoader()),
+        loading: () => const Center(child: LogoLoader()),
         error: (err, stack) => Center(child: Text('${(AppLocalizations.of(context)?.errorStr ?? 'Error: ')}$err')),
       ),
     );

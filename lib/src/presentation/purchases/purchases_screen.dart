@@ -20,6 +20,13 @@ import '../../application/products/product_providers.dart';
 import '../../application/purchases/purchase_service.dart';
 import '../../domain/products/product.dart';
 import '../../infrastructure/repositories/supplier_repository.dart';
+import '../widgets/status_badge.dart';
+import '../widgets/print_dialog.dart';
+import '../documents/pdf_preview_screen.dart';
+import '../../application/documents/pdf_generator.dart';
+import '../../infrastructure/database/app_database.dart';
+import '../../infrastructure/database/providers.dart';
+import 'package:drift/drift.dart' as drift;
 
 final List<PurchaseSession> globalPurchaseSessions = [];
 int globalPurchaseActiveSessionIndex = 0;
@@ -42,7 +49,8 @@ class _PaymentEntry {
 }
 
 class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
-  Set<String> _multiSelectedProductIds = {};
+  bool _isProcessing = false;
+  final Set<String> _multiSelectedProductIds = {};
   List<String> _localOrder = [];
   List<PurchaseSession> get _sessions => globalPurchaseSessions;
   int get _activeSessionIndex => globalPurchaseActiveSessionIndex;
@@ -130,9 +138,28 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
                 ),
                 TextFormField(
                   controller: priceCtrl,
-                  decoration: const InputDecoration(labelText: 'Unit Cost'),
+                  decoration: const InputDecoration(labelText: 'Unit Cost (Dhs)'),
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Colors.blue.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline, size: 16, color: Colors.blue.shade800),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Baseline WAC Cost: ${product.purchasePrice.toStringAsFixed(2)} Dhs',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.blue.shade900),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -249,6 +276,7 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
   }
 
   Future<void> _processPurchase() async {
+    if (_isProcessing) return;
     if (_activeSession.selectedSupplierId == null ||
         _activeSession.cart.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -270,6 +298,8 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
       );
       return;
     }
+
+    setState(() => _isProcessing = true);
 
     final paymentReqs =
         _activeSession.payments
@@ -310,22 +340,19 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
     );
 
     try {
+      final db = ref.read(databaseProvider);
+      PurchaseEntity? createdPurchase;
       if (_activeSession.editingId != null) {
         await ref
             .read(purchaseServiceProvider)
             .updatePurchase(req, _activeSession.editingId!);
+        createdPurchase = await (db.select(db.purchases)..where((t) => t.id.equals(_activeSession.editingId!))).getSingleOrNull();
       } else {
         await ref.read(purchaseServiceProvider).executePurchase(req);
+        final purchases = await (db.select(db.purchases)..where((t) => t.supplierId.equals(req.supplierId))..orderBy([(t) => drift.OrderingTerm(expression: t.date, mode: drift.OrderingMode.desc)])).get();
+        createdPurchase = purchases.firstOrNull;
       }
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              AppLocalizations.of(context)?.savedSuccessfully ??
-                  'Purchase recorded successfully!',
-            ),
-          ),
-        );
         setState(() {
           _activeSession.dispose();
           _sessions.removeAt(_activeSessionIndex);
@@ -336,11 +363,76 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
                 title: 'Cart 1',
               ),
             );
-          }
-          if (_activeSessionIndex >= _sessions.length) {
+            _activeSessionIndex = 0;
+          } else if (_activeSessionIndex >= _sessions.length) {
             _activeSessionIndex = _sessions.length - 1;
           }
         });
+
+        // Peak-End Rule: Clear, reassuring completion summary modal
+        if (createdPurchase != null) {
+          final purchaseToPrint = createdPurchase;
+          await showDialog(
+            context: context,
+            barrierDismissible: true,
+            builder: (ctx) => AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.teal, size: 28),
+                  const SizedBox(width: 10),
+                  Text(AppLocalizations.of(context)?.savedSuccessfully ?? 'Purchase Recorded Successfully'),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${purchaseToPrint.documentType} #${purchaseToPrint.purchaseNumber}',
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text('Total: ${purchaseToPrint.total.toStringAsFixed(2)} Dhs'),
+                  Text('Paid: ${purchaseToPrint.paidAmount.toStringAsFixed(2)} Dhs'),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      const Text('Status: ', style: TextStyle(fontWeight: FontWeight.w600)),
+                      StatusBadge(status: purchaseToPrint.status),
+                    ],
+                  ),
+                ],
+              ),
+              actions: [
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    Navigator.pop(ctx);
+                    final options = await PrintDialog.show(context, defaultLanguageCode: Localizations.localeOf(context).languageCode);
+                    if (options != null && mounted) {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => PdfPreviewScreen(title: "Purchase ${purchaseToPrint.purchaseNumber}", buildPdf: () => ref.read(pdfGeneratorProvider).generatePurchasePdf(purchaseToPrint.id, options))));
+                    }
+                  },
+                  icon: const Icon(Icons.print),
+                  label: Text(AppLocalizations.of(context)?.printDocument ?? 'Print Document'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(context)?.savedSuccessfully ??
+                    'Purchase recorded successfully!',
+              ),
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -351,6 +443,10 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
             ),
           ),
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isProcessing = false);
       }
     }
   }
@@ -456,10 +552,11 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
               onTap: () {
                 if (_multiSelectedProductIds.isNotEmpty) {
                   setState(() {
-                    if (isSelected)
+                    if (isSelected) {
                       _multiSelectedProductIds.remove(p.id);
-                    else
+                    } else {
                       _multiSelectedProductIds.add(p.id);
+                    }
                   });
                 } else {
                   _addToPurchase(p);
@@ -521,10 +618,11 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
                       value: isSelected,
                       onChanged: (bool? val) {
                         setState(() {
-                          if (val == true)
+                          if (val == true) {
                             _multiSelectedProductIds.add(p.id);
-                          else
+                          } else {
                             _multiSelectedProductIds.remove(p.id);
+                          }
                         });
                       },
                     ),
@@ -538,7 +636,7 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
           ],
         );
       },
-      loading: () => const Center(child: const LogoLoader()),
+      loading: () => const Center(child: LogoLoader()),
       error:
           (err, stack) =>
               Center(child: Text('${l10n?.errorStr ?? "Error:"} $err')),
@@ -581,7 +679,9 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
                       child: Row(
                         children: [
                           Text(
-                            session.title,
+                            session.cart.isNotEmpty
+                                ? '${session.title} (${session.cart.length})'
+                                : session.title,
                             style: TextStyle(
                               fontWeight:
                                   isActive
@@ -638,7 +738,7 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
             child: DropdownButtonFormField<String>(
-              value: _activeSession.selectedDocumentType,
+              initialValue: _activeSession.selectedDocumentType,
               decoration: const InputDecoration(labelText: 'Document Type', border: OutlineInputBorder()),
               items: const [
                 DropdownMenuItem(value: 'BON', child: Text('BON')),
@@ -678,7 +778,7 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
                 children: [
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      value: _activeSession.selectedCompanyBranch,
+                      initialValue: _activeSession.selectedCompanyBranch,
                       decoration: const InputDecoration(labelText: 'Company Branch', border: OutlineInputBorder()),
                       items: const [
                         DropdownMenuItem(value: 'MARKO_GROUP', child: Text('MARKO_GROUP')),
@@ -692,7 +792,7 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      value: _activeSession.selectedPaymentMethod,
+                      initialValue: _activeSession.selectedPaymentMethod,
                       decoration: const InputDecoration(labelText: 'Payment Method', border: OutlineInputBorder()),
                       items: const [
                         DropdownMenuItem(value: 'CASH', child: Text('Espèce')),
@@ -882,7 +982,7 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
                             Expanded(
                               flex: 2,
                               child: DropdownButtonFormField<String>(
-                                value: p.method,
+                                initialValue: p.method,
                                 isExpanded: true,
                                 decoration: const InputDecoration(
                                   labelText: 'Method',
@@ -996,16 +1096,25 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: _processPurchase,
+                    onPressed: _isProcessing ? null : _processPurchase,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.teal,
                       foregroundColor: Colors.white,
                     ),
-                    child: Text(
-                      l10n?.confirm ??
-                          AppLocalizations.of(context)!.recordPurchase,
-                      style: const TextStyle(fontSize: 18),
-                    ),
+                    child: _isProcessing
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Text(
+                            l10n?.confirm ??
+                                AppLocalizations.of(context)!.recordPurchase,
+                            style: const TextStyle(fontSize: 18),
+                          ),
                   ),
                 ),
               ],
@@ -1143,7 +1252,7 @@ class _SupplierSearchDialog extends StatefulWidget {
   final List<Supplier> suppliers;
   final String? initialSupplierId;
 
-  const _SupplierSearchDialog({required this.suppliers, this.initialSupplierId});
+  const _SupplierSearchDialog({required this.suppliers}) : initialSupplierId = null;
 
   @override
   State<_SupplierSearchDialog> createState() => _SupplierSearchDialogState();

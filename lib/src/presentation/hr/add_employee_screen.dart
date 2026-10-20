@@ -195,7 +195,7 @@ class _AddEmployeeScreenState extends ConsumerState<AddEmployeeScreen> {
                 child: Column(
                   children: [
                     DropdownButtonFormField<String>(
-                      value: _selectedRole,
+                      initialValue: _selectedRole,
                       items: (ref.watch(currentUserProvider)?.role == 'ADMIN' 
                           ? ['ADMIN', 'GERANT', 'CASHIER', 'MAGAZINIER'] 
                           : ['GERANT', 'CASHIER', 'MAGAZINIER'])

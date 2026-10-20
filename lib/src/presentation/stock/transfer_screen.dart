@@ -89,10 +89,10 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(AppLocalizations.of(context)!.stockTransfer)),
       body: productsAsync.when(
-        loading: () => const Center(child: const LogoLoader()),
+        loading: () => const Center(child: LogoLoader()),
         error: (e, st) => Center(child: Text('${(AppLocalizations.of(context)?.errorStr ?? 'Error: ')}$e')),
         data: (products) => locationsAsync.when(
-          loading: () => const Center(child: const LogoLoader()),
+          loading: () => const Center(child: LogoLoader()),
           error: (e, st) => Center(child: Text('${(AppLocalizations.of(context)?.errorStr ?? 'Error: ')}$e')),
           data: (locations) {
             return Padding(
@@ -102,7 +102,7 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                 child: ListView(
                   children: [
                     DropdownButtonFormField<String>(
-                      value: _selectedProductId,
+                      initialValue: _selectedProductId,
                       decoration: InputDecoration(labelText: AppLocalizations.of(context)!.productLabel),
                       items: products.map((p) {
                         return DropdownMenuItem(
@@ -115,7 +115,7 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
-                      value: _fromLocationId,
+                      initialValue: _fromLocationId,
                       decoration: InputDecoration(labelText: AppLocalizations.of(context)!.sourceLocation),
                       items: locations.map((loc) {
                         return DropdownMenuItem(
@@ -128,7 +128,7 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
-                      value: _toLocationId,
+                      initialValue: _toLocationId,
                       decoration: InputDecoration(labelText: AppLocalizations.of(context)!.destinationLocation),
                       items: locations.map((loc) {
                         return DropdownMenuItem(

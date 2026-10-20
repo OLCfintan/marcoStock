@@ -483,8 +483,8 @@ class PdfGeneratorService {
         return [
           productName,
           line.quantity.toStringAsFixed(2),
-          line.unitPrice.toStringAsFixed(2) + ' DH',
-          line.lineTotal.toStringAsFixed(2) + ' DH',
+          '${line.unitPrice.toStringAsFixed(2)} DH',
+          '${line.lineTotal.toStringAsFixed(2)} DH',
         ];
       }).toList(),
       headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.black, fontSize: 10),
@@ -566,8 +566,9 @@ class PdfGeneratorService {
 
     pw.Widget _buildFactureHeader(InvoiceEntity invoice, ClientEntity? client, String companyName, String companyAddress, String companyPhone, String companyTaxId, String companyIce, String companyRc, String companyRib, String companyEmail, pw.ImageProvider? logoImage, AppLocalizations l10n) {
     String docTypeTitle = l10n.pdfFacture;
-    if (invoice.documentType == 'BON') docTypeTitle = l10n.pdfBonDeLivraison;
-    else if (invoice.documentType == 'COMMANDE') docTypeTitle = l10n.pdfBonDeCommande;
+    if (invoice.documentType == 'BON') {
+      docTypeTitle = l10n.pdfBonDeLivraison;
+    } else if (invoice.documentType == 'COMMANDE') docTypeTitle = l10n.pdfBonDeCommande;
     else if (invoice.documentType == 'TICKET') docTypeTitle = l10n.ticket;
 
     final clientName = invoice.clientNameOverride ?? client?.name ?? 'Client Passager';
@@ -660,8 +661,8 @@ class PdfGeneratorService {
         return [
           productName,
           line.quantity.toStringAsFixed(2),
-          line.unitPrice.toStringAsFixed(2) + ' DH',
-          line.lineTotal.toStringAsFixed(2) + ' DH',
+          '${line.unitPrice.toStringAsFixed(2)} DH',
+          '${line.lineTotal.toStringAsFixed(2)} DH',
         ];
       }).toList(),
       headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.black, fontSize: 10),
@@ -873,8 +874,9 @@ pw.Widget _buildTotalRow(String label, String amount, {bool isBold = false, doub
 
 pw.Widget _buildOldHeader(InvoiceEntity invoice, ClientEntity? client, String companyName, String companyAddress, String companyPhone, String companyTaxId, pw.ImageProvider? logoImage, AppLocalizations l10n) {
     String docTypeTitle = l10n.pdfFacture;
-    if (invoice.documentType == 'BON') docTypeTitle = l10n.pdfBonDeLivraison;
-    else if (invoice.documentType == 'COMMANDE') docTypeTitle = l10n.pdfBonDeCommande;
+    if (invoice.documentType == 'BON') {
+      docTypeTitle = l10n.pdfBonDeLivraison;
+    } else if (invoice.documentType == 'COMMANDE') docTypeTitle = l10n.pdfBonDeCommande;
     else if (invoice.documentType == 'TICKET') docTypeTitle = l10n.ticket;
 
     return pw.Row(

@@ -19,6 +19,7 @@ import '../../infrastructure/repositories/product_repository.dart';
 
 import 'add_product_screen.dart';
 import '../widgets/item_navigator.dart';
+import '../widgets/product_image.dart';
 
 class ProductsScreen extends ConsumerStatefulWidget {
   const ProductsScreen({super.key});
@@ -31,11 +32,37 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
   final Set<String> _selectedProductIds = {};
   String _searchQuery = '';
   final FocusNode _searchFocusNode = FocusNode();
+  bool _isGridView = true;
 
   @override
   void dispose() {
     _searchFocusNode.dispose();
     super.dispose();
+  }
+
+  Future<void> _deleteProduct(Product p) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm'),
+        content: const Text('Are you sure you want to delete this?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(AppLocalizations.of(context)!.cancelStr),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(AppLocalizations.of(context)!.deleteStr),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+    final db = ref.read(databaseProvider);
+    await (db.update(db.products)..where((t) => t.id.equals(p.id)))
+        .write(const ProductsCompanion(isActive: drift.Value(false)));
   }
 
   void _showConsumableDialog(BuildContext context, Product product) {
@@ -227,6 +254,15 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
             title: Text(AppLocalizations.of(context)!.productsCatalog),
             actions: [
           IconButton(
+            icon: Icon(_isGridView ? Icons.view_list_rounded : Icons.grid_view_rounded),
+            tooltip: _isGridView ? 'Switch to Table View' : 'Switch to Grid View',
+            onPressed: () {
+              setState(() {
+                _isGridView = !_isGridView;
+              });
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.qr_code_scanner),
             tooltip: AppLocalizations.of(context)!.scanBarcode,
             onPressed: () {
@@ -251,14 +287,14 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                 final confirm = await showDialog<bool>(
                   context: context,
                   builder: (context) => AlertDialog(
-                    title: Text('Confirm'),
-                    content: Text('Are you sure you want to delete this?'),
+                    title: const Text('Confirm'),
+                    content: const Text('Are you sure you want to delete this?'),
                     actions: [
-                      TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocalizations.of(context)!.cancelStr ?? 'Cancel')),
+                      TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocalizations.of(context)!.cancelStr)),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                         onPressed: () => Navigator.pop(context, true),
-                        child: Text(AppLocalizations.of(context)!.deleteStr ?? 'Delete'),
+                        child: Text(AppLocalizations.of(context)!.deleteStr),
                       ),
                     ],
                   ),
@@ -288,6 +324,195 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
           if (products.isEmpty && _searchQuery.isEmpty) {
             return Center(child: Text(AppLocalizations.of(context)!.noProductsAvailable));
           }
+
+          if (_isGridView) {
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                  child: TextField(
+                    focusNode: _searchFocusNode,
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context)!.searchProducts,
+                      prefixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      suffixIcon: _searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear),
+                              onPressed: () => setState(() => _searchQuery = ''),
+                            )
+                          : null,
+                    ),
+                    onChanged: (val) {
+                      setState(() {
+                        _searchQuery = val;
+                      });
+                    },
+                  ),
+                ),
+                Expanded(
+                  child: GridView.builder(
+                    padding: const EdgeInsets.all(16),
+                    gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                      maxCrossAxisExtent: 220,
+                      childAspectRatio: 0.72,
+                      crossAxisSpacing: 14,
+                      mainAxisSpacing: 14,
+                    ),
+                    itemCount: products.length,
+                    itemBuilder: (context, index) {
+                      final p = products[index];
+                      final isSelected = _selectedProductIds.contains(p.id);
+                      final theme = Theme.of(context);
+                      final isAdmin = ref.watch(currentUserProvider)?.role == 'ADMIN';
+
+                      return Card(
+                        elevation: isSelected ? 4 : 1,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          side: BorderSide(
+                            color: isSelected ? theme.colorScheme.primary : theme.dividerColor.withValues(alpha: 0.5),
+                            width: isSelected ? 2 : 1,
+                          ),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: InkWell(
+                          onTap: () {
+                            if (_selectedProductIds.isNotEmpty) {
+                              setState(() {
+                                if (isSelected) {
+                                  _selectedProductIds.remove(p.id);
+                                } else {
+                                  _selectedProductIds.add(p.id);
+                                }
+                              });
+                            } else {
+                              ItemNavigator.openProduct(context, p);
+                            }
+                          },
+                          onLongPress: () {
+                            setState(() {
+                              if (isSelected) {
+                                _selectedProductIds.remove(p.id);
+                              } else {
+                                _selectedProductIds.add(p.id);
+                              }
+                            });
+                          },
+                          onDoubleTap: () => ItemNavigator.openProduct(context, p),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  theme.colorScheme.primaryContainer.withValues(alpha: 0.25),
+                                  theme.colorScheme.surface,
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(8, 4, 4, 0),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      if (_selectedProductIds.isNotEmpty)
+                                        SizedBox(
+                                          width: 24,
+                                          height: 24,
+                                          child: Checkbox(
+                                            value: isSelected,
+                                            onChanged: (val) {
+                                              setState(() {
+                                                if (val == true) {
+                                                  _selectedProductIds.add(p.id);
+                                                } else {
+                                                  _selectedProductIds.remove(p.id);
+                                                }
+                                              });
+                                            },
+                                          ),
+                                        )
+                                      else
+                                        const SizedBox(width: 24),
+                                      PopupMenuButton<String>(
+                                        icon: const Icon(Icons.more_vert, size: 20),
+                                        padding: EdgeInsets.zero,
+                                        onSelected: (value) {
+                                          if (value == 'consumables') _showConsumableDialog(context, p);
+                                          if (value == 'edit') Navigator.push(context, MaterialPageRoute(builder: (_) => AddProductScreen(productToEdit: p)));
+                                          if (value == 'family') Navigator.push(context, MaterialPageRoute(builder: (_) => AddProductScreen(templateProduct: p)));
+                                          if (value == 'delete') _deleteProduct(p);
+                                        },
+                                        itemBuilder: (context) => [
+                                          PopupMenuItem(value: 'consumables', child: Text(AppLocalizations.of(context)!.createConsumables)),
+                                          PopupMenuItem(value: 'family', child: Text(AppLocalizations.of(context)!.addFamilyMember)),
+                                          PopupMenuItem(value: 'edit', child: Text(AppLocalizations.of(context)!.edit)),
+                                          if (isAdmin)
+                                            PopupMenuItem(value: 'delete', child: Text(AppLocalizations.of(context)!.deleteStr, style: const TextStyle(color: Colors.red))),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                    child: ProductImage(
+                                      product: p,
+                                      size: double.infinity,
+                                      fit: BoxFit.contain,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                                  child: Column(
+                                    children: [
+                                      Text(
+                                        p.name,
+                                        textAlign: TextAlign.center,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        '${p.reference} • ${p.unitSize} ${p.unit}',
+                                        style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurfaceVariant),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '${p.sellingPrice.toStringAsFixed(2)} Dhs',
+                                        style: TextStyle(
+                                          color: theme.colorScheme.primary,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          }
+
           return SingleChildScrollView(
             child: SizedBox(
               width: double.infinity,
@@ -343,26 +568,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                   onConsumable: (p) => _showConsumableDialog(context, p),
                   onEdit: (p) => Navigator.push(context, MaterialPageRoute(builder: (_) => AddProductScreen(productToEdit: p))),
                   onAddFamilyMember: (p) => Navigator.push(context, MaterialPageRoute(builder: (_) => AddProductScreen(templateProduct: p))),
-                  onDelete: (p) async {
-                    final confirm = await showDialog<bool>(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: Text('Confirm'),
-                        content: Text('Are you sure you want to delete this?'),
-                        actions: [
-                          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocalizations.of(context)!.cancelStr ?? 'Cancel')),
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                            onPressed: () => Navigator.pop(context, true),
-                            child: Text(AppLocalizations.of(context)!.deleteStr ?? 'Delete'),
-                          ),
-                        ],
-                      ),
-                    );
-                    if (confirm != true) return;
-                    final db = ref.read(databaseProvider);
-                    await (db.update(db.products)..where((t) => t.id.equals(p.id))).write(const ProductsCompanion(isActive: drift.Value(false)));
-                  },
+                  onDelete: (p) => _deleteProduct(p),
                   onDoubleTap: (p) => ItemNavigator.openProduct(context, p),
                   isAdmin: ref.watch(currentUserProvider)?.role == 'ADMIN',
                   context: context,
@@ -371,7 +577,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
             ),
           );
         },
-        loading: () => const Center(child: const LogoLoader()),
+        loading: () => const Center(child: LogoLoader()),
         error: (err, stack) => Center(child: Text('${(AppLocalizations.of(context)?.errorStr ?? 'Error: ')}$err')),
       ),
       floatingActionButton: FloatingActionButton(
@@ -449,7 +655,16 @@ class _ProductDataSource extends DataTableSource {
             ],
           ),
         ),
-        buildCell(Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold))),
+        buildCell(
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ProductAvatarImage(product: p, radius: 16),
+              const SizedBox(width: 8),
+              Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+            ],
+          ),
+        ),
         buildCell(Text(p.reference)),
         buildCell(Text('${p.packagingType} (${p.unitSize} ${p.unit})')),
         buildCell(Text('${p.purchasePrice.toStringAsFixed(2)} ${AppLocalizations.of(context)!.dhsStr}')),

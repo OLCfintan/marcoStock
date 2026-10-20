@@ -179,7 +179,7 @@ Description / الوصف: ${p.description ?? 'N/A'}''';
       stream: query.watch(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: const LogoLoader());
+          return const Center(child: LogoLoader());
         }
         if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
@@ -199,7 +199,7 @@ Description / الوصف: ${p.description ?? 'N/A'}''';
             return ListTile(
               leading: const CircleAvatar(
                 backgroundColor: Colors.blueGrey,
-                child: Icon(Icons.warehouse, color: const Color(0xff64748b)),
+                child: Icon(Icons.warehouse, color: Color(0xff64748b)),
               ),
               title: Text(location.name),
               subtitle: Text('Location Type: ${location.type}'),
@@ -223,7 +223,7 @@ Description / الوصف: ${p.description ?? 'N/A'}''';
       stream: query.watch(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: const LogoLoader());
+          return const Center(child: LogoLoader());
         }
         if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
@@ -243,7 +243,7 @@ Description / الوصف: ${p.description ?? 'N/A'}''';
             return ListTile(
               leading: const CircleAvatar(
                 backgroundColor: Colors.teal,
-                child: Icon(Icons.build, color: const Color(0xff64748b)),
+                child: Icon(Icons.build, color: Color(0xff64748b)),
               ),
               title: Text(product.name),
               subtitle: Text('Reference: ${product.reference}'),

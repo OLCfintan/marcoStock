@@ -6,12 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../infrastructure/database/app_database.dart';
-import '../../infrastructure/database/providers.dart';
 import '../../application/payments/payment_service.dart';
-import 'package:drift/drift.dart' as drift;
 import 'image_picker_field.dart';
-import 'package:uuid/uuid.dart';
 
 class PaymentLedgerDialog extends ConsumerStatefulWidget {
   final String? clientId;
@@ -166,7 +162,7 @@ class _PaymentLedgerDialogState extends ConsumerState<PaymentLedgerDialog> {
                               Expanded(
                                 flex: 2,
                                 child: DropdownButtonFormField<String>(
-                                  value: p.method,
+                                  initialValue: p.method,
                                   decoration: const InputDecoration(labelText: 'Method', isDense: true),
                                   items: [
                                     DropdownMenuItem(value: 'CASH', child: Text(AppLocalizations.of(context)!.cash.toUpperCase())),

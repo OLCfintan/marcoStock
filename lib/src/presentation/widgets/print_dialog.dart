@@ -61,7 +61,7 @@ class _PrintDialogState extends State<PrintDialog> {
           const Text('Document Language:', style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
-            value: _selectedLang,
+            initialValue: _selectedLang,
             items: const [
               DropdownMenuItem(value: 'ar', child: Text('Arabic')),
               DropdownMenuItem(value: 'fr', child: Text('French')),
@@ -95,7 +95,7 @@ class _PrintDialogState extends State<PrintDialog> {
           const Text('Export Format:', style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           DropdownButtonFormField<ExportFormat>(
-            value: _selectedFormat,
+            initialValue: _selectedFormat,
             items: const [
               DropdownMenuItem(value: ExportFormat.pdf, child: Text('PDF Document')),
               DropdownMenuItem(value: ExportFormat.image, child: Text('Image (JPEG)')),

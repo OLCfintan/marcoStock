@@ -28,7 +28,7 @@ extension DocumentEditHelper on ConsumerState {
     
     session.payments.clear();
     
-    if (invoice.invoiceNumber != null) session.invoiceCounterController.text = invoice.invoiceNumber;;
+    session.invoiceCounterController.text = invoice.invoiceNumber;
     if (invoice.clientNameOverride != null) session.customNameController.text = invoice.clientNameOverride!;
     if (invoice.clientIceOverride != null) session.customIceController.text = invoice.clientIceOverride!;
 

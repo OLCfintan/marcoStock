@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 
 import '../database/app_database.dart';
 import '../database/providers.dart';
+import '../../domain/constants/locations.dart';
 
 final stockRepositoryProvider = Provider<StockRepository>((ref) {
   return StockRepository(ref.watch(databaseProvider));
@@ -18,6 +19,9 @@ class StockItem {
   final String locationId;
   final String locationName;
   final Decimal quantity;
+  final Decimal minimumStock;
+  final Decimal purchasePrice;
+  final String? imagePath;
 
   StockItem({
     required this.productId,
@@ -28,7 +32,14 @@ class StockItem {
     required this.locationId,
     required this.locationName,
     required this.quantity,
+    required this.minimumStock,
+    required this.purchasePrice,
+    this.imagePath,
   });
+
+  bool get isShortage => minimumStock > Decimal.zero && quantity < minimumStock;
+  Decimal get shortageQuantity => isShortage ? (minimumStock - quantity) : Decimal.zero;
+  Decimal get shortageFinancialImpact => shortageQuantity * purchasePrice;
 }
 
 class StockRepository {
@@ -41,8 +52,6 @@ class StockRepository {
     return _db.select(_db.stockBalances).watch().asyncMap((balances) async {
       final items = <StockItem>[];
       for (final balance in balances) {
-        // if (balance.quantity <= Decimal.zero) continue; // Allow viewing zero and negative stocks for auditing
-        
         final product = await (_db.select(_db.products)
           ..where((t) => t.id.equals(balance.productId)))
           .getSingleOrNull();
@@ -52,6 +61,10 @@ class StockRepository {
           ..where((t) => t.id.equals(balance.locationId)))
           .getSingleOrNull();
         if (location == null) continue;
+
+        final minStock = location.id == AppLocations.baseWarehouse
+            ? product.baseMinimumStock
+            : product.magazinMinimumStock;
         
         items.add(StockItem(
           productId: product.id,
@@ -62,6 +75,9 @@ class StockRepository {
           locationId: location.id,
           locationName: location.name,
           quantity: balance.quantity,
+          minimumStock: minStock,
+          purchasePrice: product.purchasePrice,
+          imagePath: product.imagePath,
         ));
       }
       return items;

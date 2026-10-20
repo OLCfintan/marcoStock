@@ -14,7 +14,6 @@ import '../../application/backup/backup_service.dart';
 import '../../infrastructure/database/app_database.dart';
 import '../../infrastructure/database/providers.dart';
 import 'package:drift/drift.dart' as drift;
-import '../widgets/logo_loader.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});

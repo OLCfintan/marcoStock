@@ -28,6 +28,7 @@ import '../../application/documents/pdf_generator.dart';
 import 'payment_ledger_dialog.dart';
 import '../../application/hr/payroll_service.dart';
 import '../clients/client_details_screen.dart';
+import 'status_badge.dart';
 
 enum HumanType {
   client,
@@ -113,7 +114,7 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   DropdownButtonFormField<String>(
-                    value: selectedAction,
+                    initialValue: selectedAction,
                     decoration: const InputDecoration(labelText: 'Action Type'),
                     items: [
                       DropdownMenuItem(value: 'SALARY', child: Text(AppLocalizations.of(context)!.creditMonthlySalary)),
@@ -427,7 +428,7 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
       return StreamBuilder<List<InvoiceEntity>>(
         stream: (db.select(db.invoices)..where((t) => t.clientId.equals(widget.id) & t.isActive.equals(true))..orderBy([(t) => drift.OrderingTerm(expression: t.date, mode: drift.OrderingMode.desc)])).watch(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData) return const Center(child: const LogoLoader());
+          if (!snapshot.hasData) return const Center(child: LogoLoader());
           var items = snapshot.data!;
           if (_searchQuery.isNotEmpty) {
             final q = ArabicTransliterator.transliterate(_searchQuery.toLowerCase());
@@ -457,15 +458,19 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
                     }
                   },
                   leading: const Icon(Icons.receipt_long, color: Colors.blue),
-                  title: Text('${inv.documentType == 'FACTURE_DUMMY' ? 'FACTURE' : inv.documentType} #${inv.invoiceNumber}' + (inv.clientNameOverride != null && inv.clientNameOverride!.isNotEmpty ? ' - ${inv.clientNameOverride}' : '')),
+                  title: Text('${inv.documentType == 'FACTURE_DUMMY' ? 'FACTURE' : inv.documentType} #${inv.invoiceNumber}${inv.clientNameOverride != null && inv.clientNameOverride!.isNotEmpty ? ' - ${inv.clientNameOverride}' : ''}'),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Date: ${inv.date.toString().split(' ')[0]}'),
-                      if (inv.documentType == 'BON')
-                        Text('${inv.total.toStringAsFixed(2)} Dhs - ${inv.status}', style: TextStyle(fontWeight: FontWeight.bold, color: inv.status == 'PAID' ? Colors.green : (inv.status == 'PARTIAL' ? Colors.orange : Colors.red)))
-                      else
-                        Text('${inv.total.toStringAsFixed(2)} Dhs', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+                      Row(
+                        children: [
+                          Text('${inv.total.toStringAsFixed(2)} Dhs', style: const TextStyle(fontWeight: FontWeight.bold)),
+                          const SizedBox(width: 8),
+                          if (inv.documentType == 'BON')
+                            StatusBadge(status: inv.status),
+                        ],
+                      ),
                     ]
                   ),
                   trailing: PopupMenuButton<String>(
@@ -504,7 +509,7 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
       return StreamBuilder<List<PurchaseEntity>>(
         stream: (db.select(db.purchases)..where((t) => t.supplierId.equals(widget.id) & t.isActive.equals(true))..orderBy([(t) => drift.OrderingTerm(expression: t.date, mode: drift.OrderingMode.desc)])).watch(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData) return const Center(child: const LogoLoader());
+          if (!snapshot.hasData) return const Center(child: LogoLoader());
           var items = snapshot.data!;
           if (_searchQuery.isNotEmpty) {
             final q = ArabicTransliterator.transliterate(_searchQuery.toLowerCase());
@@ -534,8 +539,13 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Date: ${pur.date.toString().split(' ')[0]}'),
-                      Text('${pur.total.toStringAsFixed(2)} Dhs - ${pur.status}', style: TextStyle(fontWeight: FontWeight.bold, color: pur.status == 'PAID' ? Colors.green : (pur.status == 'PARTIAL' ? Colors.orange : Colors.red))),
+                      Row(
+                        children: [
+                          Text('${pur.total.toStringAsFixed(2)} Dhs', style: const TextStyle(fontWeight: FontWeight.bold)),
+                          const SizedBox(width: 8),
+                          StatusBadge(status: pur.status),
+                        ],
+                      ),
                     ]
                   ),
                   trailing: PopupMenuButton<String>(
@@ -599,7 +609,7 @@ class _HumanProfileDialogState extends ConsumerState<HumanProfileDialog> with Si
     return StreamBuilder<List<PaymentEntity>>(
       stream: _watchPayments(db),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Center(child: const LogoLoader());
+        if (!snapshot.hasData) return const Center(child: LogoLoader());
         final payments = snapshot.data!;
         return _buildLedgerList(payments);
       },
